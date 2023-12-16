@@ -48,20 +48,51 @@ MEMORY
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 512K
 }
 
+__privileged_functions_region_size__  = 64K;
+__privileged_data_region_size__       = 32K;
+
+__FLASH_segment_start__               = ORIGIN( FLASH );
+__FLASH_segment_end__                 = __FLASH_segment_start__ + LENGTH( FLASH );
+
+__SRAM_segment_start__                = ORIGIN( RAM );
+__SRAM_segment_end__                  = __SRAM_segment_start__ + LENGTH( RAM );
+
+__privileged_functions_start__        = __FLASH_segment_start__;
+__privileged_functions_end__          = __FLASH_segment_start__ + __privileged_functions_region_size__;
+
+__privileged_data_start__             = __SRAM_segment_start__;
+__privileged_data_end__               = __SRAM_segment_start__ + __privileged_data_region_size__;
+
+
 /* Sections */
 SECTIONS
 {
-  /* The startup code into "FLASH" Rom type memory */
-  .isr_vector :
-  {
-    . = ALIGN(4);
-    KEEP(*(.isr_vector)) /* Startup code */
-    . = ALIGN(4);
-  } >FLASH
+    /* The startup code and FreeRTOS kernel code are placed into privileged
+     * flash. */
+    .privileged_functions :
+    {
+        . = ALIGN(4);
+        KEEP(*(.isr_vector)) /* Startup code */
+        . = ALIGN(4);
+        *(privileged_functions)
+        . = ALIGN(4);
+        FILL(0xDEAD);
+        /* Ensure that un-privileged code is placed after the region reserved
+         * for privileged kernel code. */
+        /* Note that dot (.) actually refers to the byte offset from the start
+         * of the current section (.privileged_functions in this case). As a
+         * result, setting dot (.) to a value sets the size of the section. */
+        . = __privileged_functions_region_size__;
+    } >FLASH
 
   /* The program code and other data into "FLASH" Rom type memory */
   .text :
   {
+    /* Place the FreeRTOS System Calls first in the unprivileged region. */
+    . = ALIGN(4);
+    __syscalls_flash_start__ = .;
+    *(freertos_system_calls)
+    __syscalls_flash_end__ = .;
     . = ALIGN(4);
     *(.text)           /* .text sections (code) */
     *(.text*)          /* .text* sections (code) */
@@ -129,7 +160,23 @@ SECTIONS
   } >FLASH
 
   /* Used by the startup to initialize data */
-  _sidata = LOADADDR(.data);
+  _sidata = LOADADDR(.privileged_data);
+
+	/* FreeRTOS kernel data. */
+	.privileged_data :
+	{
+	    . = ALIGN(4);
+	    _sdata = .;        /* Create a global symbol at data start. */
+	    *(privileged_data)
+	    . = ALIGN(4);
+	    FILL(0xDEAD);
+	    /* Ensure that un-privileged data is placed after the region reserved
+	     * for privileged kernel data. */
+	    /* Note that dot (.) actually refers to the byte offset from the start
+	     * of the current section (.privileged_data in this case). As a result,
+	     * setting dot (.) to a value sets the size of the section. */
+	    . = __privileged_data_region_size__;
+	} >RAM AT> FLASH
 
   /* Initialized data sections into "RAM" Ram type memory */
   .data :
