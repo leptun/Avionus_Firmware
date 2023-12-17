@@ -88,8 +88,8 @@
 #define portPRIVILEGED_EXECUTION_START_ADDRESS    ( 0UL )
 #define portMPU_REGION_VALID                      ( 0x10UL )
 #define portMPU_REGION_ENABLE                     ( 0x01UL )
-#define portPERIPHERALS_START_ADDRESS             0x40000000UL
-#define portPERIPHERALS_END_ADDRESS               0x5FFFFFFFUL
+//#define portPERIPHERALS_START_ADDRESS             0x40000000UL
+//#define portPERIPHERALS_END_ADDRESS               0x5FFFFFFFUL
 
 /* Constants required to access and manipulate the SysTick. */
 #define portNVIC_SYSTICK_INT                      ( 0x00000002UL )
@@ -1248,15 +1248,15 @@ static void prvSetupMPU( void )
                                        prvGetMPURegionSizeSetting( ( uint32_t ) __privileged_data_end__ - ( uint32_t ) __privileged_data_start__ ) |
                                        ( portMPU_REGION_ENABLE );
 
-        /* By default allow everything to access the general peripherals.  The
-         * system peripherals and registers are protected. */
-        portMPU_REGION_BASE_ADDRESS_REG = ( portPERIPHERALS_START_ADDRESS ) |
-                                          ( portMPU_REGION_VALID ) |
-                                          ( portGENERAL_PERIPHERALS_REGION );
-
-        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER ) |
-                                       ( prvGetMPURegionSizeSetting( portPERIPHERALS_END_ADDRESS - portPERIPHERALS_START_ADDRESS ) ) |
-                                       ( portMPU_REGION_ENABLE );
+//        /* By default allow everything to access the general peripherals.  The
+//         * system peripherals and registers are protected. */
+//        portMPU_REGION_BASE_ADDRESS_REG = ( portPERIPHERALS_START_ADDRESS ) |
+//                                          ( portMPU_REGION_VALID ) |
+//                                          ( portGENERAL_PERIPHERALS_REGION );
+//
+//        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER ) |
+//                                       ( prvGetMPURegionSizeSetting( portPERIPHERALS_END_ADDRESS - portPERIPHERALS_START_ADDRESS ) ) |
+//                                       ( portMPU_REGION_ENABLE );
 
         /* Enable the memory fault exception. */
         portNVIC_SYS_CTRL_STATE_REG |= portNVIC_MEM_FAULT_ENABLE;
