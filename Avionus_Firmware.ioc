@@ -2,6 +2,10 @@
 CAD.formats=
 CAD.pinconfig=
 CAD.provider=
+CORTEX_M7.CPU_DCache=Enabled
+CORTEX_M7.CPU_ICache=Enabled
+CORTEX_M7.FlashInterface=TCM_Enabled
+CORTEX_M7.IPParameters=FlashInterface,CPU_ICache,CPU_DCache
 File.Version=6
 GPIO.groupedBy=Group By Peripherals
 KeepUserPlacement=false
