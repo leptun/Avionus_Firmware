@@ -175,7 +175,7 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 
 #include <main.h>
 
-#define traceLOW_POWER_IDLE_BEGIN() HAL_GPIO_WritePin(UI_LED_GPS_GPIO_Port, UI_LED_GPS_Pin, GPIO_PIN_RESET);
-#define traceLOW_POWER_IDLE_END() HAL_GPIO_WritePin(UI_LED_GPS_GPIO_Port, UI_LED_GPS_Pin, GPIO_PIN_SET);
+#define traceLOW_POWER_IDLE_BEGIN() HAL_GPIO_WritePin(UI_LED_STATUS_GPIO_Port, UI_LED_STATUS_Pin, GPIO_PIN_RESET);
+#define traceLOW_POWER_IDLE_END() HAL_GPIO_WritePin(UI_LED_STATUS_GPIO_Port, UI_LED_STATUS_Pin, GPIO_PIN_SET);
 
 #endif /* FREERTOS_CONFIG_H */

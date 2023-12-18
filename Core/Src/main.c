@@ -59,7 +59,7 @@ static void MX_TIM11_Init(void);
 
 void taskBlinkMain(void *pvParameters) {
 	for (;;) {
-		  HAL_GPIO_TogglePin(UI_LED_STATUS_GPIO_Port, UI_LED_STATUS_Pin);
+		  HAL_GPIO_TogglePin(UI_LED_GPS_GPIO_Port, UI_LED_GPS_Pin);
 		  vTaskDelay(1000);
 	}
 }
@@ -78,6 +78,13 @@ static const TaskParameters_t xBlinkTaskDefinition =
         { (uint32_t*)AHB1PERIPH_BASE, 0x2000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0xEF << MPU_RASR_SRD_Pos)},
     }
 };
+
+HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority) { return HAL_OK; }
+void HAL_IncTick(void) { }
+uint32_t HAL_GetTick(void) { return xTaskGetTickCount(); }
+void HAL_Delay(uint32_t Delay) { vTaskDelay(Delay); }
+void HAL_SuspendTick(void) { vTaskSuspendAll(); }
+void HAL_ResumeTick(void) { xTaskResumeAll(); }
 
 /* USER CODE END 0 */
 
@@ -382,27 +389,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
-
-/**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM6 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
-  * @retval None
-  */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  /* USER CODE BEGIN Callback 0 */
-
-  /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM6) {
-    HAL_IncTick();
-  }
-  /* USER CODE BEGIN Callback 1 */
-
-  /* USER CODE END Callback 1 */
-}
 
 /**
   * @brief  This function is executed in case of error occurrence.
