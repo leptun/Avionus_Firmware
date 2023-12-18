@@ -112,6 +112,8 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
+  HAL_EnableCompensationCell();
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
