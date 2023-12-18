@@ -52,11 +52,11 @@
 #define configENABLE_MPU                         1
 
 #define configUSE_PREEMPTION                     1
-#define configUSE_PORT_OPTIMISED_TASK_SELECTION  0
-#define configUSE_TICKLESS_IDLE                  0
+#define configUSE_PORT_OPTIMISED_TASK_SELECTION  1
+#define configUSE_TICKLESS_IDLE                  1
 #define configCPU_CLOCK_HZ                       ( SystemCoreClock )
 #define configTICK_RATE_HZ                       ((TickType_t)1000)
-#define configMAX_PRIORITIES                     ( 56 )
+#define configMAX_PRIORITIES                     ( 32 )
 #define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
 #define configMAX_TASK_NAME_LEN                  ( 16 )
 #define configUSE_16_BIT_TICKS                   0
@@ -172,5 +172,10 @@ to all Cortex-M ports, and do not rely on any particular library functions. */
 /* !!!! configMAX_SYSCALL_INTERRUPT_PRIORITY must not be set to zero !!!!
 See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY 	( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
+
+#include <main.h>
+
+#define traceLOW_POWER_IDLE_BEGIN() HAL_GPIO_WritePin(UI_LED_GPS_GPIO_Port, UI_LED_GPS_Pin, GPIO_PIN_RESET);
+#define traceLOW_POWER_IDLE_END() HAL_GPIO_WritePin(UI_LED_GPS_GPIO_Port, UI_LED_GPS_Pin, GPIO_PIN_SET);
 
 #endif /* FREERTOS_CONFIG_H */
