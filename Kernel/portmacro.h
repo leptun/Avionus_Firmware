@@ -93,6 +93,8 @@ typedef unsigned long    UBaseType_t;
 #define portMPU_RASR_TEX_S_C_B_LOCATION                          ( 16UL )
 #define portMPU_RASR_TEX_S_C_B_MASK                              ( 0x3FUL )
 
+#define mpuMPU_RASR_SRD_LOCATION                                 ( 8UL )
+
 /* MPU settings that can be overriden in FreeRTOSConfig.h. */
 #ifndef configTOTAL_MPU_REGIONS
     /* Define to 8 for backward compatibility. */
@@ -176,13 +178,13 @@ typedef unsigned long    UBaseType_t;
 #endif
 
 //#define portGENERAL_PERIPHERALS_REGION    ( configTOTAL_MPU_REGIONS - 5UL )
-#define portSTACK_REGION                  ( configTOTAL_MPU_REGIONS - 4UL )
-#define portUNPRIVILEGED_FLASH_REGION     ( configTOTAL_MPU_REGIONS - 3UL )
-#define portPRIVILEGED_FLASH_REGION       ( configTOTAL_MPU_REGIONS - 2UL )
-#define portPRIVILEGED_RAM_REGION         ( configTOTAL_MPU_REGIONS - 1UL )
+#define portSTACK_REGION                  ( configTOTAL_MPU_REGIONS - 2UL )
+#define portUNPRIVILEGED_FLASH_REGION     ( configTOTAL_MPU_REGIONS - 1UL )
+//#define portPRIVILEGED_FLASH_REGION       ( configTOTAL_MPU_REGIONS - 2UL )
+//#define portPRIVILEGED_RAM_REGION         ( configTOTAL_MPU_REGIONS - 1UL )
 #define portFIRST_CONFIGURABLE_REGION     ( 0UL )
-#define portLAST_CONFIGURABLE_REGION      ( configTOTAL_MPU_REGIONS - 5UL )
-#define portNUM_CONFIGURABLE_REGIONS      ( configTOTAL_MPU_REGIONS - 4UL )
+#define portLAST_CONFIGURABLE_REGION      ( configTOTAL_MPU_REGIONS - 3UL )
+#define portNUM_CONFIGURABLE_REGIONS      ( configTOTAL_MPU_REGIONS - 2UL )
 #define portTOTAL_NUM_REGIONS_IN_TCB      ( portNUM_CONFIGURABLE_REGIONS + 1 ) /* Plus 1 to create space for the stack region. */
 
 #define portSWITCH_TO_USER_MODE()    __asm volatile ( " mrs r0, control \n orr r0, #1 \n msr control, r0 " ::: "r0", "memory" )
