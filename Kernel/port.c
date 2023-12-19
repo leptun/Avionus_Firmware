@@ -1466,16 +1466,12 @@ static void prvSetupMPU( void )
         extern uint32_t * __privileged_functions_end__;
         extern uint32_t * __FLASH_segment_start__;
         extern uint32_t * __FLASH_segment_end__;
-        extern uint32_t * __privileged_data_start__;
-        extern uint32_t * __privileged_data_end__;
     #else
         /* Declaration when these variable are exported from linker scripts. */
         extern uint32_t __privileged_functions_start__[];
         extern uint32_t __privileged_functions_end__[];
         extern uint32_t __FLASH_segment_start__[];
         extern uint32_t __FLASH_segment_end__[];
-//        extern uint32_t __privileged_data_start__[];
-//        extern uint32_t __privileged_data_end__[];
     #endif /* if defined( __ARMCC_VERSION ) */
 
     /* The only permitted number of regions are 8 or 16. */
@@ -1497,39 +1493,6 @@ static void prvSetupMPU( void )
                                        ( prvGetMPURegionSizeSetting( ( uint32_t ) __FLASH_segment_end__ - ( uint32_t ) __FLASH_segment_start__ ) ) |
 									   ( (0x01 << mpuMPU_RASR_SRD_LOCATION) ) |
                                        ( portMPU_REGION_ENABLE );
-
-//        /* Setup the privileged flash for privileged only access.  This is where
-//         * the kernel code is placed. */
-//        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __privileged_functions_start__ ) | /* Base address. */
-//                                          ( portMPU_REGION_VALID ) |
-//                                          ( portPRIVILEGED_FLASH_REGION );
-//
-//        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_PRIVILEGED_READ_ONLY ) |
-//                                       ( ( configTEX_S_C_B_FLASH & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
-//                                       ( prvGetMPURegionSizeSetting( ( uint32_t ) __privileged_functions_end__ - ( uint32_t ) __privileged_functions_start__ ) ) |
-//                                       ( portMPU_REGION_ENABLE );
-
-        /* Setup the privileged data RAM region.  This is where the kernel data
-         * is placed. */
-//        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __privileged_data_start__ ) | /* Base address. */
-//                                          ( portMPU_REGION_VALID ) |
-//                                          ( portPRIVILEGED_RAM_REGION );
-//
-//        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_PRIVILEGED_READ_WRITE ) |
-//                                       ( portMPU_REGION_EXECUTE_NEVER ) |
-//                                       ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
-//                                       prvGetMPURegionSizeSetting( ( uint32_t ) __privileged_data_end__ - ( uint32_t ) __privileged_data_start__ ) |
-//                                       ( portMPU_REGION_ENABLE );
-
-//        /* By default allow everything to access the general peripherals.  The
-//         * system peripherals and registers are protected. */
-//        portMPU_REGION_BASE_ADDRESS_REG = ( portPERIPHERALS_START_ADDRESS ) |
-//                                          ( portMPU_REGION_VALID ) |
-//                                          ( portGENERAL_PERIPHERALS_REGION );
-//
-//        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER ) |
-//                                       ( prvGetMPURegionSizeSetting( portPERIPHERALS_END_ADDRESS - portPERIPHERALS_START_ADDRESS ) ) |
-//                                       ( portMPU_REGION_ENABLE );
 
         /* Enable the memory fault exception. */
         portNVIC_SYS_CTRL_STATE_REG |= portNVIC_MEM_FAULT_ENABLE;
@@ -1604,14 +1567,10 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
          * exported from linker scripts. */
         extern uint32_t * __SRAM_segment_start__;
         extern uint32_t * __SRAM_segment_end__;
-        extern uint32_t * __privileged_data_start__;
-        extern uint32_t * __privileged_data_end__;
     #else
         /* Declaration when these variable are exported from linker scripts. */
         extern uint32_t __SRAM_segment_start__[];
         extern uint32_t __SRAM_segment_end__[];
-//        extern uint32_t __privileged_data_start__[];
-//        extern uint32_t __privileged_data_end__[];
     #endif /* if defined( __ARMCC_VERSION ) */
 
     int32_t lIndex;
