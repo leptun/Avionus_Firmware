@@ -300,7 +300,7 @@ static UBaseType_t uxCriticalNesting = 0xaaaaaaaa;
  * The number of SysTick increments that make up one tick period.
  */
 #if ( configUSE_TICKLESS_IDLE == 1 )
-    static uint32_t ulTimerCountsForOneTick = 0;
+    PRIVILEGED_DATA static uint32_t ulTimerCountsForOneTick = 0;
 #endif /* configUSE_TICKLESS_IDLE */
 
 /*
@@ -308,7 +308,7 @@ static UBaseType_t uxCriticalNesting = 0xaaaaaaaa;
  * 24 bit resolution of the SysTick timer.
  */
 #if ( configUSE_TICKLESS_IDLE == 1 )
-    static uint32_t xMaximumPossibleSuppressedTicks = 0;
+    PRIVILEGED_DATA static uint32_t xMaximumPossibleSuppressedTicks = 0;
 #endif /* configUSE_TICKLESS_IDLE */
 
 /*
@@ -316,7 +316,7 @@ static UBaseType_t uxCriticalNesting = 0xaaaaaaaa;
  * power functionality only.
  */
 #if ( configUSE_TICKLESS_IDLE == 1 )
-    static uint32_t ulStoppedTimerCompensation = 0;
+    PRIVILEGED_DATA static uint32_t ulStoppedTimerCompensation = 0;
 #endif /* configUSE_TICKLESS_IDLE */
 
 #if ( ( configUSE_MPU_WRAPPERS_V1 == 0 ) && ( configENABLE_ACCESS_CONTROL_LIST == 1 ) )
