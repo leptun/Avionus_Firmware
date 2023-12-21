@@ -81,7 +81,7 @@ static const TaskParameters_t xBlinkTaskDefinition =
 };
 
 HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority) { return HAL_OK; }
-void HAL_IncTick(void) { }
+void HAL_IncTick(void) { Error_Handler(); }
 uint32_t HAL_GetTick(void) { return xTaskGetTickCount(); }
 void HAL_Delay(uint32_t Delay) { vTaskDelay(Delay); }
 void HAL_SuspendTick(void) { vTaskSuspendAll(); }
