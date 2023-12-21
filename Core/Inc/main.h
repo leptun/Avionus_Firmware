@@ -28,6 +28,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
+#include "stm32f7xx_ll_rtc.h"
 #include "stm32f7xx_ll_tim.h"
 #include "stm32f7xx_ll_bus.h"
 #include "stm32f7xx_ll_cortex.h"
@@ -72,6 +73,8 @@ void Error_Handler(void);
 #define UI_LED_GPS_GPIO_Port GPIOE
 #define UI_LED_STATUS_Pin GPIO_PIN_3
 #define UI_LED_STATUS_GPIO_Port GPIOE
+#define POWER_D1_EN_Pin GPIO_PIN_13
+#define POWER_D1_EN_GPIO_Port GPIOC
 #define UI_SW_USER_Pin GPIO_PIN_2
 #define UI_SW_USER_GPIO_Port GPIOF
 #define UI_LED_RX_Pin GPIO_PIN_10
