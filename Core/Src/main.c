@@ -22,8 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <FreeRTOS.h>
-#include <task.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,52 +54,6 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-void taskBlinkMain(void *pvParameters) {
-	for (;;) {
-		  HAL_GPIO_TogglePin(UI_LED_GPS_GPIO_Port, UI_LED_GPS_Pin);
-		  vTaskDelay(1000);
-	}
-}
-
-static portSTACK_TYPE xBlinkTaskStack[ 128 ] __attribute__((aligned(128*4)));
-static const TaskParameters_t xBlinkTaskDefinition =
-{
-    taskBlinkMain,
-	"Blinky",
-    sizeof(xBlinkTaskStack) / sizeof(portSTACK_TYPE),
-    NULL,
-    1,
-	xBlinkTaskStack,
-    {
-        /* Base address   Length                    Parameters */
-        { (uint32_t*)AHB1PERIPH_BASE, 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11101111 << MPU_RASR_SRD_Pos) },
-    }
-};
-
-HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority) {
-	extern void vPortSetupTimerInterrupt(void);
-	vPortSetupTimerInterrupt();
-	return HAL_OK;
-}
-void HAL_IncTick(void) { Error_Handler(); }
-uint32_t HAL_GetTick(void) { return xTaskGetTickCount(); }
-void HAL_Delay(uint32_t Delay) { vTaskDelay(Delay); }
-void HAL_SuspendTick(void) { vTaskSuspendAll(); }
-void HAL_ResumeTick(void) { xTaskResumeAll(); }
-
-
-void mainWrapper(void *) {
-	extern int main();
-	main();
-}
-
-int InitRTOS(void) {
-	xTaskCreate(mainWrapper, "main", 0x200, NULL, 0 | portPRIVILEGE_BIT, NULL);
-	vTaskStartScheduler();
-	return 0;
-}
-
 
 /* USER CODE END 0 */
 
@@ -140,14 +93,11 @@ int main(void)
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
 
-  xTaskCreateRestricted( &xBlinkTaskDefinition, NULL );
-
-  vTaskDelete (NULL);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  return 0;
   while (1)
   {
     /* USER CODE END WHILE */

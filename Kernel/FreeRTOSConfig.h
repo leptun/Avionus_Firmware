@@ -90,7 +90,7 @@
 #define configUSE_TICK_HOOK                      0
 #define configCHECK_FOR_STACK_OVERFLOW           0
 #define configUSE_MALLOC_FAILED_HOOK             0
-#define configUSE_DAEMON_TASK_STARTUP_HOOK       0
+#define configUSE_DAEMON_TASK_STARTUP_HOOK       1
 #define configUSE_SB_COMPLETED_CALLBACK          0
 
 /* Run time and task stats gathering related definitions. */
@@ -104,7 +104,7 @@
 
 /* Software timer definitions. */
 #define configUSE_TIMERS                         1
-#define configTIMER_TASK_PRIORITY                3
+#define configTIMER_TASK_PRIORITY                0
 #define configTIMER_QUEUE_LENGTH                 10
 #define configTIMER_TASK_STACK_DEPTH             256
 
