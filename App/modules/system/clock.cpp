@@ -7,6 +7,7 @@ namespace system {
 namespace clock {
 
 static TaskHandle_t pxClockTaskHandle;
+static bool cssEnabled = false;
 
 enum ClockThreadFlags {
 	FLAG_LSIRDY = 0x000001,
@@ -79,8 +80,11 @@ void taskClockMain(void *pvParameters) {
 	}
 
 	// Setup CSS
+	taskENTER_CRITICAL();
 	LL_RCC_ClearFlag_HSECSS();
 	LL_RCC_HSE_EnableCSS();
+	cssEnabled = true;
+	taskEXIT_CRITICAL();
 
 	// Configure main PLL using HSE
 	LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_12, 216, LL_RCC_PLLP_DIV_2);
@@ -111,8 +115,11 @@ void taskClockMain(void *pvParameters) {
 		}
 	} while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL);
 
+	// Adjust system tick interrupt to new cpu frequency
+	taskENTER_CRITICAL();
 	LL_SetSystemCoreClock(216000000);
 	HAL_InitTick(TICK_INT_PRIORITY);
+	taskEXIT_CRITICAL();
 
 //	if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG_CSS, &retFlags, 0) == pdTRUE) {
 //		//todo CSS after clock switch
@@ -156,6 +163,12 @@ void RCC_IRQHandler() {
 	flags &= flags >> 8; // mask enabled interrupts
 	RCC->CIR |= flags << 16; //clear pending flags
 
+	// handle CSS exception
+	if (!READ_BIT(RCC->CR, RCC_CR_CSSON) && cssEnabled) {
+		flags |= FLAG_CSS;
+		cssEnabled = false;
+	}
+
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 	xTaskNotifyIndexedFromISR(pxClockTaskHandle, 0, flags, eSetBits, &xHigherPriorityTaskWoken);
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
@@ -166,9 +179,8 @@ void NMI_Handler() {
 	if (LL_RCC_IsActiveFlag_HSECSS()) {
 		LL_RCC_ClearFlag_HSECSS();
 
-		CLEAR_BIT(RCC->CR, RCC_CR_CSSON); //disable CSS
-
-		HAL_NVIC_SetPendingIRQ(RCC_IRQn);
+		CLEAR_BIT(RCC->CR, RCC_CR_CSSON); // disable CSS in hardware, cssEnabled is still true
+		HAL_NVIC_SetPendingIRQ(RCC_IRQn); // pend an RCC irq which will handle the disabled CSS
 
 	}
 	Error_Handler();
