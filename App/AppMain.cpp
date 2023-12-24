@@ -26,7 +26,7 @@ static TaskParameters_t xAppMainTaskDefinition =
 	xAppMainTaskStack,
     {
         /* Base address   Length                    Parameters */
-//        { (uint32_t*)AHB1PERIPH_BASE, 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11101111 << MPU_RASR_SRD_Pos) },
+//        { (uint32_t*)(AHB1PERIPH_BASE), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11101111 << MPU_RASR_SRD_Pos) },
     }
 };
 

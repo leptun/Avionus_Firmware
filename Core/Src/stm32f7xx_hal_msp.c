@@ -64,13 +64,18 @@
 void HAL_MspInit(void)
 {
   /* USER CODE BEGIN MspInit 0 */
-
+	__HAL_RCC_BKPSRAM_CLK_ENABLE();
   /* USER CODE END MspInit 0 */
 
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_RCC_SYSCFG_CLK_ENABLE();
 
   /* System interrupt init*/
+
+  /* Peripheral interrupt init */
+  /* RCC_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(RCC_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(RCC_IRQn);
 
   /* USER CODE BEGIN MspInit 1 */
 
