@@ -1,3 +1,4 @@
+#include "blink.hpp"
 #include <FreeRTOS.h>
 #include <task.h>
 
@@ -5,8 +6,8 @@ namespace blink {
 
 void taskBlinkMain(void *pvParameters) {
 	for (;;) {
-		  HAL_GPIO_TogglePin(UI_LED_GPS_GPIO_Port, UI_LED_GPS_Pin);
-		  vTaskDelay(1000);
+		HAL_GPIO_TogglePin(UI_LED_GPS_GPIO_Port, UI_LED_GPS_Pin);
+		vTaskDelay(1000);
 	}
 }
 
