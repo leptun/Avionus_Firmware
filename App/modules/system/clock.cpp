@@ -67,6 +67,18 @@ static bool configureHClocks(bool useExternalClock) {
 	uint32_t retFlags;
 	TimeOut_t xTimeOut;
 	TickType_t xTicksToWait;
+
+	// switch clock to HSI
+	LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSI);
+	vTaskSetTimeOutState(&xTimeOut); xTicksToWait = pdMS_TO_TICKS(10);
+	while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_HSI) { if (xTaskCheckForTimeOut(&xTimeOut, &xTicksToWait) != pdFALSE) Error_Handler(); }
+
+	// Adjust system tick interrupt to new cpu frequency
+	taskENTER_CRITICAL();
+	LL_SetSystemCoreClock(HSI_VALUE);
+	HAL_InitTick(TICK_INT_PRIORITY);
+	taskEXIT_CRITICAL();
+
 	if (useExternalClock) {
 		// Enable HSE
 		LL_RCC_HSE_Enable();
@@ -81,6 +93,12 @@ static bool configureHClocks(bool useExternalClock) {
 		LL_RCC_HSE_EnableCSS();
 		cssEnabled = true;
 		taskEXIT_CRITICAL();
+	} else {
+		// Disable HSE
+		LL_RCC_HSE_Disable();
+		vTaskSetTimeOutState(&xTimeOut); xTicksToWait = pdMS_TO_TICKS(2);
+		while(LL_RCC_HSE_IsReady()) { if (xTaskCheckForTimeOut(&xTimeOut, &xTicksToWait) != pdFALSE) Error_Handler(); }
+
 	}
 
 	// Configure main PLL
