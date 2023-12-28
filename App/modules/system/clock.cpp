@@ -21,15 +21,23 @@ enum ClockThreadFlags {
 };
 
 static bool configureLClocks(bool useExternalClock) {
+	TimeOut_t xTimeOut;
+	TickType_t xTicksToWait;
+
 	// check if the RTC is already configured
 	if ((LL_RCC_GetRTCClockSource() == (useExternalClock ? LL_RCC_RTC_CLKSOURCE_LSE : LL_RCC_RTC_CLKSOURCE_LSI)) && LL_RCC_IsEnabledRTC()) {
 		return true;
 	}
 
 	LL_PWR_EnableBkUpAccess();
+
 	LL_RCC_DisableRTC();
+	LL_RCC_LSI_Disable();
+	LL_RCC_LSE_Disable();
+	vTaskSetTimeOutState(&xTimeOut); xTicksToWait = pdMS_TO_TICKS(10);
+	while(LL_RCC_LSI_IsReady() || LL_RCC_LSE_IsReady()) { if (xTaskCheckForTimeOut(&xTimeOut, &xTicksToWait) != pdFALSE) Error_Handler(); }
+
 	if (useExternalClock) {
-		LL_RCC_LSE_Disable();
 		LL_RCC_LSE_SetDriveCapability(LL_RCC_LSEDRIVE_LOW);
 		LL_RCC_LSE_DisableBypass();
 		LL_RCC_LSE_Enable();
@@ -40,7 +48,6 @@ static bool configureLClocks(bool useExternalClock) {
 			LL_PWR_DisableBkUpAccess();
 			return false;
 		}
-
 	} else {
 		LL_RCC_LSI_Enable();
 		LL_RCC_SetRTCClockSource(LL_RCC_RTC_CLKSOURCE_LSI);
