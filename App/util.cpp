@@ -25,7 +25,9 @@ BaseType_t xTaskNotifyWaitBitsAllIndexed(UBaseType_t uxIndexToWaitOn, uint32_t u
 		currBits |= newBits & ulBitsToClearOnExit; // cumulate cleared bits
 		ulBitsToClearOnExit &= ~newBits; // clear bits only once on exit
 	}
-	*pulNotificationValue = currBits;
+	if (pulNotificationValue) {
+		*pulNotificationValue = currBits;
+	}
 	return ret;
 }
 
@@ -49,7 +51,9 @@ BaseType_t xTaskNotifyWaitBitsAnyIndexed(UBaseType_t uxIndexToWaitOn, uint32_t u
 		ulBitsToClearOnEntry = 0; // clear bits only once on entry
 		currBits |= newBits & ulBitsToClearOnExit; // cumulate cleared bits
 	}
-	*pulNotificationValue = currBits;
+	if (pulNotificationValue) {
+		*pulNotificationValue = currBits;
+	}
 	return ret;
 }
 

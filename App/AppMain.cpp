@@ -16,7 +16,7 @@ void taskAppMain(void *pvParameters) {
 }
 
 static portSTACK_TYPE xAppMainTaskStack[ 128 ] __attribute__((aligned(128*4)));
-static TaskParameters_t xAppMainTaskDefinition =
+static const TaskParameters_t xAppMainTaskDefinition =
 {
 	taskAppMain,
 	"main",
