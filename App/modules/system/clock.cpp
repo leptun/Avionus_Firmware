@@ -18,7 +18,15 @@ enum ClockThreadFlags {
 	FLAG_PLLI2SRDY = 0x000020,
 	FLAG_PLLSAIRDY = 0x000040,
 	FLAG_CSS = 0x000080,
+//	FLAG_RTC_TICK = 0x000100,
 };
+
+//static void configureRTC() {
+//	if (LL_RTC_IsActiveFlag_INITS(RTC)) {
+//		// already initialized
+//		return;
+//	}
+//}
 
 static bool configureLClocks(bool useExternalClock) {
 	TimeOut_t xTimeOut;
@@ -31,7 +39,9 @@ static bool configureLClocks(bool useExternalClock) {
 
 	LL_PWR_EnableBkUpAccess();
 
-	LL_RCC_DisableRTC();
+	LL_RCC_ForceBackupDomainReset();
+	LL_RCC_ReleaseBackupDomainReset();
+
 	LL_RCC_LSI_Disable();
 	LL_RCC_LSE_Disable();
 	vTaskSetTimeOutState(&xTimeOut); xTicksToWait = pdMS_TO_TICKS(10);
@@ -41,26 +51,27 @@ static bool configureLClocks(bool useExternalClock) {
 		LL_RCC_LSE_SetDriveCapability(LL_RCC_LSEDRIVE_LOW);
 		LL_RCC_LSE_DisableBypass();
 		LL_RCC_LSE_Enable();
-		LL_RCC_SetRTCClockSource(LL_RCC_RTC_CLKSOURCE_LSE);
-
 		if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG_LSERDY, NULL, pdMS_TO_TICKS(LSE_STARTUP_TIMEOUT)) == pdFALSE) {
 			// LSE timeout
-			LL_PWR_DisableBkUpAccess();
-			return false;
+			goto fail;
 		}
+		LL_RCC_SetRTCClockSource(LL_RCC_RTC_CLKSOURCE_LSE);
 	} else {
 		LL_RCC_LSI_Enable();
-		LL_RCC_SetRTCClockSource(LL_RCC_RTC_CLKSOURCE_LSI);
-
 		if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG_LSIRDY, NULL, pdMS_TO_TICKS(LSI_TIMEOUT_VALUE)) == pdFALSE) {
-			// LSE timeout
-			LL_PWR_DisableBkUpAccess();
-			return false;
+			// LSI timeout
+			goto fail;
 		}
+		LL_RCC_SetRTCClockSource(LL_RCC_RTC_CLKSOURCE_LSI);
 	}
+
 	LL_RCC_EnableRTC();
+
 	LL_PWR_DisableBkUpAccess();
 	return true;
+fail:
+	LL_PWR_DisableBkUpAccess();
+	return false;
 }
 
 static bool configureHClocks(bool useExternalClock) {
@@ -231,8 +242,6 @@ void taskClockMain(void *pvParameters) {
 		}
 	}
 
-//	HAL_RCC_OscConfig
-
 	if (xTaskNotify(callingTaskHandle, 0, eNoAction) != pdPASS)
 		Error_Handler();
 
@@ -299,7 +308,7 @@ void RCC_IRQHandler() {
 
 extern "C"
 void NMI_Handler() {
-	if (LL_RCC_IsActiveFlag_HSECSS()) {
+	if (LL_RCC_IsActiveFlag_HSECSS() && READ_BIT(RCC->CR, RCC_CR_CSSON)) {
 		LL_RCC_ClearFlag_HSECSS();
 
 		// disable CSS in hardware, cssEnabled is still true
@@ -313,6 +322,13 @@ void NMI_Handler() {
 	}
 	Error_Handler();
 }
+
+//extern "C"
+//void RTC_WKUP_IRQHandler() {
+//	if (LL_RTC_IsActiveFlag_WUT(RTC) && LL_RTC_IsEnabledIT_WUT(RTC)) {
+//
+//	}
+//}
 
 }
 }
