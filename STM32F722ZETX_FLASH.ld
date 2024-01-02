@@ -35,17 +35,20 @@
 /* Entry Point */
 ENTRY(Reset_Handler)
 
-/* Highest address of the user mode stack */
-_estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */
+_Min_Heap_Size = 0x1f8; /* required amount of heap */
+_Min_Stack_Size = 0x8; /* required amount of stack */
 
-_Min_Heap_Size = 0x100; /* required amount of heap */
-_Min_Stack_Size = 0x100; /* required amount of stack */
+/* Highest address of the user mode stack */
+_estack = ORIGIN(ITCMRAM) + _Min_Heap_Size + _Min_Stack_Size;
 
 /* Memories definition */
 MEMORY
 {
-  RAM      (rw)    : ORIGIN = 0x20000000,   LENGTH = 256K
-  FLASH    (rx)    : ORIGIN = 0x00200000,   LENGTH = 512K
+	ITCMRAM (rw) : ORIGIN = 0x00000000, LENGTH = 16K
+	DTCMRAM (rw) : ORIGIN = 0x20000000, LENGTH = 64K
+	SRAM1 (rw) : ORIGIN = 0x20010000, LENGTH = 176K
+	SRAM2 (rw) : ORIGIN = 0x2003C000, LENGTH = 16K
+	FLASH (rx) : ORIGIN = 0x00200000, LENGTH = 512K
 }
 
 __privileged_functions_region_size__  = 64K;
@@ -54,13 +57,13 @@ __privileged_data_region_size__       = 32K;
 __FLASH_segment_start__               = ORIGIN( FLASH );
 __FLASH_segment_end__                 = __FLASH_segment_start__ + LENGTH( FLASH );
 
-__SRAM_segment_start__                = ORIGIN( RAM );
-__SRAM_segment_end__                  = __SRAM_segment_start__ + LENGTH( RAM );
+__SRAM_segment_start__                = ORIGIN( DTCMRAM );
+__SRAM_segment_end__                  = __SRAM_segment_start__ + LENGTH( DTCMRAM ) + LENGTH( SRAM1 ) + LENGTH( SRAM2 );
 
 __privileged_functions_start__        = __FLASH_segment_start__;
 __privileged_functions_end__          = __FLASH_segment_start__ + __privileged_functions_region_size__;
 
-__privileged_data_start__             = __SRAM_segment_start__;
+__privileged_data_start__             = ORIGIN ( DTCMRAM );
 __privileged_data_end__               = __SRAM_segment_start__ + __privileged_data_region_size__;
 
 
@@ -169,14 +172,13 @@ SECTIONS
 	    _sdata = .;        /* Create a global symbol at data start. */
 	    *(privileged_data)
 	    . = ALIGN(4);
-	    FILL(0xDEAD);
 	    /* Ensure that un-privileged data is placed after the region reserved
 	     * for privileged kernel data. */
 	    /* Note that dot (.) actually refers to the byte offset from the start
 	     * of the current section (.privileged_data in this case). As a result,
 	     * setting dot (.) to a value sets the size of the section. */
 	    . = __privileged_data_region_size__;
-	} >RAM AT> FLASH
+	} >DTCMRAM AT> FLASH
 
   /* Initialized data sections into "RAM" Ram type memory */
   .data :
@@ -190,7 +192,7 @@ SECTIONS
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
 
-  } >RAM AT> FLASH
+  } >DTCMRAM AT> FLASH
 
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);
@@ -206,7 +208,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM
+  } >DTCMRAM
 
   /* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
   ._user_heap_stack :
@@ -217,7 +219,7 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >RAM
+  } >ITCMRAM
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :
