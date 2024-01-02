@@ -1565,12 +1565,12 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
     #if defined( __ARMCC_VERSION )
         /* Declaration when these variable are defined in code instead of being
          * exported from linker scripts. */
-        extern uint32_t * __SRAM_segment_start__;
-        extern uint32_t * __SRAM_segment_end__;
+//        extern uint32_t * __SRAM_segment_start__;
+//        extern uint32_t * __SRAM_segment_end__;
     #else
         /* Declaration when these variable are exported from linker scripts. */
-        extern uint32_t __SRAM_segment_start__[];
-        extern uint32_t __SRAM_segment_end__[];
+//        extern uint32_t __SRAM_segment_start__[];
+//        extern uint32_t __SRAM_segment_end__[];
     #endif /* if defined( __ARMCC_VERSION ) */
 
     int32_t lIndex;
@@ -1578,26 +1578,8 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
 
     if( xRegions == NULL )
     {
-        /* No MPU regions are specified so allow access to all RAM. */
-        xMPUSettings->xRegion[ 0 ].ulRegionBaseAddress =
-            ( ( uint32_t ) __SRAM_segment_start__ ) | /* Base address. */
-            ( portMPU_REGION_VALID ) |
-            ( portSTACK_REGION ); /* Region number. */
-
-        xMPUSettings->xRegion[ 0 ].ulRegionAttribute =
-            ( portMPU_REGION_READ_WRITE ) |
-            ( portMPU_REGION_EXECUTE_NEVER ) |
-            ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
-            ( prvGetMPURegionSizeSetting( ( uint32_t ) __SRAM_segment_end__ - ( uint32_t ) __SRAM_segment_start__ ) ) |
-            ( portMPU_REGION_ENABLE );
-
-        xMPUSettings->xRegionSettings[ 0 ].ulRegionStartAddress = ( uint32_t ) __SRAM_segment_start__;
-        xMPUSettings->xRegionSettings[ 0 ].ulRegionEndAddress = ( uint32_t ) __SRAM_segment_end__;
-        xMPUSettings->xRegionSettings[ 0 ].ulRegionPermissions = ( tskMPU_READ_PERMISSION |
-                                                                   tskMPU_WRITE_PERMISSION );
-
         /* Invalidate user configurable regions. */
-        for( ul = 1UL; ul <= portNUM_CONFIGURABLE_REGIONS; ul++ )
+        for( ul = 0UL; ul <= portNUM_CONFIGURABLE_REGIONS; ul++ )
         {
             xMPUSettings->xRegion[ ul ].ulRegionBaseAddress = ( ( ul - 1UL ) | portMPU_REGION_VALID );
             xMPUSettings->xRegion[ ul ].ulRegionAttribute = 0UL;
@@ -1605,6 +1587,24 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
             xMPUSettings->xRegionSettings[ ul ].ulRegionEndAddress = 0UL;
             xMPUSettings->xRegionSettings[ ul ].ulRegionPermissions = 0UL;
         }
+
+//        /* No MPU regions are specified so allow access to all RAM. */
+//        xMPUSettings->xRegion[ 0 ].ulRegionBaseAddress =
+//            ( ( uint32_t ) __SRAM_segment_start__ ) | /* Base address. */
+//            ( portMPU_REGION_VALID ) |
+//            ( portSTACK_REGION ); /* Region number. */
+//
+//        xMPUSettings->xRegion[ 0 ].ulRegionAttribute =
+//            ( portMPU_REGION_READ_WRITE ) |
+//            ( portMPU_REGION_EXECUTE_NEVER ) |
+//            ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
+//            ( prvGetMPURegionSizeSetting( ( uint32_t ) __SRAM_segment_end__ - ( uint32_t ) __SRAM_segment_start__ ) ) |
+//            ( portMPU_REGION_ENABLE );
+//
+//        xMPUSettings->xRegionSettings[ 0 ].ulRegionStartAddress = ( uint32_t ) __SRAM_segment_start__;
+//        xMPUSettings->xRegionSettings[ 0 ].ulRegionEndAddress = ( uint32_t ) __SRAM_segment_end__;
+//        xMPUSettings->xRegionSettings[ 0 ].ulRegionPermissions = ( tskMPU_READ_PERMISSION |
+//                                                                   tskMPU_WRITE_PERMISSION );
     }
     else
     {

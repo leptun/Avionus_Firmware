@@ -1,6 +1,6 @@
 [submodule "FreeRTOS-Kernel"]
 	path = FreeRTOS-Kernel
-	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
+	url = https://github.com/leptun/FreeRTOS-Kernel.git
 [submodule "tinyusb"]
 	path = tinyusb
 	url = https://github.com/hathach/tinyusb.git

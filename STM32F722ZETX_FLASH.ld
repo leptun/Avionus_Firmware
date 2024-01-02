@@ -52,7 +52,7 @@ MEMORY
 }
 
 __privileged_functions_region_size__  = 64K;
-__privileged_data_region_size__       = 32K;
+/* __privileged_data_region_size__       = 32K; */
 
 __FLASH_segment_start__               = ORIGIN( FLASH );
 __FLASH_segment_end__                 = __FLASH_segment_start__ + LENGTH( FLASH );
@@ -63,8 +63,10 @@ __SRAM_segment_end__                  = __SRAM_segment_start__ + LENGTH( DTCMRAM
 __privileged_functions_start__        = __FLASH_segment_start__;
 __privileged_functions_end__          = __FLASH_segment_start__ + __privileged_functions_region_size__;
 
+/*
 __privileged_data_start__             = ORIGIN ( DTCMRAM );
 __privileged_data_end__               = __SRAM_segment_start__ + __privileged_data_region_size__;
+*/
 
 
 /* Sections */
@@ -162,64 +164,137 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
-  /* Used by the startup to initialize data */
-  _sidata = LOADADDR(.privileged_data);
+/* -------------------------------------------------------------------------- */
 
-	/* FreeRTOS kernel data. */
-	.privileged_data :
+	.tinyusb_bss (NOLOAD) :
 	{
-	    . = ALIGN(4);
-	    _sdata = .;        /* Create a global symbol at data start. */
-	    *(privileged_data)
-	    . = ALIGN(4);
-	    /* Ensure that un-privileged data is placed after the region reserved
-	     * for privileged kernel data. */
-	    /* Note that dot (.) actually refers to the byte offset from the start
-	     * of the current section (.privileged_data in this case). As a result,
-	     * setting dot (.) to a value sets the size of the section. */
-	    . = __privileged_data_region_size__;
+		. = ALIGN(4);
+		_tinyusb_bss_run_addr = .;
+		
+		./tinyusb/src/*.o(.bss*) /* */
+		./usb/*.o(.bss*) /* */
+		
+		. = ALIGN(4);
+		_tinyusb_bss_end = .;
+	} >SRAM2
+
+	.tinyusb_data :
+	{
+		. = ALIGN(4);
+		_tinyusb_data_run_addr = .;
+		
+		./tinyusb/src/*.o(.data*) /* */
+		./usb/*.o(.data*) /* */
+		
+		. = ALIGN(4);
+		_tinyusb_data_end = .;
+	} >SRAM2 AT> FLASH
+	_tinyusb_data_load_addr = LOADADDR(.tinyusb_data);
+	
+/* -------------------------------------------------------------------------- */
+
+	.freertos_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_freertos_bss_run_addr = .;
+		
+		./Kernel/*.o(.bss*) /* */
+		./FreeRTOS-Kernel/*.o(.bss*) /* */
+		
+		. = ALIGN(4);
+		_freertos_bss_end = .;
+	} >DTCMRAM
+
+	.freertos_data :
+	{
+		. = ALIGN(4);
+		_freertos_data_run_addr = .;
+		
+		./Kernel/*.o(.data*) /* */
+		./FreeRTOS-Kernel/*.o(.data*) /* */
+		
+		. = ALIGN(4);
+		
+		/* Ensure that un-privileged data is placed after the region reserved
+		 * for privileged kernel data. */
+		/* Note that dot (.) actually refers to the byte offset from the start
+		 * of the current section (.privileged_data in this case). As a result,
+		 * setting dot (.) to a value sets the size of the section. */
+		/* . = __data_region_size__ - (_freertos_bss_end - _freertos_bss_run_addr); */
+		
+		_freertos_data_end = .;
 	} >DTCMRAM AT> FLASH
+	_freertos_data_load_addr = LOADADDR(.freertos_data);
 
-  /* Initialized data sections into "RAM" Ram type memory */
-  .data :
-  {
-    . = ALIGN(4);
-    *(.data)           /* .data sections */
-    *(.data*)          /* .data* sections */
-/*    *(.RamFunc)        /* .RamFunc sections */
-/*    *(.RamFunc*)       /* .RamFunc* sections */
+/* -------------------------------------------------------------------------- */
 
-    . = ALIGN(4);
-    _edata = .;        /* define a global symbol at data end */
+	.app_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_app_bss_run_addr = .;
+		
+		./App/*.o(.bss*) /* */
+		
+		. = ALIGN(4);
+		_app_bss_end = .;
+	} >SRAM1
 
-  } >DTCMRAM AT> FLASH
+	.app_data :
+	{
+		. = ALIGN(4);
+		_app_data_run_addr = .;
+		
+		./App/*.o(.data*) /* */
+		
+		. = ALIGN(4);
+		_app_data_end = .;
+	} >SRAM1 AT> FLASH
+	_app_data_load_addr = LOADADDR(.app_data);
 
-  /* Uninitialized data section into "RAM" Ram type memory */
-  . = ALIGN(4);
-  .bss :
-  {
-    /* This is used by the startup in order to initialize the .bss section */
-    _sbss = .;         /* define a global symbol at bss start */
-    __bss_start__ = _sbss;
-    *(.bss)
-    *(.bss*)
-    *(COMMON)
+/* -------------------------------------------------------------------------- */
 
-    . = ALIGN(4);
-    _ebss = .;         /* define a global symbol at bss end */
-    __bss_end__ = _ebss;
-  } >DTCMRAM
+	.shared_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_shared_bss_run_addr = .;
+		
+		./Core/*.o(.bss*) /* */
+		./Drivers/*.o(.bss*) /* */
+	    *(.bss)
+	    *(.bss*)
+	    *(COMMON)
+		
+		. = ALIGN(4);
+		_shared_bss_end = .;
+	} >ITCMRAM
 
-  /* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
-  ._user_heap_stack :
-  {
-    . = ALIGN(8);
-    PROVIDE ( end = . );
-    PROVIDE ( _end = . );
-    . = . + _Min_Heap_Size;
-    . = . + _Min_Stack_Size;
-    . = ALIGN(8);
-  } >ITCMRAM
+	.shared_data :
+	{
+		. = ALIGN(4);
+		_shared_data_run_addr = .;
+		
+		./Core/*.o(.data*) /* */
+		./Drivers/*.o(.data*) /* */
+	    *(.data)           /* .data sections */
+    	*(.data*)          /* .data* sections */
+    	/*    *(.RamFunc)        /* .RamFunc sections */
+		/*    *(.RamFunc*)       /* .RamFunc* sections */
+		
+		. = ALIGN(4);
+		_shared_data_end = .;
+	} >ITCMRAM AT> FLASH
+	_shared_data_load_addr = LOADADDR(.shared_data);
+	
+	/* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
+	._user_heap_stack :
+	{
+		. = ALIGN(8);
+		PROVIDE ( end = . );
+		PROVIDE ( _end = . );
+		. = . + _Min_Heap_Size;
+		. = . + _Min_Stack_Size;
+		. = ALIGN(8);
+	} >ITCMRAM
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :
