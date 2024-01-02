@@ -177,10 +177,11 @@ typedef unsigned long    UBaseType_t;
     #define configTEX_S_C_B_SRAM          ( 0x07UL )
 #endif
 
-#define portSTACK_REGION                  ( configTOTAL_MPU_REGIONS - 2UL )
+#define portSTACK_REGION                  ( configTOTAL_MPU_REGIONS - 3UL )
+#define portSHARED_DATA_REGION            ( configTOTAL_MPU_REGIONS - 2UL )
 #define portUNPRIVILEGED_FLASH_REGION     ( configTOTAL_MPU_REGIONS - 1UL )
 #define portFIRST_CONFIGURABLE_REGION     ( 0UL )
-#define portLAST_CONFIGURABLE_REGION      ( configTOTAL_MPU_REGIONS - 3UL )
+#define portLAST_CONFIGURABLE_REGION      ( configTOTAL_MPU_REGIONS - 4UL )
 #define portNUM_CONFIGURABLE_REGIONS      ( portLAST_CONFIGURABLE_REGION + 1 )
 #define portTOTAL_NUM_REGIONS_IN_TCB      ( portNUM_CONFIGURABLE_REGIONS + 1 ) /* Plus 1 to create space for the stack region. */
 

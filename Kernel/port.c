@@ -1472,6 +1472,8 @@ static void prvSetupMPU( void )
         extern uint32_t __privileged_functions_end__[];
         extern uint32_t __FLASH_segment_start__[];
         extern uint32_t __FLASH_segment_end__[];
+        extern uint32_t __SHARED_SRAM_segment_start__[];
+        extern uint32_t __SHARED_SRAM_segment_end__[];
     #endif /* if defined( __ARMCC_VERSION ) */
 
     /* The only permitted number of regions are 8 or 16. */
@@ -1492,6 +1494,16 @@ static void prvSetupMPU( void )
                                        ( ( configTEX_S_C_B_FLASH & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
                                        ( prvGetMPURegionSizeSetting( ( uint32_t ) __FLASH_segment_end__ - ( uint32_t ) __FLASH_segment_start__ ) ) |
 									   ( (0x01 << mpuMPU_RASR_SRD_LOCATION) ) |
+                                       ( portMPU_REGION_ENABLE );
+
+        /* Setup shared ram for unprivilaged RW */
+        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __SHARED_SRAM_segment_start__ ) | /* Base address. */
+                                          ( portMPU_REGION_VALID ) |
+                                          ( portSHARED_DATA_REGION );
+
+        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_WRITE ) |
+                                       ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
+                                       ( prvGetMPURegionSizeSetting( ( uint32_t ) __SHARED_SRAM_segment_end__ - ( uint32_t ) __SHARED_SRAM_segment_start__ ) ) |
                                        ( portMPU_REGION_ENABLE );
 
         /* Enable the memory fault exception. */

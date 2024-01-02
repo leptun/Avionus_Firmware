@@ -57,11 +57,16 @@ __privileged_functions_region_size__  = 64K;
 __FLASH_segment_start__               = ORIGIN( FLASH );
 __FLASH_segment_end__                 = __FLASH_segment_start__ + LENGTH( FLASH );
 
-__SRAM_segment_start__                = ORIGIN( DTCMRAM );
-__SRAM_segment_end__                  = __SRAM_segment_start__ + LENGTH( DTCMRAM ) + LENGTH( SRAM1 ) + LENGTH( SRAM2 );
-
 __privileged_functions_start__        = __FLASH_segment_start__;
 __privileged_functions_end__          = __FLASH_segment_start__ + __privileged_functions_region_size__;
+
+__SHARED_SRAM_segment_start__         = ORIGIN( ITCMRAM );
+__SHARED_SRAM_segment_end__           = __SHARED_SRAM_segment_start__ + LENGTH( ITCMRAM );
+
+/*
+__SRAM_segment_start__                = ORIGIN( DTCMRAM );
+__SRAM_segment_end__                  = __SRAM_segment_start__ + LENGTH( DTCMRAM ) + LENGTH( SRAM1 ) + LENGTH( SRAM2 );
+*/
 
 /*
 __privileged_data_start__             = ORIGIN ( DTCMRAM );
