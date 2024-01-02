@@ -171,45 +171,6 @@ SECTIONS
 
 /* -------------------------------------------------------------------------- */
 
-	.tinyusb_bss (NOLOAD) :
-	{
-		. = ALIGN(4);
-		_tinyusb_bss_run_addr = .;
-		
-		./tinyusb/src/*.o(.bss*) /* */
-		./usb/*.o(.bss*) /* */
-		
-		. = ALIGN(4);
-		_tinyusb_bss_end = .;
-	} >SRAM2
-
-	.tinyusb_data :
-	{
-		. = ALIGN(4);
-		_tinyusb_data_run_addr = .;
-		
-		./tinyusb/src/*.o(.data*) /* */
-		./usb/*.o(.data*) /* */
-		
-		. = ALIGN(4);
-		_tinyusb_data_end = .;
-	} >SRAM2 AT> FLASH
-	_tinyusb_data_load_addr = LOADADDR(.tinyusb_data);
-	
-/* -------------------------------------------------------------------------- */
-
-	.freertos_bss (NOLOAD) :
-	{
-		. = ALIGN(4);
-		_freertos_bss_run_addr = .;
-		
-		./Kernel/*.o(.bss*) /* */
-		./FreeRTOS-Kernel/*.o(.bss*) /* */
-		
-		. = ALIGN(4);
-		_freertos_bss_end = .;
-	} >DTCMRAM
-
 	.freertos_data :
 	{
 		. = ALIGN(4);
@@ -231,18 +192,19 @@ SECTIONS
 	} >DTCMRAM AT> FLASH
 	_freertos_data_load_addr = LOADADDR(.freertos_data);
 
-/* -------------------------------------------------------------------------- */
-
-	.app_bss (NOLOAD) :
+	.freertos_bss (NOLOAD) :
 	{
 		. = ALIGN(4);
-		_app_bss_run_addr = .;
+		_freertos_bss_run_addr = .;
 		
-		./App/*.o(.bss*) /* */
+		./Kernel/*.o(.bss*) /* */
+		./FreeRTOS-Kernel/*.o(.bss*) /* */
 		
 		. = ALIGN(4);
-		_app_bss_end = .;
-	} >SRAM1
+		_freertos_bss_end = .;
+	} >DTCMRAM
+
+/* -------------------------------------------------------------------------- */
 
 	.app_data :
 	{
@@ -256,22 +218,45 @@ SECTIONS
 	} >SRAM1 AT> FLASH
 	_app_data_load_addr = LOADADDR(.app_data);
 
-/* -------------------------------------------------------------------------- */
-
-	.shared_bss (NOLOAD) :
+	.app_bss (NOLOAD) :
 	{
 		. = ALIGN(4);
-		_shared_bss_run_addr = .;
+		_app_bss_run_addr = .;
 		
-		./Core/*.o(.bss*) /* */
-		./Drivers/*.o(.bss*) /* */
-	    *(.bss)
-	    *(.bss*)
-	    *(COMMON)
+		./App/*.o(.bss*) /* */
 		
 		. = ALIGN(4);
-		_shared_bss_end = .;
-	} >ITCMRAM
+		_app_bss_end = .;
+	} >SRAM1
+
+/* -------------------------------------------------------------------------- */
+
+	.tinyusb_data :
+	{
+		. = ALIGN(4);
+		_tinyusb_data_run_addr = .;
+		
+		./tinyusb/src/*.o(.data*) /* */
+		./usb/*.o(.data*) /* */
+		
+		. = ALIGN(4);
+		_tinyusb_data_end = .;
+	} >SRAM2 AT> FLASH
+	_tinyusb_data_load_addr = LOADADDR(.tinyusb_data);
+
+	.tinyusb_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_tinyusb_bss_run_addr = .;
+		
+		./tinyusb/src/*.o(.bss*) /* */
+		./usb/*.o(.bss*) /* */
+		
+		. = ALIGN(4);
+		_tinyusb_bss_end = .;
+	} >SRAM2
+
+/* -------------------------------------------------------------------------- */
 
 	.shared_data :
 	{
@@ -289,6 +274,21 @@ SECTIONS
 		_shared_data_end = .;
 	} >ITCMRAM AT> FLASH
 	_shared_data_load_addr = LOADADDR(.shared_data);
+
+	.shared_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_shared_bss_run_addr = .;
+		
+		./Core/*.o(.bss*) /* */
+		./Drivers/*.o(.bss*) /* */
+	    *(.bss)
+	    *(.bss*)
+	    *(COMMON)
+		
+		. = ALIGN(4);
+		_shared_bss_end = .;
+	} >ITCMRAM
 	
 	/* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
 	._user_heap_stack :
