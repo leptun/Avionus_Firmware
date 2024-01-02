@@ -179,8 +179,43 @@ static bool configureHClocks(bool useExternalClock) {
 }
 
 static void taskClockMain(void *pvParameters) {
-	TaskHandle_t callingTaskHandle = (TaskHandle_t)pvParameters;
+	uint32_t lastSubSecond = LL_RTC_TIME_GetSubSecond(RTC);
+	for (;;) {
+		if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG_CSS, NULL, pdMS_TO_TICKS(1500)) == pdFALSE) {
+			// time to check if the RTC is advancing
+			uint32_t newSubSecond = LL_RTC_TIME_GetSubSecond(RTC);
+			if (newSubSecond == lastSubSecond) {
+				// rtc not advancing, switch to LSI
+				if (!configureLClocks(false)) {
+					Error_Handler();
+				}
+			}
+			lastSubSecond = newSubSecond;
+		}
+		else {
+			//CSS occured, try to reconfigure the clocks to internal
+			if (!configureHClocks(false)) {
+				Error_Handler();
+			}
+		}
+	}
+}
 
+static portSTACK_TYPE xClockTaskStack[128] __attribute__((aligned(128*4)));
+static const TaskParameters_t xClockTaskDefinition =
+{
+	taskClockMain,
+	"sys.clock",
+    sizeof(xClockTaskStack) / sizeof(portSTACK_TYPE),
+    NULL,
+    0 | portPRIVILEGE_BIT,
+	xClockTaskStack,
+    {
+        /* Base address   Length                    Parameters */
+    }
+};
+
+void Setup() {
 	TimeOut_t xTimeOut;
 	TickType_t xTicksToWait;
 
@@ -247,51 +282,7 @@ static void taskClockMain(void *pvParameters) {
 		}
 	}
 
-	if (xTaskNotify(callingTaskHandle, 0, eNoAction) != pdPASS)
-		Error_Handler();
-
-	uint32_t lastSubSecond = LL_RTC_TIME_GetSubSecond(RTC);
-	for (;;) {
-		if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG_CSS, NULL, pdMS_TO_TICKS(1500)) == pdFALSE) {
-			// time to check if the RTC is advancing
-			uint32_t newSubSecond = LL_RTC_TIME_GetSubSecond(RTC);
-			if (newSubSecond == lastSubSecond) {
-				// rtc not advancing, switch to LSI
-				if (!configureLClocks(false)) {
-					Error_Handler();
-				}
-			}
-			lastSubSecond = newSubSecond;
-		}
-		else {
-			//CSS occured, try to reconfigure the clocks to internal
-			if (!configureHClocks(false)) {
-				Error_Handler();
-			}
-		}
-
-	}
-}
-
-static portSTACK_TYPE xClockTaskStack[128] __attribute__((aligned(128*4)));
-static const TaskParameters_t xClockTaskDefinition =
-{
-	taskClockMain,
-	"sys.clock",
-    sizeof(xClockTaskStack) / sizeof(portSTACK_TYPE),
-    NULL,
-    0 | portPRIVILEGE_BIT,
-	xClockTaskStack,
-    {
-        /* Base address   Length                    Parameters */
-    }
-};
-
-void Setup() {
-	TaskParameters_t _priv_xClockTaskDefinition = xClockTaskDefinition;
-	_priv_xClockTaskDefinition.pvParameters = xTaskGetCurrentTaskHandle();
-	xTaskCreateRestricted(&_priv_xClockTaskDefinition, &pxClockTaskHandle);
-	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+	xTaskCreateRestricted(&xClockTaskDefinition, &pxClockTaskHandle);
 }
 
 extern "C"
