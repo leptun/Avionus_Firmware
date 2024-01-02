@@ -53,6 +53,7 @@ MEMORY
 
 __privileged_functions_region_size__  = 64K;
 /* __privileged_data_region_size__       = 32K; */
+__tinyusb_data_region_size__          = 2K;
 
 __FLASH_segment_start__               = ORIGIN( FLASH );
 __FLASH_segment_end__                 = __FLASH_segment_start__ + LENGTH( FLASH );
@@ -180,14 +181,6 @@ SECTIONS
 		./FreeRTOS-Kernel/*.o(.data*) /* */
 		
 		. = ALIGN(4);
-		
-		/* Ensure that un-privileged data is placed after the region reserved
-		 * for privileged kernel data. */
-		/* Note that dot (.) actually refers to the byte offset from the start
-		 * of the current section (.privileged_data in this case). As a result,
-		 * setting dot (.) to a value sets the size of the section. */
-		/* . = __data_region_size__ - (_freertos_bss_end - _freertos_bss_run_addr); */
-		
 		_freertos_data_end = .;
 	} >DTCMRAM AT> FLASH
 	_freertos_data_load_addr = LOADADDR(.freertos_data);
@@ -253,6 +246,7 @@ SECTIONS
 		./usb/*.o(.bss*) /* */
 		
 		. = ALIGN(4);
+		. = __tinyusb_data_region_size__ - (_tinyusb_data_end - _tinyusb_data_run_addr);
 		_tinyusb_bss_end = .;
 	} >SRAM2
 

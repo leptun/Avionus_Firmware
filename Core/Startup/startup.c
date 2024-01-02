@@ -24,8 +24,8 @@ static void init_data(uint32_t *start, uint32_t *end, const uint32_t *loadStart)
 
 
 void init_sections(void) {
-	INIT_SECTION(tinyusb);
 	INIT_SECTION(freertos);
 	INIT_SECTION(app);
+	INIT_SECTION(tinyusb);
 	INIT_SECTION(shared);
 }
