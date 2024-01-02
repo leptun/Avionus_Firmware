@@ -1,6 +1,7 @@
 #include "AppMain.hpp"
 #include "modules/blink.hpp"
 #include "modules/system/clock.hpp"
+#include "modules/system/usb.hpp"
 #include <FreeRTOS.h>
 #include <task.h>
 
@@ -8,6 +9,7 @@ namespace AppMain {
 
 void taskAppMain(void *pvParameters) {
 	system::clock::Setup();
+	system::usb::Setup();
 	blink::Setup();
 
 	for (;;) {
