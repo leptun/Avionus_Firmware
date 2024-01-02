@@ -66,6 +66,11 @@ static bool configureLClocks(bool useExternalClock) {
 	}
 
 	LL_RCC_EnableRTC();
+	if (!useExternalClock) {
+		LL_RTC_DisableWriteProtection(RTC);
+		LL_RTC_SetAsynchPrescaler(RTC, 125); // set prescaler for 32KHz clock
+		LL_RTC_EnableWriteProtection(RTC);
+	}
 
 	LL_PWR_DisableBkUpAccess();
 	return true;
@@ -173,7 +178,7 @@ static bool configureHClocks(bool useExternalClock) {
 	return true;
 }
 
-void taskClockMain(void *pvParameters) {
+static void taskClockMain(void *pvParameters) {
 	TaskHandle_t callingTaskHandle = (TaskHandle_t)pvParameters;
 
 	TimeOut_t xTimeOut;

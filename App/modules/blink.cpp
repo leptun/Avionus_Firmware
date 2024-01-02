@@ -4,7 +4,7 @@
 
 namespace blink {
 
-void taskBlinkMain(void *pvParameters) {
+static void taskBlinkMain(void *pvParameters) {
 	for (;;) {
 		HAL_GPIO_TogglePin(UI_LED_GPS_GPIO_Port, UI_LED_GPS_Pin);
 		vTaskDelay(1000);
