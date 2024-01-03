@@ -124,6 +124,7 @@ SECTIONS
     . = ALIGN(4);
     *(.rodata)         /* .rodata sections (constants, strings, etc.) */
     *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
+    *(.force_rodata .force_rodata*)
     . = ALIGN(4);
   } >FLASH
 

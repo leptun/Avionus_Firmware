@@ -5,6 +5,7 @@
 #include "queue.h"
 #include "task.h"
 #include "timers.h"
+#include <mem_utils.h>
 
 #define USBD_STACK_SIZE    (2*configMINIMAL_STACK_SIZE) * (CFG_TUSB_DEBUG ? 2 : 1)
 #define CDC_STACK_SZIE      configMINIMAL_STACK_SIZE
@@ -34,7 +35,7 @@ static void usb_device_task(void *pvParameters) {
 }
 
 static portSTACK_TYPE usb_device_taskStack[ USBD_STACK_SIZE ] __attribute__((aligned(USBD_STACK_SIZE*4)));
-static const TaskParameters_t usb_device_taskTaskDefinition =
+static const FORCE_RODATA TaskParameters_t usb_device_taskTaskDefinition =
 {
 	usb_device_task,
 	"usbd",
@@ -81,7 +82,7 @@ static void cdc_task(void *pvParameters) {
 }
 
 static portSTACK_TYPE cdc_taskStack[ CDC_STACK_SZIE ] __attribute__((aligned(CDC_STACK_SZIE*4)));
-static const TaskParameters_t cdc_taskTaskDefinition =
+static const FORCE_RODATA TaskParameters_t cdc_taskTaskDefinition =
 {
 	cdc_task,
 	"cdc",
