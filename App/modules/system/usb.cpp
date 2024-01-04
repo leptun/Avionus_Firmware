@@ -5,7 +5,6 @@
 #include "queue.h"
 #include "task.h"
 #include "timers.h"
-#include <mem_utils.h>
 
 #define USBD_STACK_SIZE    (2*configMINIMAL_STACK_SIZE) * (CFG_TUSB_DEBUG ? 2 : 1)
 #define CDC_STACK_SZIE      configMINIMAL_STACK_SIZE
@@ -33,22 +32,8 @@ static void usb_device_task(void *pvParameters) {
 		tud_cdc_write_flush();
 	}
 }
-
 static portSTACK_TYPE usb_device_taskStack[ USBD_STACK_SIZE ] __attribute__((aligned(USBD_STACK_SIZE*4)));
-static const FORCE_RODATA TaskParameters_t usb_device_taskTaskDefinition =
-{
-	usb_device_task,
-	"usbd",
-	sizeof(usb_device_taskStack) / sizeof(portSTACK_TYPE),
-	NULL,
-	configMAX_PRIORITIES-1,
-	usb_device_taskStack,
-	{
-		/* Base address   Length                    Parameters */
-		{ _tinyusb_data_run_addr, (uint32_t)_tinyusb_bss_end - (uint32_t)_tinyusb_data_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
-		{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11101111 << MPU_RASR_SRD_Pos) },
-	}
-};
+
 
 static void cdc_task(void *pvParameters) {
 	(void) pvParameters;
@@ -80,23 +65,7 @@ static void cdc_task(void *pvParameters) {
 		vTaskDelay(1);
 	}
 }
-
 static portSTACK_TYPE cdc_taskStack[ CDC_STACK_SZIE ] __attribute__((aligned(CDC_STACK_SZIE*4)));
-static const FORCE_RODATA TaskParameters_t cdc_taskTaskDefinition =
-{
-	cdc_task,
-	"cdc",
-	sizeof(cdc_taskStack) / sizeof(portSTACK_TYPE),
-	NULL,
-	configMAX_PRIORITIES-2,
-	cdc_taskStack,
-	{
-		/* Base address   Length                    Parameters */
-		{ (uint32_t*)(_tinyusb_data_run_addr), (uint32_t)_tinyusb_bss_end - (uint32_t)_tinyusb_data_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
-		{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11101111 << MPU_RASR_SRD_Pos) },
-	}
-};
-
 
 
 void Setup() {
@@ -137,9 +106,38 @@ void Setup() {
 	HAL_NVIC_SetPriority(OTG_HS_IRQn, 5, 0);
 	HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
 
+	const TaskParameters_t usb_device_taskTaskDefinition =
+	{
+		usb_device_task,
+		"usbd",
+		sizeof(usb_device_taskStack) / sizeof(portSTACK_TYPE),
+		NULL,
+		configMAX_PRIORITIES-1,
+		usb_device_taskStack,
+		{
+			/* Base address   Length                    Parameters */
+			{ _tinyusb_data_run_addr, (uint32_t)_tinyusb_bss_end - (uint32_t)_tinyusb_data_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
+			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11101111 << MPU_RASR_SRD_Pos) },
+		}
+	};
 
 	// Create a task for tinyusb device stack
 	xTaskCreateRestricted(&usb_device_taskTaskDefinition, NULL);
+
+	const TaskParameters_t cdc_taskTaskDefinition =
+	{
+		cdc_task,
+		"cdc",
+		sizeof(cdc_taskStack) / sizeof(portSTACK_TYPE),
+		NULL,
+		configMAX_PRIORITIES-2,
+		cdc_taskStack,
+		{
+			/* Base address   Length                    Parameters */
+			{ (uint32_t*)(_tinyusb_data_run_addr), (uint32_t)_tinyusb_bss_end - (uint32_t)_tinyusb_data_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
+			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11101111 << MPU_RASR_SRD_Pos) },
+		}
+	};
 
 	// Create CDC task
 	xTaskCreateRestricted(&cdc_taskTaskDefinition, NULL);

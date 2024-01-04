@@ -38,9 +38,6 @@ ENTRY(Reset_Handler)
 _Min_Heap_Size = 0x1f8; /* required amount of heap */
 _Min_Stack_Size = 0x8; /* required amount of stack */
 
-/* Highest address of the user mode stack */
-_estack = ORIGIN(ITCMRAM) + _Min_Heap_Size + _Min_Stack_Size;
-
 /* Memories definition */
 MEMORY
 {
@@ -87,7 +84,7 @@ SECTIONS
         . = ALIGN(4);
         *(privileged_functions)
         . = ALIGN(4);
-        FILL(0xDEAD);
+        FILL(0xADDE);
         /* Ensure that un-privileged code is placed after the region reserved
          * for privileged kernel code. */
         /* Note that dot (.) actually refers to the byte offset from the start
@@ -294,6 +291,7 @@ SECTIONS
 		. = . + _Min_Heap_Size;
 		. = . + _Min_Stack_Size;
 		. = ALIGN(8);
+		_estack = .;
 	} >ITCMRAM
 
   /* Remove information from the compiler libraries */
