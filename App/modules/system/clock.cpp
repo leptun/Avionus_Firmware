@@ -68,7 +68,7 @@ static bool configureLClocks(bool useExternalClock) {
 	LL_RCC_EnableRTC();
 	if (!useExternalClock) {
 		LL_RTC_DisableWriteProtection(RTC);
-		LL_RTC_SetAsynchPrescaler(RTC, 125); // set prescaler for 32KHz clock
+		LL_RTC_SetAsynchPrescaler(RTC, (125-1)); // set prescaler for 32KHz clock
 		LL_RTC_EnableWriteProtection(RTC);
 	}
 
