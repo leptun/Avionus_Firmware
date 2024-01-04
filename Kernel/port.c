@@ -1177,12 +1177,16 @@ void xPortPendSVHandler( void )
         " ldr r0, =0xe000ed9c                   \n" /* Region Base Address register. */
         " ldmia r2!, {r4-r11}                   \n" /* Read 4 sets of MPU registers [MPU Region # 0 - 3]. */
         " stmia r0, {r4-r11}                    \n" /* Write 4 sets of MPU registers [MPU Region # 0 - 3]. */
+        " ldmia r2!, {r4-r7}                   \n" /* Read 2 sets of MPU registers [MPU Region # 4 - 5]. */
+        " stmia r0, {r4-r7}                    \n" /* Write 2 sets of MPU registers. [MPU Region # 4 - 5]. */
         "                                       \n"
         #if ( configTOTAL_MPU_REGIONS == 16 )
             " ldmia r2!, {r4-r11}                   \n" /* Read 4 sets of MPU registers [MPU Region # 4 - 7]. */
             " stmia r0, {r4-r11}                    \n" /* Write 4 sets of MPU registers. [MPU Region # 4 - 7]. */
             " ldmia r2!, {r4-r11}                   \n" /* Read 4 sets of MPU registers [MPU Region # 8 - 11]. */
             " stmia r0, {r4-r11}                    \n" /* Write 4 sets of MPU registers. [MPU Region # 8 - 11]. */
+            " ldmia r2!, {r4-r7}                   \n" /* Read 4 sets of MPU registers [MPU Region # 12 - 13]. */
+            " stmia r0, {r4-r7}                    \n" /* Write 4 sets of MPU registers. [MPU Region # 12 - 13]. */
         #endif /* configTOTAL_MPU_REGIONS == 16. */
         "                                       \n"
         " ldr r0, =0xe000ed94                   \n" /* MPU_CTRL register. */
@@ -1543,12 +1547,13 @@ static void prvSetupMPU( void )
 									   ( (0x01 << mpuMPU_RASR_SRD_LOCATION) ) |
                                        ( portMPU_REGION_ENABLE );
 
-        /* Setup shared ram for unprivilaged RW */
+        /* Setup shared ram for unprivileged RW */
         portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __SHARED_SRAM_segment_start__ ) | /* Base address. */
                                           ( portMPU_REGION_VALID ) |
                                           ( portSHARED_DATA_REGION );
 
         portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_WRITE ) |
+                                       ( portMPU_REGION_EXECUTE_NEVER ) |
                                        ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
                                        ( prvGetMPURegionSizeSetting( ( uint32_t ) __SHARED_SRAM_segment_end__ - ( uint32_t ) __SHARED_SRAM_segment_start__ ) ) |
                                        ( portMPU_REGION_ENABLE );
@@ -1652,9 +1657,9 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
     if( xRegions == NULL )
     {
         /* Invalidate user configurable regions. */
-        for( ul = 0UL; ul <= portNUM_CONFIGURABLE_REGIONS; ul++ )
+        for( ul = 0UL; ul < portTOTAL_NUM_REGIONS_IN_TCB; ul++ )
         {
-            xMPUSettings->xRegion[ ul ].ulRegionBaseAddress = ( ( ul - 1UL ) | portMPU_REGION_VALID );
+            xMPUSettings->xRegion[ ul ].ulRegionBaseAddress = ( ( ul ) | portMPU_REGION_VALID );
             xMPUSettings->xRegion[ ul ].ulRegionAttribute = 0UL;
             xMPUSettings->xRegionSettings[ ul ].ulRegionStartAddress = 0UL;
             xMPUSettings->xRegionSettings[ ul ].ulRegionEndAddress = 0UL;
