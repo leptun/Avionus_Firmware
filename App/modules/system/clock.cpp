@@ -123,7 +123,7 @@ static bool configureHClocks(bool useExternalClock) {
 	const uint32_t pllClockFreq = targetClockFreq * 2;
 	const uint32_t pllm = (useExternalClock ? HSE_VALUE : HSI_VALUE) / pllClockInputFreq;
 	const uint32_t plln = pllClockFreq / pllClockInputFreq;
-	const uint32_t pllp = 2;
+	const uint32_t pllp_bits = LL_RCC_PLLP_DIV_2;
 	const uint32_t pllq = pllClockFreq / 48000000ul;
 
 	// configure main PLL
@@ -136,7 +136,7 @@ static bool configureHClocks(bool useExternalClock) {
 			, (useExternalClock ? LL_RCC_PLLSOURCE_HSE : LL_RCC_PLLSOURCE_HSI)
 			| (pllm << RCC_PLLCFGR_PLLM_Pos)
 			| (plln << RCC_PLLCFGR_PLLN_Pos)
-			| (pllp << RCC_PLLCFGR_PLLP_Pos)
+			| (pllp_bits)
 			| (pllq << RCC_PLLCFGR_PLLQ_Pos)
 	);
 
