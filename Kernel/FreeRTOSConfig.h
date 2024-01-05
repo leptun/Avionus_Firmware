@@ -58,7 +58,7 @@
 #define configSYSTICK_CLOCK_HZ                   ( configCPU_CLOCK_HZ / 8 )
 #define configTICK_RATE_HZ                       ((TickType_t)1000)
 #define configMAX_PRIORITIES                     ( 32 )
-#define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
+#define configMINIMAL_STACK_SIZE                 ((uint16_t)64)
 #define configMAX_TASK_NAME_LEN                  ( 16 )
 #define configUSE_16_BIT_TICKS                   0
 #define configIDLE_SHOULD_YIELD                  1
@@ -127,7 +127,7 @@
 #define configALLOW_UNPRIVILEGED_CRITICAL_SECTIONS             1
 #define configENABLE_ERRATA_837070_WORKAROUND                  0
 #define configUSE_MPU_WRAPPERS_V1                              0
-#define configPROTECTED_KERNEL_OBJECT_POOL_SIZE                10
+#define configPROTECTED_KERNEL_OBJECT_POOL_SIZE                20
 #define configSYSTEM_CALL_STACK_SIZE                           128
 
 /* Set the following definitions to 1 to include the API function, or zero

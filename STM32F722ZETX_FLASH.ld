@@ -50,7 +50,7 @@ MEMORY
 
 __privileged_functions_region_size__  = 64K;
 /* __privileged_data_region_size__       = 32K; */
-__tinyusb_data_region_size__          = 2K;
+__tinyusb_data_region_size__          = 4K;
 
 __FLASH_segment_start__               = ORIGIN( FLASH );
 __FLASH_segment_end__                 = __FLASH_segment_start__ + LENGTH( FLASH );
@@ -197,6 +197,36 @@ SECTIONS
 
 /* -------------------------------------------------------------------------- */
 
+	.tinyusb_data :
+	{
+		. = ALIGN(4);
+		_tinyusb_data_run_addr = .;
+		
+		./tinyusb/src/*.o(.data*) /* */
+		./usb/*.o(.data*) /* */
+		./App/modules/system/usb.o(.data*)
+		
+		. = ALIGN(4);
+		_tinyusb_data_end = .;
+	} >SRAM2 AT> FLASH
+	_tinyusb_data_load_addr = LOADADDR(.tinyusb_data);
+
+	.tinyusb_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_tinyusb_bss_run_addr = .;
+		
+		./tinyusb/src/*.o(.bss*) /* */
+		./usb/*.o(.bss*) /* */
+		./App/modules/system/usb.o(.bss*)
+		
+		. = ALIGN(4);
+		. = __tinyusb_data_region_size__ - (_tinyusb_data_end - _tinyusb_data_run_addr);
+		_tinyusb_bss_end = .;
+	} >SRAM2
+
+/* -------------------------------------------------------------------------- */
+
 	.app_data :
 	{
 		. = ALIGN(4);
@@ -219,34 +249,6 @@ SECTIONS
 		. = ALIGN(4);
 		_app_bss_end = .;
 	} >SRAM1
-
-/* -------------------------------------------------------------------------- */
-
-	.tinyusb_data :
-	{
-		. = ALIGN(4);
-		_tinyusb_data_run_addr = .;
-		
-		./tinyusb/src/*.o(.data*) /* */
-		./usb/*.o(.data*) /* */
-		
-		. = ALIGN(4);
-		_tinyusb_data_end = .;
-	} >SRAM2 AT> FLASH
-	_tinyusb_data_load_addr = LOADADDR(.tinyusb_data);
-
-	.tinyusb_bss (NOLOAD) :
-	{
-		. = ALIGN(4);
-		_tinyusb_bss_run_addr = .;
-		
-		./tinyusb/src/*.o(.bss*) /* */
-		./usb/*.o(.bss*) /* */
-		
-		. = ALIGN(4);
-		. = __tinyusb_data_region_size__ - (_tinyusb_data_end - _tinyusb_data_run_addr);
-		_tinyusb_bss_end = .;
-	} >SRAM2
 
 /* -------------------------------------------------------------------------- */
 

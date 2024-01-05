@@ -15,13 +15,18 @@ extern "C" uint32_t _tinyusb_bss_end[];
 namespace system {
 namespace usb {
 
+static uint32_t UUID[3];
+
 static void usb_device_task(void *pvParameters) {
 	(void) pvParameters;
 
 	// init device stack on configured roothub port
 	// This should be called after scheduler/kernel is started.
 	// Otherwise it could cause kernel issue since USB IRQ handler does use RTOS queue API.
+	memcpy(UUID, (const uint32_t*)UID_BASE, sizeof(UUID));
 	tud_init(BOARD_TUD_RHPORT);
+
+	portSWITCH_TO_USER_MODE();
 
 	// RTOS forever loop
 	while (1) {
@@ -112,12 +117,12 @@ void Setup() {
 		"usbd",
 		sizeof(usb_device_taskStack) / sizeof(portSTACK_TYPE),
 		NULL,
-		configMAX_PRIORITIES-1,
+		(configMAX_PRIORITIES-1) | portPRIVILEGE_BIT,
 		usb_device_taskStack,
 		{
 			/* Base address   Length                    Parameters */
 			{ _tinyusb_data_run_addr, (uint32_t)_tinyusb_bss_end - (uint32_t)_tinyusb_data_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
-			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11101111 << MPU_RASR_SRD_Pos) },
+			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
 		}
 	};
 
@@ -135,7 +140,7 @@ void Setup() {
 		{
 			/* Base address   Length                    Parameters */
 			{ (uint32_t*)(_tinyusb_data_run_addr), (uint32_t)_tinyusb_bss_end - (uint32_t)_tinyusb_data_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
-			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11101111 << MPU_RASR_SRD_Pos) },
+			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
 		}
 	};
 
@@ -145,13 +150,12 @@ void Setup() {
 
 static size_t board_get_unique_id(uint8_t id[], size_t max_len) {
 	(void) max_len;
-	volatile uint32_t * stm32_uuid = (volatile uint32_t *) UID_BASE;
 	uint32_t* id32 = (uint32_t*) (uintptr_t) id;
 	uint8_t const len = 12;
 
-	id32[0] = stm32_uuid[0];
-	id32[1] = stm32_uuid[1];
-	id32[2] = stm32_uuid[2];
+	id32[0] = UUID[0];
+	id32[1] = UUID[1];
+	id32[2] = UUID[2];
 
 	return len;
 }
