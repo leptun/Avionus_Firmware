@@ -79,7 +79,7 @@
 #define configHEAP_CLEAR_MEMORY_ON_FREE          1
 
 /* Memory allocation related definitions. */
-#define configSUPPORT_STATIC_ALLOCATION             0
+#define configSUPPORT_STATIC_ALLOCATION             1
 #define configSUPPORT_DYNAMIC_ALLOCATION            1
 #define configKERNEL_PROVIDED_STATIC_MEMORY         0
 #define configTOTAL_HEAP_SIZE                       ((size_t)16384)
