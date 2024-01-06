@@ -6,14 +6,17 @@
 #include "task.h"
 #include "timers.h"
 
-#define USBD_STACK_SIZE    (2*configMINIMAL_STACK_SIZE) * (CFG_TUSB_DEBUG ? 2 : 1)
-#define CDC_STACK_SZIE      configMINIMAL_STACK_SIZE
+#define USBD_STACK_SIZE     256 * (CFG_TUSB_DEBUG ? 2 : 1)
+#define CDC_STACK_SZIE      128
 
 extern "C" uint32_t _tinyusb_data_run_addr[];
 extern "C" uint32_t _tinyusb_bss_end[];
 
 namespace system {
 namespace usb {
+
+static TaskHandle_t pxusbdTaskHandle;
+static TaskHandle_t pxcdcTaskHandle;
 
 static uint32_t UUID[3];
 
@@ -43,35 +46,31 @@ static portSTACK_TYPE usb_device_taskStack[ USBD_STACK_SIZE ] __attribute__((ali
 static void cdc_task(void *pvParameters) {
 	(void) pvParameters;
 
-	// RTOS forever loop
+	uint8_t buf[64];
 	while (1) {
-		// connected() check for DTR bit
-		// Most but not all terminal client set this when making connection
-		if ( tud_cdc_connected() )
-		{
-			// There are data available
-			while (tud_cdc_available()) {
-				uint8_t buf[64];
+		xTaskNotifyWaitIndexed(1, 0, 0x01, NULL, portMAX_DELAY);
+		// There are data available
+		while (tud_cdc_available()) {
+			// read and echo back
+			uint32_t count = tud_cdc_read(buf, sizeof(buf));
 
-				// read and echo back
-				uint32_t count = tud_cdc_read(buf, sizeof(buf));
-
-				// Echo back
-				// Note: Skip echo by commenting out write() and write_flush()
-				// for throughput test e.g
-				//    $ dd if=/dev/zero of=/dev/ttyACM0 count=10000
-				tud_cdc_write(buf, count);
-			}
-
-			tud_cdc_write_flush();
+			// Echo back
+			// Note: Skip echo by commenting out write() and write_flush()
+			// for throughput test e.g
+			//    $ dd if=/dev/zero of=/dev/ttyACM0 count=10000
+			tud_cdc_write(buf, count);
 		}
-
-		// For ESP32-Sx this delay is essential to allow idle how to run and reset watchdog
-		vTaskDelay(1);
+		tud_cdc_write_flush();
 	}
 }
 static portSTACK_TYPE cdc_taskStack[ CDC_STACK_SZIE ] __attribute__((aligned(CDC_STACK_SZIE*4)));
 
+extern "C"
+void tud_cdc_rx_cb(uint8_t itf) {
+	if (xTaskNotifyIndexed(pxcdcTaskHandle, 1, (1 << itf), eSetBits) != pdPASS) {
+		Error_Handler();
+	}
+}
 
 void Setup() {
 	LL_RCC_SetUSBClockSource(LL_RCC_USB_CLKSOURCE_PLL);
@@ -106,6 +105,7 @@ void Setup() {
 
 	/* USB_OTG_HS clock enable */
 	__HAL_RCC_USB_OTG_HS_CLK_ENABLE();
+	__HAL_RCC_USB_OTG_HS_ULPI_CLK_SLEEP_DISABLE();
 
 	/* USB_OTG_HS interrupt Init */
 	HAL_NVIC_SetPriority(OTG_HS_IRQn, 5, 0);
@@ -127,7 +127,7 @@ void Setup() {
 	};
 
 	// Create a task for tinyusb device stack
-	xTaskCreateRestricted(&usb_device_taskTaskDefinition, NULL);
+	xTaskCreateRestricted(&usb_device_taskTaskDefinition, &pxusbdTaskHandle);
 
 	const TaskParameters_t cdc_taskTaskDefinition =
 	{
@@ -145,7 +145,7 @@ void Setup() {
 	};
 
 	// Create CDC task
-	xTaskCreateRestricted(&cdc_taskTaskDefinition, NULL);
+	xTaskCreateRestricted(&cdc_taskTaskDefinition, &pxcdcTaskHandle);
 }
 
 static size_t board_get_unique_id(uint8_t id[], size_t max_len) {
