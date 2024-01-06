@@ -36,7 +36,7 @@
 ENTRY(Reset_Handler)
 
 _Min_Heap_Size = 0x200; /* required amount of heap */
-_Min_Stack_Size = 0x200; /* required amount of stack */
+_Min_Stack_Size = 0x400; /* required amount of stack */
 
 /* Memories definition */
 MEMORY
@@ -170,6 +170,16 @@ SECTIONS
 
 /* -------------------------------------------------------------------------- */
 
+	._MSP_stack :
+	{
+		. = ALIGN(8);
+		. = . + _Min_Stack_Size;
+		. = ALIGN(8);
+		_estack = .;
+	} >DTCMRAM
+
+/* -------------------------------------------------------------------------- */
+
 	.freertos_data :
 	{
 		. = ALIGN(4);
@@ -283,18 +293,20 @@ SECTIONS
 		. = ALIGN(4);
 		_shared_bss_end = .;
 	} >ITCMRAM
-	
-	/* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
-	._user_heap_stack :
+
+/* -------------------------------------------------------------------------- */
+
+	._user_heap :
 	{
-		. = ALIGN(8);
+		. = ALIGN(4);
 		PROVIDE ( end = . );
 		PROVIDE ( _end = . );
 		. = . + _Min_Heap_Size;
-		. = . + _Min_Stack_Size;
-		. = ALIGN(8);
-		_estack = .;
+		. = ALIGN(4);
+		_eheap = .;
 	} >ITCMRAM
+
+/* -------------------------------------------------------------------------- */
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :
