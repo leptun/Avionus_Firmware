@@ -124,7 +124,7 @@
 #define configTEX_S_C_B_FLASH                                  0x07UL /* Default value. */
 #define configTEX_S_C_B_SRAM                                   0x07UL /* Default value. */
 #define configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY            1
-#define configALLOW_UNPRIVILEGED_CRITICAL_SECTIONS             1
+#define configALLOW_UNPRIVILEGED_CRITICAL_SECTIONS             0
 #define configENABLE_ERRATA_837070_WORKAROUND                  0
 #define configUSE_MPU_WRAPPERS_V1                              0
 #define configPROTECTED_KERNEL_OBJECT_POOL_SIZE                20
