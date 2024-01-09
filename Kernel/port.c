@@ -1906,6 +1906,26 @@ BaseType_t xPortIsAuthorizedToAccessBuffer( const void * pvBuffer,
 #endif /* #if ( ( configUSE_MPU_WRAPPERS_V1 == 0 ) && ( configENABLE_ACCESS_CONTROL_LIST == 1 ) ) */
 /*-----------------------------------------------------------*/
 
+#if ( ( configUSE_MPU_WRAPPERS_V1 == 0 ) && ( configENABLE_ACCESS_CONTROL_LIST == 1 ) )
+
+    void vPortCloneAccessToKernelObjects( TaskHandle_t xInternalTaskHandle,
+                                          TaskHandle_t xInternalTaskHandleToClone ) /* PRIVILEGED_FUNCTION */
+    {
+    	uint32_t ul;
+        xMPU_SETTINGS * xTaskMpuSettings, * xTaskMpuSettingsToClone;
+
+        xTaskMpuSettings = xTaskGetMPUSettings( xInternalTaskHandle );
+        xTaskMpuSettingsToClone = xTaskGetMPUSettings( xInternalTaskHandleToClone );
+
+        for ( ul = 0; ul < ( configPROTECTED_KERNEL_OBJECT_POOL_SIZE / portACL_ENTRY_SIZE_BITS ) + 1; ul++ )
+        {
+            xTaskMpuSettings->ulAccessControlList[ ul ] = xTaskMpuSettingsToClone->ulAccessControlList[ ul ];
+        }
+    }
+
+#endif /* #if ( ( configUSE_MPU_WRAPPERS_V1 == 0 ) && ( configENABLE_ACCESS_CONTROL_LIST == 1 ) ) */
+/*-----------------------------------------------------------*/
+
 #if ( configUSE_MPU_WRAPPERS_V1 == 0 )
 
     #if ( configENABLE_ACCESS_CONTROL_LIST == 1 )

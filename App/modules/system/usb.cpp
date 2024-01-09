@@ -15,8 +15,8 @@ extern "C" uint32_t _tinyusb_bss_end[];
 namespace system {
 namespace usb {
 
-static TaskHandle_t pxusbdTaskHandle;
 static TaskHandle_t pxcdcTaskHandle;
+static TaskHandle_t pxusbdTaskHandle;
 
 static uint32_t UUID[3];
 
@@ -28,6 +28,9 @@ static void usb_device_task(void *pvParameters) {
 	// Otherwise it could cause kernel issue since USB IRQ handler does use RTOS queue API.
 	memcpy(UUID, (const uint32_t*)UID_BASE, sizeof(UUID));
 	tud_init(BOARD_TUD_RHPORT);
+
+	vGrantAccessToTask(NULL, pxcdcTaskHandle);
+	vCloneAccessToKernelObjects(pxcdcTaskHandle, NULL);
 
 	portSWITCH_TO_USER_MODE();
 
@@ -111,24 +114,6 @@ void Setup() {
 	HAL_NVIC_SetPriority(OTG_HS_IRQn, 5, 0);
 	HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
 
-	const TaskParameters_t usb_device_taskTaskDefinition =
-	{
-		usb_device_task,
-		"usbd",
-		sizeof(usb_device_taskStack) / sizeof(portSTACK_TYPE),
-		NULL,
-		(configMAX_PRIORITIES-1) | portPRIVILEGE_BIT,
-		usb_device_taskStack,
-		{
-			/* Base address   Length                    Parameters */
-			{ _tinyusb_data_run_addr, (uint32_t)_tinyusb_bss_end - (uint32_t)_tinyusb_data_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
-			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
-		}
-	};
-
-	// Create a task for tinyusb device stack
-	xTaskCreateRestricted(&usb_device_taskTaskDefinition, &pxusbdTaskHandle);
-
 	const TaskParameters_t cdc_taskTaskDefinition =
 	{
 		cdc_task,
@@ -146,6 +131,24 @@ void Setup() {
 
 	// Create CDC task
 	xTaskCreateRestricted(&cdc_taskTaskDefinition, &pxcdcTaskHandle);
+
+	const TaskParameters_t usb_device_taskTaskDefinition =
+	{
+		usb_device_task,
+		"usbd",
+		sizeof(usb_device_taskStack) / sizeof(portSTACK_TYPE),
+		NULL,
+		(configMAX_PRIORITIES-1) | portPRIVILEGE_BIT,
+		usb_device_taskStack,
+		{
+			/* Base address   Length                    Parameters */
+			{ _tinyusb_data_run_addr, (uint32_t)_tinyusb_bss_end - (uint32_t)_tinyusb_data_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
+			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
+		}
+	};
+
+	// Create a task for tinyusb device stack
+	xTaskCreateRestricted(&usb_device_taskTaskDefinition, &pxusbdTaskHandle);
 }
 
 static size_t board_get_unique_id(uint8_t id[], size_t max_len) {

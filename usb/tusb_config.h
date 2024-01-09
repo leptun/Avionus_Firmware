@@ -57,7 +57,7 @@
 
 // This examples use FreeRTOS
 #ifndef CFG_TUSB_OS
-#define CFG_TUSB_OS           OPT_OS_FREERTOS
+#define CFG_TUSB_OS           OPT_OS_CUSTOM
 #endif
 
 // Espressif IDF requires "freertos/" prefix in include path

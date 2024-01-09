@@ -129,6 +129,7 @@
 #define configUSE_MPU_WRAPPERS_V1                              0
 #define configPROTECTED_KERNEL_OBJECT_POOL_SIZE                20
 #define configSYSTEM_CALL_STACK_SIZE                           128
+#define configENABLE_ACCESS_CONTROL_LIST                       1
 
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */
@@ -137,7 +138,7 @@ to exclude the API function. */
 #define INCLUDE_vTaskDelete                  1
 #define INCLUDE_vTaskCleanUpResources        0
 #define INCLUDE_vTaskSuspend                 1
-#define INCLUDE_vTaskDelayUntil              1
+#define INCLUDE_xTaskDelayUntil              1
 #define INCLUDE_vTaskDelay                   1
 #define INCLUDE_xTaskGetSchedulerState       1
 #define INCLUDE_xTaskGetCurrentTaskHandle    1
