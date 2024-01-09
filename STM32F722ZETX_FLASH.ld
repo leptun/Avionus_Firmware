@@ -50,7 +50,7 @@ MEMORY
 
 __privileged_functions_region_size__  = 64K;
 /* __privileged_data_region_size__       = 32K; */
-__tinyusb_data_region_size__          = 4K;
+__tinyusb_data_region_size__          = 2K;
 
 __FLASH_segment_start__               = ORIGIN( FLASH );
 __FLASH_segment_end__                 = __FLASH_segment_start__ + LENGTH( FLASH );
@@ -200,6 +200,7 @@ SECTIONS
 		
 		./Kernel/*.o(.bss*) /* */
 		./FreeRTOS-Kernel/*.o(.bss*) /* */
+		*(.stack)
 		
 		. = ALIGN(4);
 		_freertos_bss_end = .;

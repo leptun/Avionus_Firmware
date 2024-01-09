@@ -11,7 +11,7 @@ static void taskBlinkMain(void *pvParameters) {
 	}
 }
 
-static portSTACK_TYPE xBlinkTaskStack[ 128 ] __attribute__((aligned(128*4)));
+static portSTACK_TYPE xBlinkTaskStack[ 128 ] __attribute__((aligned(128*4))) __attribute__((section(".stack")));
 static const TaskParameters_t xBlinkTaskDefinition =
 {
     taskBlinkMain,

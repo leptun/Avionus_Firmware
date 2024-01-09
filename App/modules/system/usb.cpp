@@ -1,10 +1,11 @@
-#include <modules/system/usb.hpp>
+#include "usb.hpp"
 #include "tusb.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "queue.h"
 #include "task.h"
 #include "timers.h"
+#include "../../util.hpp"
 
 #define USBD_STACK_SIZE     256 * (CFG_TUSB_DEBUG ? 2 : 1)
 #define CDC_STACK_SZIE      128
@@ -43,30 +44,28 @@ static void usb_device_task(void *pvParameters) {
 		tud_cdc_write_flush();
 	}
 }
-static portSTACK_TYPE usb_device_taskStack[ USBD_STACK_SIZE ] __attribute__((aligned(USBD_STACK_SIZE*4)));
+static portSTACK_TYPE usb_device_taskStack[ USBD_STACK_SIZE ] __attribute__((aligned(USBD_STACK_SIZE*4))) __attribute__((section(".stack")));
 
 
 static void cdc_task(void *pvParameters) {
 	(void) pvParameters;
 
 	uint8_t buf[64];
-	while (1) {
-		xTaskNotifyWaitIndexed(1, 0, 0x01, NULL, portMAX_DELAY);
-		// There are data available
-		while (tud_cdc_available()) {
-			// read and echo back
-			uint32_t count = tud_cdc_read(buf, sizeof(buf));
-
-			// Echo back
-			// Note: Skip echo by commenting out write() and write_flush()
-			// for throughput test e.g
-			//    $ dd if=/dev/zero of=/dev/ttyACM0 count=10000
-			tud_cdc_write(buf, count);
+	for (;;) {
+		uint32_t pendingItfs = 0;
+		util::xTaskNotifyWaitBitsAnyIndexed(1, 0, 0x3, &pendingItfs, portMAX_DELAY);
+		for (uint8_t i = 0; i < 2; i++) {
+			if (pendingItfs & (1 << i)) {
+				while (tud_cdc_n_available(i)) {
+					uint32_t count = tud_cdc_n_read(i, buf, sizeof(buf));
+					tud_cdc_n_write(i, buf, count);
+				}
+				tud_cdc_n_write_flush(i);
+			}
 		}
-		tud_cdc_write_flush();
 	}
 }
-static portSTACK_TYPE cdc_taskStack[ CDC_STACK_SZIE ] __attribute__((aligned(CDC_STACK_SZIE*4)));
+static portSTACK_TYPE cdc_taskStack[ CDC_STACK_SZIE ] __attribute__((aligned(CDC_STACK_SZIE*4))) __attribute__((section(".stack")));
 
 extern "C"
 void tud_cdc_rx_cb(uint8_t itf) {
