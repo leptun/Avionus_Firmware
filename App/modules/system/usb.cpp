@@ -107,7 +107,6 @@ void Setup() {
 
 	/* USB_OTG_HS clock enable */
 	__HAL_RCC_USB_OTG_HS_CLK_ENABLE();
-	__HAL_RCC_USB_OTG_HS_ULPI_CLK_SLEEP_DISABLE();
 
 	/* USB_OTG_HS interrupt Init */
 	HAL_NVIC_SetPriority(OTG_HS_IRQn, 5, 0);
