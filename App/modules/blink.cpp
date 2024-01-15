@@ -2,6 +2,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
+namespace modules {
 namespace blink {
 
 static void taskBlinkMain(void *pvParameters) {
@@ -30,4 +31,5 @@ void Setup() {
 	xTaskCreateRestricted(&xBlinkTaskDefinition, NULL);
 }
 
+}
 }

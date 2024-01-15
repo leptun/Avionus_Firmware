@@ -5,7 +5,7 @@
 #include "queue.h"
 #include "task.h"
 #include "timers.h"
-#include "../../util.hpp"
+#include <util.hpp>
 
 #define USBD_STACK_SIZE     256 * (CFG_TUSB_DEBUG ? 2 : 1)
 #define CDC_STACK_SZIE      128
@@ -13,7 +13,7 @@
 extern "C" uint32_t _tinyusb_data_run_addr[];
 extern "C" uint32_t _tinyusb_bss_end[];
 
-namespace system {
+namespace modules {
 namespace usb {
 
 static TaskHandle_t pxcdcTaskHandle;

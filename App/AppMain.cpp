@@ -1,16 +1,18 @@
 #include "AppMain.hpp"
 #include "modules/blink.hpp"
-#include "modules/system/clock.hpp"
-#include "modules/system/usb.hpp"
+#include "modules/clock.hpp"
+#include "modules/power.hpp"
+#include "modules/usb.hpp"
 #include <FreeRTOS.h>
 #include <task.h>
 
 namespace AppMain {
 
 void taskAppMain(void *pvParameters) {
-	system::clock::Setup();
-	system::usb::Setup();
-	blink::Setup();
+	modules::clock::Setup();
+	modules::power::Setup();
+	modules::usb::Setup();
+	modules::blink::Setup();
 
 	for (;;) {
 		vTaskDelay(1000);

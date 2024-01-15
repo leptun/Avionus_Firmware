@@ -1,6 +1,6 @@
 #pragma once
 
-namespace system {
+namespace modules {
 namespace usb {
 
 void Setup();

@@ -85,6 +85,14 @@ void Error_Handler(void);
 #define POWER_D2_EN_GPIO_Port GPIOF
 #define POWER_D4_EN_Pin GPIO_PIN_12
 #define POWER_D4_EN_GPIO_Port GPIOF
+#define RF_RX_SWITCH_Pin GPIO_PIN_13
+#define RF_RX_SWITCH_GPIO_Port GPIOF
+#define RF_TX_SWITCH_Pin GPIO_PIN_14
+#define RF_TX_SWITCH_GPIO_Port GPIOF
+#define RF_NRESET_Pin GPIO_PIN_15
+#define RF_NRESET_GPIO_Port GPIOF
+#define RF_NSS_Pin GPIO_PIN_11
+#define RF_NSS_GPIO_Port GPIOE
 #define UI_LED_RX_Pin GPIO_PIN_10
 #define UI_LED_RX_GPIO_Port GPIOD
 #define UI_LED_TX_Pin GPIO_PIN_11

@@ -215,7 +215,7 @@ SECTIONS
 		
 		./tinyusb/src/*.o(.data*) /* */
 		./usb/*.o(.data*) /* */
-		./App/modules/system/usb.o(.data*)
+		./App/modules/usb.o(.data*)
 		
 		. = ALIGN(4);
 		_tinyusb_data_end = .;
@@ -229,7 +229,7 @@ SECTIONS
 		
 		./tinyusb/src/*.o(.bss*) /* */
 		./usb/*.o(.bss*) /* */
-		./App/modules/system/usb.o(.bss*)
+		./App/modules/usb.o(.bss*)
 		
 		. = ALIGN(4);
 		. = __tinyusb_data_region_size__ - (_tinyusb_data_end - _tinyusb_data_run_addr);

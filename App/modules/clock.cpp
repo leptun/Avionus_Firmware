@@ -1,9 +1,9 @@
 #include "clock.hpp"
 #include <FreeRTOS.h>
 #include <task.h>
-#include "../../util.hpp"
+#include <util.hpp>
 
-namespace system {
+namespace modules {
 namespace clock {
 
 static TaskHandle_t pxClockTaskHandle;
