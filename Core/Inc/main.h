@@ -28,7 +28,8 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
-
+#include "stm32f7xx_ll_adc.h"
+#include "stm32f7xx_ll_dma.h"
 #include "stm32f7xx_ll_rcc.h"
 #include "stm32f7xx_ll_bus.h"
 #include "stm32f7xx_ll_system.h"
@@ -36,9 +37,7 @@ extern "C" {
 #include "stm32f7xx_ll_cortex.h"
 #include "stm32f7xx_ll_utils.h"
 #include "stm32f7xx_ll_pwr.h"
-#include "stm32f7xx_ll_dma.h"
 #include "stm32f7xx_ll_rtc.h"
-#include "stm32f7xx_ll_tim.h"
 #include "stm32f7xx_ll_gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -81,6 +80,26 @@ void Error_Handler(void);
 #define POWER_D1_EN_GPIO_Port GPIOC
 #define UI_SW_USER_Pin GPIO_PIN_2
 #define UI_SW_USER_GPIO_Port GPIOF
+#define MEAS_D3_3V3_Pin GPIO_PIN_3
+#define MEAS_D3_3V3_GPIO_Port GPIOF
+#define MEAS_D4_3V3_Pin GPIO_PIN_4
+#define MEAS_D4_3V3_GPIO_Port GPIOF
+#define MEAS_D5_5V_Pin GPIO_PIN_5
+#define MEAS_D5_5V_GPIO_Port GPIOF
+#define MEAS_D2_1V8_Pin GPIO_PIN_10
+#define MEAS_D2_1V8_GPIO_Port GPIOF
+#define MEAS_POWER_IN_Pin GPIO_PIN_0
+#define MEAS_POWER_IN_GPIO_Port GPIOC
+#define MEAS_I_D1_5V_Pin GPIO_PIN_1
+#define MEAS_I_D1_5V_GPIO_Port GPIOC
+#define MEAS_D1_5V_Pin GPIO_PIN_2
+#define MEAS_D1_5V_GPIO_Port GPIOC
+#define MEAS_D2_3V3_Pin GPIO_PIN_3
+#define MEAS_D2_3V3_GPIO_Port GPIOC
+#define MEAS_SERVO_Pin GPIO_PIN_4
+#define MEAS_SERVO_GPIO_Port GPIOC
+#define MEAS_I_SERVO_5V5_Pin GPIO_PIN_5
+#define MEAS_I_SERVO_5V5_GPIO_Port GPIOC
 #define POWER_D2_EN_Pin GPIO_PIN_11
 #define POWER_D2_EN_GPIO_Port GPIOF
 #define POWER_D4_EN_Pin GPIO_PIN_12

@@ -1,8 +1,9 @@
 #include "AppMain.hpp"
-#include "modules/blink.hpp"
 #include "modules/clock.hpp"
+#include "modules/adc.hpp"
 #include "modules/power.hpp"
 #include "modules/usb.hpp"
+#include "modules/blink.hpp"
 #include <FreeRTOS.h>
 #include <task.h>
 
@@ -10,6 +11,7 @@ namespace AppMain {
 
 void taskAppMain(void *pvParameters) {
 	modules::clock::Setup();
+	modules::adc::Setup();
 	modules::power::Setup();
 	modules::usb::Setup();
 	modules::blink::Setup();

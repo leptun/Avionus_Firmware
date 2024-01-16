@@ -1,11 +1,5 @@
 #include "power.hpp"
-#include "adc.h"
-#include <FreeRTOS.h>
-#include <event_groups.h>
-#include <timers.h>
 #include <util.hpp>
-
-static uint16_t adc_meas[12] __attribute__((aligned(8)));
 
 namespace modules {
 namespace power {
@@ -19,16 +13,7 @@ static const util::IO EN_PINS[] = {
 	{ POWER_SERVO_5V_AUX_EN_GPIO_Port, POWER_SERVO_5V_AUX_EN_Pin },
 };
 
-//extern "C" void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
-//
-//}
-
 void Setup() {
-	HAL_ADC_Start(&hadc2);
-	HAL_ADC_Start(&hadc3);
-	HAL_ADCEx_MultiModeStart_DMA(&hadc1, (uint32_t *)adc_meas, COUNT_OF(adc_meas));
-	LL_TIM_EnableCounter(TIM6);
-
 	EnablePowerDomain(PowerDomainControl::D1);
 	EnablePowerDomain(PowerDomainControl::D2);
 	EnablePowerDomain(PowerDomainControl::D3);
