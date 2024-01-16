@@ -2,6 +2,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <util.hpp>
+#include <config.hpp>
 
 namespace modules {
 namespace clock {
@@ -118,7 +119,7 @@ static bool configureHClocks(bool useExternalClock) {
 	}
 
 	// Configure main PLL
-	const uint32_t targetClockFreq = 216000000ul;
+	const uint32_t targetClockFreq = config::system_clock_frequency;
 	const uint32_t pllClockInputFreq = 2000000ul;
 	const uint32_t pllClockFreq = targetClockFreq * 2;
 	const uint32_t pllm = (useExternalClock ? HSE_VALUE : HSI_VALUE) / pllClockInputFreq;
