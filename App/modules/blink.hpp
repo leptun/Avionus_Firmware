@@ -3,7 +3,7 @@
 namespace modules {
 namespace blink {
 
-extern void Setup();
+void Setup();
 
 }
 }

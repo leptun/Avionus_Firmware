@@ -213,6 +213,9 @@ static void taskClockMain(void *pvParameters) {
 	LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_4);
 	LL_RCC_SetAPB2Prescaler(LL_RCC_APB2_DIV_2);
 
+	// Make all timers run at HCLK
+	LL_RCC_SetTIMPrescaler(LL_RCC_TIM_PRESCALER_FOUR_TIMES);
+
 	// Setup RCC interrupts
 	LL_RCC_ClearFlag_LSIRDY();
 	LL_RCC_EnableIT_LSIRDY();

@@ -2,6 +2,7 @@
 #include "modules/clock.hpp"
 #include "modules/adc.hpp"
 #include "modules/power.hpp"
+#include "modules/servo.hpp"
 #include "modules/usb.hpp"
 #include "modules/blink.hpp"
 #include <FreeRTOS.h>
@@ -13,11 +14,15 @@ void taskAppMain(void *pvParameters) {
 	modules::clock::Setup();
 	modules::adc::Setup();
 	modules::power::Setup();
+	modules::servo::Setup();
 	modules::usb::Setup();
 	modules::blink::Setup();
 
 	for (;;) {
-		vTaskDelay(1000);
+		modules::servo::SetServoPosition(15, 1000);
+		vTaskDelay(2000);
+		modules::servo::SetServoPosition(15, 2000);
+		vTaskDelay(2000);
 	}
 }
 
