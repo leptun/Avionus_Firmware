@@ -63,6 +63,7 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
+void MX_SDMMC2_SD_Init(void);
 
 /* USER CODE BEGIN EFP */
 
@@ -155,6 +156,10 @@ void Error_Handler(void);
 #define SERVO_CH10_GPIO_Port GPIOA
 #define SERVO_CH11_Pin GPIO_PIN_11
 #define SERVO_CH11_GPIO_Port GPIOA
+#define SD_CARD_CD_Pin GPIO_PIN_13
+#define SD_CARD_CD_GPIO_Port GPIOG
+#define SD_CARD_WP_Pin GPIO_PIN_14
+#define SD_CARD_WP_GPIO_Port GPIOG
 #define POWER_D3_EN_Pin GPIO_PIN_15
 #define POWER_D3_EN_GPIO_Port GPIOG
 #define UI_BUZZER_Pin GPIO_PIN_9
