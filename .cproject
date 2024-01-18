@@ -57,8 +57,9 @@
 									<listOptionValue builtIn="false" value="../App"/>
 									<listOptionValue builtIn="false" value="../tinyusb/src"/>
 									<listOptionValue builtIn="false" value="../usb"/>
-									<listOptionValue builtIn="false" value="../FatFs/src"/>
 									<listOptionValue builtIn="false" value="../FatFs"/>
+									<listOptionValue builtIn="false" value="../FatFs/src"/>
+									<listOptionValue builtIn="false" value="../umm_malloc/src"/>
 									<listOptionValue builtIn="false" value="../Core/ThreadSafe"/>
 								</option>
 								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.languagestandard.1897046078" name="Language standard" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.languagestandard" useByScannerDiscovery="true" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.languagestandard.value.gnu18" valueType="enumerated"/>
@@ -87,8 +88,9 @@
 									<listOptionValue builtIn="false" value="../App"/>
 									<listOptionValue builtIn="false" value="../tinyusb/src"/>
 									<listOptionValue builtIn="false" value="../usb"/>
-									<listOptionValue builtIn="false" value="../FatFs/src"/>
 									<listOptionValue builtIn="false" value="../FatFs"/>
+									<listOptionValue builtIn="false" value="../FatFs/src"/>
+									<listOptionValue builtIn="false" value="../umm_malloc/src"/>
 									<listOptionValue builtIn="false" value="../Core/ThreadSafe"/>
 								</option>
 								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.languagestandard.294688666" name="Language standard" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.languagestandard" useByScannerDiscovery="true" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.languagestandard.value.gnupp20" valueType="enumerated"/>
@@ -119,15 +121,19 @@
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec.328813530" name="MCU Output Converter Motorola S-rec with symbols" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1952267406.1802006936" name="ffsystem.c" rcbsApplicability="disable" resourcePath="FatFs/src/ffsystem.c" toolsToInvoke="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1358135656.1344953139">
+						<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1358135656.1344953139" name="MCU GCC Compiler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1358135656"/>
+					</fileInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="App"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="FatFs"/>
+						<entry excluding="src/ffsystem.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="FatFs"/>
 						<entry excluding="portable|examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="FreeRTOS-Kernel"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="FreeRTOS-Kernel/portable/Common"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Kernel"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="tinyusb/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="umm_malloc/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="usb"/>
 					</sourceEntries>
 				</configuration>
@@ -184,8 +190,9 @@
 									<listOptionValue builtIn="false" value="../App"/>
 									<listOptionValue builtIn="false" value="../tinyusb/src"/>
 									<listOptionValue builtIn="false" value="../usb"/>
-									<listOptionValue builtIn="false" value="../FatFs/src"/>
 									<listOptionValue builtIn="false" value="../FatFs"/>
+									<listOptionValue builtIn="false" value="../FatFs/src"/>
+									<listOptionValue builtIn="false" value="../umm_malloc/src"/>
 									<listOptionValue builtIn="false" value="../Core/ThreadSafe"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="true" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.otherflags.1906335652" name="Other flags" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.otherflags" useByScannerDiscovery="true" valueType="stringList"/>
@@ -212,8 +219,9 @@
 									<listOptionValue builtIn="false" value="../App"/>
 									<listOptionValue builtIn="false" value="../tinyusb/src"/>
 									<listOptionValue builtIn="false" value="../usb"/>
-									<listOptionValue builtIn="false" value="../FatFs/src"/>
 									<listOptionValue builtIn="false" value="../FatFs"/>
+									<listOptionValue builtIn="false" value="../FatFs/src"/>
+									<listOptionValue builtIn="false" value="../umm_malloc/src"/>
 									<listOptionValue builtIn="false" value="../Core/ThreadSafe"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.otherflags.1724231789" name="Other flags" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.otherflags" useByScannerDiscovery="true" valueType="stringList">
@@ -243,15 +251,19 @@
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec.618349541" name="MCU Output Converter Motorola S-rec with symbols" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.release.1232014980.193085607" name="ffsystem.c" rcbsApplicability="disable" resourcePath="FatFs/src/ffsystem.c" toolsToInvoke="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1986718307.2050812805">
+						<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1986718307.2050812805" name="MCU GCC Compiler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1986718307"/>
+					</fileInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="App"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="FatFs"/>
+						<entry excluding="src/ffsystem.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="FatFs"/>
 						<entry excluding="portable|examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="FreeRTOS-Kernel"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="FreeRTOS-Kernel/portable/Common"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Kernel"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="tinyusb/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="umm_malloc/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="usb"/>
 					</sourceEntries>
 				</configuration>

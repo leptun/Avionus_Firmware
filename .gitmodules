@@ -4,3 +4,6 @@
 [submodule "tinyusb"]
 	path = tinyusb
 	url = https://github.com/hathach/tinyusb.git
+[submodule "umm_malloc"]
+	path = umm_malloc
+	url = https://github.com/rhempel/umm_malloc.git

@@ -51,6 +51,7 @@ MEMORY
 __privileged_functions_region_size__  = 64K;
 /* __privileged_data_region_size__       = 32K; */
 __tinyusb_data_region_size__          = 2K;
+__fatfs_data_region_size__            = 2K;
 
 __FLASH_segment_start__               = ORIGIN( FLASH );
 __FLASH_segment_end__                 = __FLASH_segment_start__ + LENGTH( FLASH );
@@ -234,6 +235,32 @@ SECTIONS
 		. = ALIGN(4);
 		. = __tinyusb_data_region_size__ - (_tinyusb_data_end - _tinyusb_data_run_addr);
 		_tinyusb_bss_end = .;
+	} >SRAM2
+
+/* -------------------------------------------------------------------------- */
+
+	.fatfs_data :
+	{
+		. = ALIGN(4);
+		_fatfs_data_run_addr = .;
+		
+		./FatFs/*.o(.data*) /* */
+		
+		. = ALIGN(4);
+		_fatfs_data_end = .;
+	} >SRAM2 AT> FLASH
+	_fatfs_data_load_addr = LOADADDR(.fatfs_data);
+
+	.fatfs_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_fatfs_bss_run_addr = .;
+		
+		./FatFs/*.o(.bss*) /* */
+		
+		. = ALIGN(4);
+		. = __fatfs_data_region_size__ - (_fatfs_data_end - _fatfs_data_run_addr);
+		_fatfs_bss_end = .;
 	} >SRAM2
 
 /* -------------------------------------------------------------------------- */
