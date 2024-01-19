@@ -2,16 +2,23 @@
 #include "diskio.h"
 #include "ff.h"
 #include <main.h>
+#include <inttypes.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "event_groups.h"
 
 
+#define SDMMC_TIMEOUT_MS 5000
+
 extern SD_HandleTypeDef hsd2;
-static volatile DSTATUS sta = STA_NOINIT;
 EventGroupHandle_t sd_diskio_flags;
 enum FlagDef {
-	SD_DISKIO_TRANSFER_CPLT = 0x01,
+	SD_DISKIO_FLAG_NOINIT = STA_NOINIT,
+	SD_DISKIO_FLAG_NODISK = STA_NODISK,
+	SD_DISKIO_FLAG_PROTECT = STA_PROTECT,
+	SD_DISKIO_TRANSFER_CPLT = 0x08,
+	SD_DISKIO_TRANSFER_ERROR = 0x10,
+	SD_DISKIO_TRANSFER_ABORTED = 0x20,
 };
 
 static int sdmmc_card_detected() {
@@ -19,15 +26,29 @@ static int sdmmc_card_detected() {
 }
 
 static int sdmmc_card_write_protected() {
-	return HAL_GPIO_ReadPin(SD_CARD_WP_GPIO_Port, SD_CARD_WP_Pin) == GPIO_PIN_RESET;
+	return HAL_GPIO_ReadPin(SD_CARD_WP_GPIO_Port, SD_CARD_WP_Pin) == GPIO_PIN_SET;
+}
+
+static void sdmmc_config_dma_stream(const void *buff) {
+	uint32_t tz = __CLZ(__RBIT((uint32_t)buff)); // get trailing zeros
+	uint32_t sxcr;
+	switch (tz) {
+	case 0: sxcr = DMA_MBURST_SINGLE | DMA_MDATAALIGN_BYTE; break;
+	case 1: sxcr = DMA_MBURST_SINGLE | DMA_MDATAALIGN_HALFWORD; break;
+	case 2:
+	case 3: sxcr = DMA_MBURST_SINGLE | DMA_MDATAALIGN_WORD; break;
+	default: sxcr = DMA_MBURST_INC4 | DMA_MDATAALIGN_WORD;
+	}
+
+	MODIFY_REG(hsd2.hdmarx->Instance->CR, DMA_SxCR_MSIZE | DMA_SxCR_MBURST, sxcr);
 }
 
 static int sdmmc_wait_ready() {
-	TickType_t xTicksToWait = pdMS_TO_TICKS(1000);
+	TickType_t xTicksToWait = pdMS_TO_TICKS(SDMMC_TIMEOUT_MS);
 	TimeOut_t xTimeOut;
 	vTaskSetTimeOutState(&xTimeOut);
 	while (HAL_SD_GetCardState(&hsd2) != HAL_SD_CARD_TRANSFER) {
-		if (sta & STA_NODISK) {
+		if (disk_sdmmc_status() & STA_NODISK) {
 			return RES_NOTRDY;
 		}
 		if (xTaskCheckForTimeOut(&xTimeOut, &xTicksToWait) != pdFALSE) {
@@ -39,7 +60,12 @@ static int sdmmc_wait_ready() {
 }
 
 DSTATUS disk_sdmmc_status (void) {
-	return sta;
+	if (sd_diskio_flags) {
+		return xEventGroupGetBits(sd_diskio_flags) & (STA_NOINIT | STA_NODISK | STA_PROTECT);
+	}
+	else {
+		return STA_NOINIT;
+	}
 }
 
 DSTATUS disk_sdmmc_initialize(void) {
@@ -51,7 +77,21 @@ DSTATUS disk_sdmmc_initialize(void) {
 		vGrantAccessToEventGroup(NULL, sd_diskio_flags);
 	}
 
-	sta = sdmmc_card_write_protected() ? STA_PROTECT : 0;
+	if (sdmmc_card_write_protected()) {
+		xEventGroupSetBits(sd_diskio_flags, STA_PROTECT);
+	} else {
+		xEventGroupClearBits(sd_diskio_flags, STA_PROTECT);
+	}
+
+	/* Check if the SD card is plugged in the slot */
+	if (!sdmmc_card_detected()) {
+		xEventGroupSetBits(sd_diskio_flags, STA_NOINIT | STA_NODISK);
+		return disk_sdmmc_status();
+	}
+	else {
+		xEventGroupClearBits(sd_diskio_flags, STA_NODISK);
+	}
+
 	/* uSD device interface configuration */
 	hsd2.Instance = SDMMC2;
 	hsd2.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
@@ -61,15 +101,9 @@ DSTATUS disk_sdmmc_initialize(void) {
 	hsd2.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_ENABLE;
 	hsd2.Init.ClockDiv = SDMMC_INIT_CLK_DIV;
 
-	/* Check if the SD card is plugged in the slot */
-	if (!sdmmc_card_detected()) {
-		sta = STA_NOINIT | STA_NODISK;
-		return sta;
-	}
-
 	if (HAL_SD_Init(&hsd2) != HAL_OK) {
-		sta = STA_NOINIT;
-		return sta;
+		xEventGroupSetBits(sd_diskio_flags, STA_NOINIT);
+		return disk_sdmmc_status();
 	}
 
 	/* Configure SD Bus width */
@@ -85,15 +119,14 @@ DSTATUS disk_sdmmc_initialize(void) {
 
 	/* Enable wide operation */
 	if (HAL_SD_ConfigWideBusOperation(&hsd2, hsd2.Init.BusWide) != HAL_OK) {
-		sta = STA_NOINIT;
-		return sta;
+		xEventGroupSetBits(sd_diskio_flags, STA_NOINIT);
 	}
 
-	return sta;
+	return disk_sdmmc_status();
 }
 
 DRESULT disk_sdmmc_read (BYTE* buff, LBA_t sector, UINT count) {
-	if (sta & STA_NOINIT) {
+	if (disk_sdmmc_status() & STA_NOINIT) {
 		return RES_NOTRDY;
 	}
 	DRESULT res;
@@ -101,30 +134,26 @@ DRESULT disk_sdmmc_read (BYTE* buff, LBA_t sector, UINT count) {
 		return res;
 	}
 
-	uint32_t msize;
-	if ((uint32_t)buff & 0x01) {
-		msize = DMA_MDATAALIGN_BYTE;
-	}
-	else if ((uint32_t)buff & 0x02) {
-		msize = DMA_MDATAALIGN_HALFWORD;
-	}
-	else {
-		msize = DMA_MDATAALIGN_WORD;
-	}
-	MODIFY_REG(hsd2.hdmarx->Instance->CR, DMA_SxCR_MSIZE, msize);
+	sdmmc_config_dma_stream(buff);
 
 	if (HAL_SD_ReadBlocks_DMA(&hsd2, buff, (uint32_t)sector, count) != HAL_OK) {
 		return RES_ERROR;
 	}
 
-	if (xEventGroupWaitBits(sd_diskio_flags, SD_DISKIO_TRANSFER_CPLT, pdTRUE, pdTRUE, pdMS_TO_TICKS(1000)) != SD_DISKIO_TRANSFER_CPLT) {
+	if (xEventGroupWaitBits(
+			sd_diskio_flags,
+			SD_DISKIO_TRANSFER_CPLT | SD_DISKIO_TRANSFER_ERROR | SD_DISKIO_TRANSFER_ABORTED,
+			pdTRUE,
+			pdFALSE,
+			pdMS_TO_TICKS(SDMMC_TIMEOUT_MS)
+	) != SD_DISKIO_TRANSFER_CPLT) {
 		return RES_ERROR;
 	}
 	return RES_OK;
 }
 
 DRESULT disk_sdmmc_write (const BYTE* buff, LBA_t sector, UINT count) {
-	if (sta & STA_NOINIT) {
+	if (disk_sdmmc_status() & STA_NOINIT) {
 		return RES_NOTRDY;
 	}
 	DRESULT res;
@@ -132,30 +161,26 @@ DRESULT disk_sdmmc_write (const BYTE* buff, LBA_t sector, UINT count) {
 		return res;
 	}
 
-	uint32_t msize;
-	if ((uint32_t)buff & 0x01) {
-		msize = DMA_MDATAALIGN_BYTE;
-	}
-	else if ((uint32_t)buff & 0x02) {
-		msize = DMA_MDATAALIGN_HALFWORD;
-	}
-	else {
-		msize = DMA_MDATAALIGN_WORD;
-	}
-	MODIFY_REG(hsd2.hdmarx->Instance->CR, DMA_SxCR_MSIZE, msize);
+	sdmmc_config_dma_stream(buff);
 
 	if (HAL_SD_WriteBlocks_DMA(&hsd2, (uint8_t*)buff, (uint32_t)sector, count) != HAL_OK) {
 		return RES_ERROR;
 	}
 
-	if (xEventGroupWaitBits(sd_diskio_flags, SD_DISKIO_TRANSFER_CPLT, pdTRUE, pdTRUE, pdMS_TO_TICKS(1000)) != SD_DISKIO_TRANSFER_CPLT) {
+	if (xEventGroupWaitBits(
+			sd_diskio_flags,
+			SD_DISKIO_TRANSFER_CPLT | SD_DISKIO_TRANSFER_ERROR | SD_DISKIO_TRANSFER_ABORTED,
+			pdTRUE,
+			pdFALSE,
+			pdMS_TO_TICKS(SDMMC_TIMEOUT_MS)
+	) != SD_DISKIO_TRANSFER_CPLT) {
 		return RES_ERROR;
 	}
 	return RES_OK;
 }
 
 DRESULT disk_sdmmc_ioctl (BYTE cmd, void* buff) {
-	if (sta & STA_NOINIT) {
+	if (disk_sdmmc_status() & STA_NOINIT) {
 		return RES_NOTRDY;
 	}
 
@@ -193,6 +218,22 @@ void HAL_SD_TxCpltCallback(SD_HandleTypeDef *hsd) {
 void HAL_SD_RxCpltCallback(SD_HandleTypeDef *hsd) {
 	BaseType_t xHigherPriorityTaskWoken, xResult;
 	xResult = xEventGroupSetBitsFromISR(sd_diskio_flags, SD_DISKIO_TRANSFER_CPLT, &xHigherPriorityTaskWoken);
+	if(xResult != pdFAIL) {
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	}
+}
+
+void HAL_SD_ErrorCallback(SD_HandleTypeDef *hsd) {
+	BaseType_t xHigherPriorityTaskWoken, xResult;
+	xResult = xEventGroupSetBitsFromISR(sd_diskio_flags, SD_DISKIO_TRANSFER_ERROR, &xHigherPriorityTaskWoken);
+	if(xResult != pdFAIL) {
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	}
+}
+
+void HAL_SD_AbortCallback(SD_HandleTypeDef *hsd) {
+	BaseType_t xHigherPriorityTaskWoken, xResult;
+	xResult = xEventGroupSetBitsFromISR(sd_diskio_flags, SD_DISKIO_TRANSFER_ABORTED, &xHigherPriorityTaskWoken);
 	if(xResult != pdFAIL) {
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}

@@ -154,7 +154,7 @@ void HAL_SD_MspInit(SD_HandleTypeDef* hsd)
     hdma_sdmmc2.Init.Priority = DMA_PRIORITY_LOW;
     hdma_sdmmc2.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
     hdma_sdmmc2.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
-    hdma_sdmmc2.Init.MemBurst = DMA_MBURST_SINGLE;
+    hdma_sdmmc2.Init.MemBurst = DMA_MBURST_INC4;
     hdma_sdmmc2.Init.PeriphBurst = DMA_PBURST_INC4;
     if (HAL_DMA_Init(&hdma_sdmmc2) != HAL_OK)
     {

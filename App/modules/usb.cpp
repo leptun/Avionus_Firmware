@@ -116,7 +116,7 @@ void Setup() {
 	{
 		cdc_task,
 		"cdc",
-		sizeof(cdc_taskStack) / sizeof(portSTACK_TYPE),
+		(configSTACK_DEPTH_TYPE)sizeof(cdc_taskStack) / sizeof(portSTACK_TYPE),
 		NULL,
 		configMAX_PRIORITIES-2,
 		cdc_taskStack,
@@ -134,7 +134,7 @@ void Setup() {
 	{
 		usb_device_task,
 		"usbd",
-		sizeof(usb_device_taskStack) / sizeof(portSTACK_TYPE),
+		(configSTACK_DEPTH_TYPE)sizeof(usb_device_taskStack) / sizeof(portSTACK_TYPE),
 		NULL,
 		(configMAX_PRIORITIES-1) | portPRIVILEGE_BIT,
 		usb_device_taskStack,

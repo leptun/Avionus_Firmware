@@ -283,7 +283,7 @@ static const TaskParameters_t xClockTaskDefinition =
 {
 	taskClockMain,
 	"sys",
-    sizeof(xClockTaskStack) / sizeof(portSTACK_TYPE),
+	(configSTACK_DEPTH_TYPE)sizeof(xClockTaskStack) / sizeof(portSTACK_TYPE),
     NULL,
     0 | portPRIVILEGE_BIT,
 	xClockTaskStack,

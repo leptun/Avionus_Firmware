@@ -5,17 +5,19 @@
 #include "modules/servo.hpp"
 #include "modules/usb.hpp"
 #include "modules/blink.hpp"
+#include "Logging.hpp"
 #include <FreeRTOS.h>
 #include <task.h>
 
 namespace AppMain {
 
-void taskAppMain(void *pvParameters) {
+static void taskAppMain(void *pvParameters) {
 	modules::clock::Setup();
 	modules::adc::Setup();
 	modules::power::Setup();
 	modules::servo::Setup();
 	modules::usb::Setup();
+	Logging::Setup();
 	modules::blink::Setup();
 
 	for (;;) {
@@ -27,11 +29,10 @@ void taskAppMain(void *pvParameters) {
 }
 
 static portSTACK_TYPE xAppMainTaskStack[ 128 ] __attribute__((aligned(128*4))) __attribute__((section(".stack")));
-static const TaskParameters_t xAppMainTaskDefinition =
-{
+static const TaskParameters_t xAppMainTaskDefinition = {
 	taskAppMain,
 	"main",
-    sizeof(xAppMainTaskStack) / sizeof(portSTACK_TYPE),
+    (configSTACK_DEPTH_TYPE)sizeof(xAppMainTaskStack) / sizeof(portSTACK_TYPE),
     NULL,
     0 | portPRIVILEGE_BIT,
 	xAppMainTaskStack,
