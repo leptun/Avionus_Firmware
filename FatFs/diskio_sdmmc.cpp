@@ -97,7 +97,7 @@ DSTATUS disk_sdmmc_initialize(void) {
 	hsd2.Instance = SDMMC2;
 	hsd2.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
 	hsd2.Init.ClockBypass = SDMMC_CLOCK_BYPASS_DISABLE;
-	hsd2.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
+	hsd2.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_ENABLE;
 	hsd2.Init.BusWide = SDMMC_BUS_WIDE_1B;
 	hsd2.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_ENABLE;
 	hsd2.Init.ClockDiv = SDMMC_INIT_CLK_DIV;

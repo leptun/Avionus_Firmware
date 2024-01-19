@@ -14,7 +14,7 @@ uint8_t retSD;    /* Return value for SD */
 FATFS SDFatFS;    /* File system object for SD logical drive */
 FIL SDFile;       /* File object for SD */
 
-uint8_t aBuf[16384];
+uint8_t aBuf[16384] __attribute__((aligned(16)));
 struct {
 	UINT br_total;
 	UINT bw_total;
@@ -71,7 +71,7 @@ void testWrite() {
 			lastTime = timeNow;
 		}
 	}
-	while (bw == sizeof(aBuf) && stat.bw_total < 100000000);
+	while (bw == sizeof(aBuf) && stat.bw_total < 104857600);
 	retSD = f_close(&SDFile);
 }
 
