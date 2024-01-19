@@ -13,8 +13,8 @@ HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority) {
 	return HAL_OK;
 }
 void HAL_IncTick(void) { Error_Handler(); }
-uint32_t HAL_GetTick(void) { return xTaskGetTickCount(); }
-void HAL_Delay(uint32_t Delay) { vTaskDelay(Delay); }
+uint32_t HAL_GetTick(void) { return (xPortIsInsideInterrupt() != pdFALSE) ? xTaskGetTickCountFromISR() : xTaskGetTickCount(); }
+void HAL_Delay(uint32_t Delay) { if (xPortIsInsideInterrupt() == pdFALSE) vTaskDelay(Delay); } //todo implement spinlock or something for the case of ISR
 void HAL_SuspendTick(void) { vTaskSuspendAll(); }
 void HAL_ResumeTick(void) { xTaskResumeAll(); }
 

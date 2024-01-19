@@ -6,6 +6,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "event_groups.h"
+#include <modules/exti.hpp>
 
 
 #define SDMMC_TIMEOUT_MS 5000
@@ -21,11 +22,11 @@ enum FlagDef {
 	SD_DISKIO_TRANSFER_ABORTED = 0x20,
 };
 
-static int sdmmc_card_detected() {
+static bool sdmmc_card_detected() {
 	return HAL_GPIO_ReadPin(SD_CARD_CD_GPIO_Port, SD_CARD_CD_Pin) == GPIO_PIN_RESET;
 }
 
-static int sdmmc_card_write_protected() {
+static bool sdmmc_card_write_protected() {
 	return HAL_GPIO_ReadPin(SD_CARD_WP_GPIO_Port, SD_CARD_WP_Pin) == GPIO_PIN_SET;
 }
 
@@ -43,7 +44,7 @@ static void sdmmc_config_dma_stream(const void *buff) {
 	MODIFY_REG(hsd2.hdmarx->Instance->CR, DMA_SxCR_MSIZE | DMA_SxCR_MBURST, sxcr);
 }
 
-static int sdmmc_wait_ready() {
+static DRESULT sdmmc_wait_ready() {
 	TickType_t xTicksToWait = pdMS_TO_TICKS(SDMMC_TIMEOUT_MS);
 	TimeOut_t xTimeOut;
 	vTaskSetTimeOutState(&xTimeOut);
@@ -238,3 +239,16 @@ void HAL_SD_AbortCallback(SD_HandleTypeDef *hsd) {
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
+
+void modules::exti::exti13_handler() {
+	BaseType_t xHigherPriorityTaskWoken, xResult;
+
+	(void)HAL_SD_Abort(&hsd2);
+
+	xResult = xEventGroupSetBitsFromISR(sd_diskio_flags, STA_NOINIT, &xHigherPriorityTaskWoken);
+	if(xResult != pdFAIL) {
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	}
+}
+
+

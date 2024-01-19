@@ -1,4 +1,5 @@
 #include "AppMain.hpp"
+#include "modules/exti.hpp"
 #include "modules/clock.hpp"
 #include "modules/adc.hpp"
 #include "modules/power.hpp"
@@ -12,6 +13,7 @@
 namespace AppMain {
 
 static void taskAppMain(void *pvParameters) {
+	modules::exti::Setup();
 	modules::clock::Setup();
 	modules::adc::Setup();
 	modules::power::Setup();
