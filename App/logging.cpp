@@ -2,6 +2,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <ff.h>
+#include <fatfs.h>
 
 extern "C" uint32_t _fatfs_data_run_addr[];
 extern "C" uint32_t _fatfs_bss_end[];
@@ -76,10 +77,9 @@ void testWrite() {
 }
 
 static void taskLogging(void *pvParameters) {
-	vTaskDelay(1000);
+	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); //wait for parent task to finish initializing this task
 
 	retSD = f_mount(&SDFatFS, "0:/", 1);
-	portSWITCH_TO_USER_MODE();
 
 	testRead();
 	testWrite();
@@ -96,7 +96,7 @@ static const TaskParameters_t xLoggingTaskDefinition =
 	"Logging",
 	(configSTACK_DEPTH_TYPE)sizeof(xLoggingTaskStack) / sizeof(portSTACK_TYPE),
     NULL,
-    2 | portPRIVILEGE_BIT,
+    2,
 	xLoggingTaskStack,
     {
         /* Base address   Length                    Parameters */
@@ -109,7 +109,15 @@ static const TaskParameters_t xLoggingTaskDefinition =
 };
 
 void Setup() {
-	xTaskCreateRestricted(&xLoggingTaskDefinition, NULL);
+	TaskHandle_t loggingTask;
+	if (xTaskCreateRestricted(&xLoggingTaskDefinition, &loggingTask) != pdPASS) {
+		Error_Handler();
+	}
+
+	fatfs_GrantAccess(loggingTask);
+	if (xTaskNotify(loggingTask, 0, eNoAction) != pdPASS) {
+		Error_Handler();
+	}
 }
 
 }

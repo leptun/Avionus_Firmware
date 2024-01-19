@@ -22,6 +22,19 @@ enum FlagDef {
 	SD_DISKIO_TRANSFER_ABORTED = 0x20,
 };
 
+void diskio_sdmmc_init(void) {
+	sd_diskio_flags = xEventGroupCreate();
+	if (!sd_diskio_flags) {
+		Error_Handler();
+	}
+	hsd2.Instance = SDMMC2;
+	HAL_SD_MspInit(&hsd2);
+}
+
+void diskio_sdmmc_grant_access(TaskHandle_t task) {
+	vGrantAccessToEventGroup(task, sd_diskio_flags);
+}
+
 static bool sdmmc_card_detected() {
 	return HAL_GPIO_ReadPin(SD_CARD_CD_GPIO_Port, SD_CARD_CD_Pin) == GPIO_PIN_RESET;
 }
@@ -70,14 +83,6 @@ DSTATUS disk_sdmmc_status (void) {
 }
 
 DSTATUS disk_sdmmc_initialize(void) {
-	if (!sd_diskio_flags) {
-		sd_diskio_flags = xEventGroupCreate();
-		if (!sd_diskio_flags) {
-			Error_Handler();
-		}
-		vGrantAccessToEventGroup(NULL, sd_diskio_flags);
-	}
-
 	if (sdmmc_card_write_protected()) {
 		xEventGroupSetBits(sd_diskio_flags, STA_PROTECT);
 	} else {
@@ -94,7 +99,6 @@ DSTATUS disk_sdmmc_initialize(void) {
 	}
 
 	/* uSD device interface configuration */
-	hsd2.Instance = SDMMC2;
 	hsd2.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
 	hsd2.Init.ClockBypass = SDMMC_CLOCK_BYPASS_DISABLE;
 	hsd2.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_ENABLE;
