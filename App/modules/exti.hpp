@@ -8,6 +8,9 @@ namespace exti {
 
 void Setup();
 
+void GrantAccess(TaskHandle_t task);
+
+
 void exti0_handler(void);
 void exti1_handler(void);
 void exti2_handler(void);

@@ -48,24 +48,26 @@ void Setup(void) {
 	}
 }
 
-static void IrqHandler(void) {
-	BaseType_t xHigherPriorityTaskWoken, xResult = pdFAIL;
+void GrantAccess(TaskHandle_t task) {
+	vGrantAccessToEventGroup(task, exti_flags);
+}
 
+static void IrqHandler(void) {
 	uint32_t flags = LL_EXTI_ReadFlag_0_31(LL_EXTI_LINE_ALL) & READ_BIT(EXTI->IMR, LL_EXTI_LINE_ALL);
 	LL_EXTI_ClearFlag_0_31(flags);
 
 	if (exti_flags) {
+		BaseType_t xHigherPriorityTaskWoken, xResult;
 		xResult = xEventGroupSetBitsFromISR(exti_flags, flags, &xHigherPriorityTaskWoken);
+		if(xResult != pdFAIL) {
+			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+		}
 	}
 
 	while (flags) {
 		uint32_t hidx = __CLZ(flags);
 		extiHandlers[hidx]();
 		flags &= ~(1 << (31 - hidx));
-	}
-
-	if(xResult != pdFAIL) {
-		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
 
