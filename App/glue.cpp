@@ -34,3 +34,10 @@ extern "C"
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
 	__asm("BKPT #0\n");
 }
+
+extern "C"
+int __io_putchar(int ch) {
+	// Write character to ITM ch.0
+	ITM_SendChar(ch);
+	return(ch);
+}
