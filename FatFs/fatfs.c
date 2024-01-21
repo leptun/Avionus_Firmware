@@ -11,6 +11,7 @@ void fatfs_Init(void) {
 
 void fatfs_GrantAccess(TaskHandle_t task) {
 	ff_system_grant_access(task);
+	ff_mem_grant_access(task);
 	diskio_sdmmc_grant_access(task);
 }
 
