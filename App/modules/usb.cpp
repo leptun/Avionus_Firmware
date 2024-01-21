@@ -27,11 +27,15 @@ static void usb_device_task(void *pvParameters) {
 	// init device stack on configured roothub port
 	// This should be called after scheduler/kernel is started.
 	// Otherwise it could cause kernel issue since USB IRQ handler does use RTOS queue API.
-	memcpy(UUID, (const uint32_t*)UID_BASE, sizeof(UUID));
 	tud_init(BOARD_TUD_RHPORT);
 
 	vGrantAccessToTask(NULL, pxcdcTaskHandle);
 	vCloneAccessToKernelObjects(pxcdcTaskHandle, NULL);
+
+	// start the cdc task
+	if (xTaskNotify(pxcdcTaskHandle, 0, eNoAction) != pdPASS) {
+		Error_Handler();
+	}
 
 	portSWITCH_TO_USER_MODE();
 
@@ -49,6 +53,8 @@ static portSTACK_TYPE usb_device_taskStack[ USBD_STACK_SIZE ] __attribute__((ali
 
 static void cdc_task(void *pvParameters) {
 	(void) pvParameters;
+
+	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); //wait for parent task to finish initializing this task
 
 	uint8_t buf[64];
 	for (;;) {
@@ -75,6 +81,8 @@ void tud_cdc_rx_cb(uint8_t itf) {
 }
 
 void Setup() {
+	memcpy(UUID, (const uint32_t*)UID_BASE, sizeof(UUID));
+
 	LL_RCC_SetUSBClockSource(LL_RCC_USB_CLKSOURCE_PLL);
 
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
