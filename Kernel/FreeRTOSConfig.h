@@ -70,7 +70,8 @@
 #define configQUEUE_REGISTRY_SIZE                8
 #define configUSE_QUEUE_SETS                     0
 #define configUSE_TIME_SLICING                   0
-#define configUSE_NEWLIB_REENTRANT               1
+#define configUSE_NEWLIB_REENTRANT               2
+#include <newlib-freertos-mpu.h>
 #define configENABLE_BACKWARD_COMPATIBILITY      0
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS  5
 #define configUSE_MINI_LIST_ITEM                 1
