@@ -4,6 +4,7 @@
 #include <ff.h>
 #include <fatfs.h>
 #include <modules/exti.hpp>
+#include <stdio.h>
 
 extern "C" uint32_t _fatfs_data_run_addr[];
 extern "C" uint32_t _fatfs_bss_end[];
@@ -79,6 +80,8 @@ void testWrite() {
 
 static void taskLogging(void *pvParameters) {
 	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); //wait for parent task to finish initializing this task
+
+	puts("test");
 
 	retSD = f_mount(&SDFatFS, "0:/", 1);
 

@@ -317,6 +317,7 @@ SECTIONS
 	    *(.bss)
 	    *(.bss*)
 	    *(COMMON)
+	    *(.shared)
 		
 		. = ALIGN(4);
 		_shared_bss_end = .;

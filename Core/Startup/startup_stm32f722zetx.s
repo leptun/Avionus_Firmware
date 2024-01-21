@@ -51,12 +51,10 @@ Reset_Handler:
   bl init_sections
 
 /* Call the clock system intitialization function.*/
-  bl  SystemInit   
-/* Call static constructors */
-    bl __libc_init_array
+  bl  SystemInit
 /* Call the application's entry point.*/
   bl  vTaskStartScheduler
-  bx  lr    
+  bx  lr
 .size  Reset_Handler, .-Reset_Handler
 
 /**
