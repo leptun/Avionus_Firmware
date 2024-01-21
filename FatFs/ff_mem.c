@@ -8,7 +8,7 @@
 
 #include <umm_malloc.h>		/* with POSIX API */
 
-static uint8_t fatfs_heap_buf[1024] __attribute__((aligned(4)));
+static uint8_t fatfs_heap_buf[1984] __attribute__((aligned(4)));
 static umm_heap fatfs_heap;
 
 void* ff_memalloc (	/* Returns pointer to the allocated memory block (null if not enough core) */
