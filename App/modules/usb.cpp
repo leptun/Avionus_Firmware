@@ -6,6 +6,7 @@
 #include "task.h"
 #include "timers.h"
 #include <util.hpp>
+#include <retarget_locks.h>
 
 #define USBD_STACK_SIZE     256 * (CFG_TUSB_DEBUG ? 2 : 1)
 #define CDC_STACK_SZIE      128
@@ -30,6 +31,7 @@ static void usb_device_task(void *pvParameters) {
 	tud_init(BOARD_TUD_RHPORT);
 
 	vGrantAccessToTask(NULL, pxcdcTaskHandle);
+	retarget_locks_grant_access(NULL);
 	vCloneAccessToKernelObjects(pxcdcTaskHandle, NULL);
 
 	// start the cdc task
