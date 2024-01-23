@@ -117,7 +117,7 @@
 #define xPortSysTickHandler SysTick_Handler
 
 /* Define to trap errors during development. */
-#define configASSERT( x ) if ((x) == 0) {taskDISABLE_INTERRUPTS(); for( ;; );}
+#define configASSERT( x ) if ((x) == 0) { __asm("BKPT #0\n"); taskDISABLE_INTERRUPTS(); for( ;; ); }
 
 /* FreeRTOS MPU specific definitions. */
 #define configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS 0

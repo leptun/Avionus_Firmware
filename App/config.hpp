@@ -30,4 +30,6 @@ static const util::TIM_CHAN_PAIR servo_channels[] = {
 
 static TIM_TypeDef * const adc_timer = TIM6;
 
+static constexpr uint32_t usb_stream_buffer_size = 64;
+
 }

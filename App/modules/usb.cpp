@@ -7,6 +7,9 @@
 #include "timers.h"
 #include <util.hpp>
 #include <retarget_locks.h>
+#include <stream_buffer.h>
+#include <config.hpp>
+#include <math.h>
 
 #define USBD_STACK_SIZE     256 * (CFG_TUSB_DEBUG ? 2 : 1)
 #define CDC_STACK_SZIE      128
@@ -16,6 +19,14 @@ extern "C" uint32_t _tinyusb_data_end[];
 
 namespace modules {
 namespace usb {
+
+enum CDCThreadFlags {
+	FLAG_KRPC_RX = 0x000001,
+	FLAG_KRPC_TX = 0x000002,
+};
+
+StreamBufferHandle_t krpc_rx_stream;
+StreamBufferHandle_t krpc_tx_stream;
 
 static TaskHandle_t pxcdcTaskHandle;
 static TaskHandle_t pxusbdTaskHandle;
@@ -30,6 +41,8 @@ static void usb_device_task(void *pvParameters) {
 	// Otherwise it could cause kernel issue since USB IRQ handler does use RTOS queue API.
 	tud_init(BOARD_TUD_RHPORT);
 
+	vGrantAccessToStreamBuffer(NULL, krpc_rx_stream);
+	vGrantAccessToStreamBuffer(NULL, krpc_tx_stream);
 	vGrantAccessToTask(NULL, pxcdcTaskHandle);
 	retarget_locks_grant_access(NULL);
 	vCloneAccessToKernelObjects(pxcdcTaskHandle, NULL);
@@ -60,15 +73,22 @@ static void cdc_task(void *pvParameters) {
 
 	uint8_t buf[64];
 	for (;;) {
-		uint32_t pendingItfs = 0;
-		util::xTaskNotifyWaitBitsAnyIndexed(1, 0, 0x3, &pendingItfs, portMAX_DELAY);
-		for (uint8_t i = 0; i < 2; i++) {
-			if (pendingItfs & (1 << i)) {
-				while (tud_cdc_n_available(i)) {
-					uint32_t count = tud_cdc_n_read(i, buf, sizeof(buf));
-					tud_cdc_n_write(i, buf, count);
+		uint32_t pendingFlags = 0;
+		util::xTaskNotifyWaitBitsAnyIndexed(1, 0, FLAG_KRPC_RX | FLAG_KRPC_TX, &pendingFlags, portMAX_DELAY);
+		if (pendingFlags & FLAG_KRPC_RX) {
+			size_t count = tud_cdc_read(buf, std::min(sizeof(buf), xStreamBufferSpacesAvailable(krpc_tx_stream)));
+			if (xStreamBufferSend(krpc_rx_stream, buf, count, 0) != count) {
+				Error_Handler();
+			}
+		}
+		if (pendingFlags & FLAG_KRPC_TX) {
+			size_t count = xStreamBufferReceive(krpc_tx_stream, buf, std::min(sizeof(buf), (size_t)tud_cdc_write_available()), 0);
+			tud_cdc_write(buf, count);
+			tud_cdc_write_flush();
+			if (xStreamBufferBytesAvailable(krpc_tx_stream) > 0) {
+				if (xTaskNotifyIndexed(NULL, 1, FLAG_KRPC_TX, eSetBits) != pdPASS) {
+					Error_Handler();
 				}
-				tud_cdc_n_write_flush(i);
 			}
 		}
 	}
@@ -77,8 +97,32 @@ static portSTACK_TYPE cdc_taskStack[ CDC_STACK_SZIE ] __attribute__((aligned(CDC
 
 extern "C"
 void tud_cdc_rx_cb(uint8_t itf) {
-	if (xTaskNotifyIndexed(pxcdcTaskHandle, 1, (1 << itf), eSetBits) != pdPASS) {
+	if (xTaskNotifyIndexed(pxcdcTaskHandle, 1, FLAG_KRPC_RX, eSetBits) != pdPASS) {
 		Error_Handler();
+	}
+}
+
+static void krpc_rx_callback(StreamBufferHandle_t xStreamBuffer, BaseType_t xIsInsideISR, BaseType_t * const pxHigherPriorityTaskWoken) {
+	if (xIsInsideISR) {
+		if (xTaskNotifyIndexedFromISR(pxcdcTaskHandle, 1, FLAG_KRPC_RX, eSetBits, pxHigherPriorityTaskWoken) != pdPASS) {
+			Error_Handler();
+		}
+	} else {
+		if (xTaskNotifyIndexed(pxcdcTaskHandle, 1, FLAG_KRPC_RX, eSetBits) != pdPASS) {
+			Error_Handler();
+		}
+	}
+}
+
+static void krpc_tx_callback(StreamBufferHandle_t xStreamBuffer, BaseType_t xIsInsideISR, BaseType_t * const pxHigherPriorityTaskWoken) {
+	if (xIsInsideISR) {
+		if (xTaskNotifyIndexedFromISR(pxcdcTaskHandle, 1, FLAG_KRPC_TX, eSetBits, pxHigherPriorityTaskWoken) != pdPASS) {
+			Error_Handler();
+		}
+	} else {
+		if (xTaskNotifyIndexed(pxcdcTaskHandle, 1, FLAG_KRPC_TX, eSetBits) != pdPASS) {
+			Error_Handler();
+		}
 	}
 }
 
@@ -121,6 +165,9 @@ void Setup() {
 	/* USB_OTG_HS interrupt Init */
 	HAL_NVIC_SetPriority(OTG_HS_IRQn, 5, 0);
 	HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+
+	krpc_rx_stream = xStreamBufferCreateWithCallback(config::usb_stream_buffer_size, 0, NULL, krpc_rx_callback);
+	krpc_tx_stream = xStreamBufferCreateWithCallback(config::usb_stream_buffer_size, 0, krpc_tx_callback, NULL);
 
 	const TaskParameters_t cdc_taskTaskDefinition =
 	{

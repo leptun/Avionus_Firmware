@@ -7,3 +7,6 @@
 [submodule "umm_malloc"]
 	path = umm_malloc
 	url = https://github.com/rhempel/umm_malloc.git
+[submodule "krpc-arduino"]
+	path = krpc-arduino
+	url = https://github.com/krpc/krpc-arduino.git
