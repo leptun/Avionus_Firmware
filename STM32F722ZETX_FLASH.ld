@@ -35,7 +35,7 @@
 /* Entry Point */
 ENTRY(Reset_Handler)
 
-_Min_Heap_Size = 0x200; /* required amount of heap */
+_Min_Heap_Size = 0x1fc; /* required amount of heap */
 _Min_Stack_Size = 0x400; /* required amount of stack */
 
 /* Memories definition */
@@ -49,7 +49,7 @@ MEMORY
 }
 
 __privileged_functions_region_size__  = 64K;
-/* __privileged_data_region_size__       = 32K; */
+__shared_region_size__                = 16K;
 __tinyusb_data_region_size__          = 2K;
 __fatfs_data_region_size__            = 2K;
 
@@ -60,17 +60,7 @@ __privileged_functions_start__        = __FLASH_segment_start__;
 __privileged_functions_end__          = __FLASH_segment_start__ + __privileged_functions_region_size__;
 
 __SHARED_SRAM_segment_start__         = ORIGIN( ITCMRAM );
-__SHARED_SRAM_segment_end__           = __SHARED_SRAM_segment_start__ + LENGTH( ITCMRAM );
-
-/*
-__SRAM_segment_start__                = ORIGIN( DTCMRAM );
-__SRAM_segment_end__                  = __SRAM_segment_start__ + LENGTH( DTCMRAM ) + LENGTH( SRAM1 ) + LENGTH( SRAM2 );
-*/
-
-/*
-__privileged_data_start__             = ORIGIN ( DTCMRAM );
-__privileged_data_end__               = __SRAM_segment_start__ + __privileged_data_region_size__;
-*/
+__SHARED_SRAM_segment_end__           = __SHARED_SRAM_segment_start__ + __shared_region_size__;
 
 
 /* Sections */
@@ -171,15 +161,18 @@ SECTIONS
 
 /* -------------------------------------------------------------------------- */
 
-	.MSP_stack :
+	.freertos_bss (NOLOAD) :
 	{
-		. = ALIGN(8);
-		. = . + _Min_Stack_Size;
-		. = ALIGN(8);
-		_estack = .;
+		. = ALIGN(4);
+		_freertos_bss_run_addr = .;
+		
+		*(.stack)
+		./Kernel/*.o(.bss*) /* */
+		./FreeRTOS-Kernel/*.o(.bss*) /* */
+		
+		. = ALIGN(4);
+		_freertos_bss_end = .;
 	} >DTCMRAM
-
-/* -------------------------------------------------------------------------- */
 
 	.freertos_data :
 	{
@@ -194,20 +187,30 @@ SECTIONS
 	} >DTCMRAM AT> FLASH
 	_freertos_data_load_addr = LOADADDR(.freertos_data);
 
-	.freertos_bss (NOLOAD) :
+/* -------------------------------------------------------------------------- */
+
+	.MSP_stack :
 	{
-		. = ALIGN(4);
-		_freertos_bss_run_addr = .;
-		
-		./Kernel/*.o(.bss*) /* */
-		./FreeRTOS-Kernel/*.o(.bss*) /* */
-		*(.stack)
-		
-		. = ALIGN(4);
-		_freertos_bss_end = .;
+		. = ALIGN(8);
+		. = . + _Min_Stack_Size;
+		. = ALIGN(8);
+		_estack = .;
 	} >DTCMRAM
 
 /* -------------------------------------------------------------------------- */
+
+	.tinyusb_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_tinyusb_bss_run_addr = .;
+		
+		./tinyusb/src/*.o(.bss*) /* */
+		./usb/*.o(.bss*) /* */
+		./App/modules/usb.o(.bss*)
+		
+		. = ALIGN(4);
+		_tinyusb_bss_end = .;
+	} >SRAM2
 
 	.tinyusb_data :
 	{
@@ -222,22 +225,25 @@ SECTIONS
 		_tinyusb_data_end = .;
 	} >SRAM2 AT> FLASH
 	_tinyusb_data_load_addr = LOADADDR(.tinyusb_data);
-
-	.tinyusb_bss (NOLOAD) :
+	
+	.tinyusb_free (NOLOAD) :
 	{
-		. = ALIGN(4);
-		_tinyusb_bss_run_addr = .;
-		
-		./tinyusb/src/*.o(.bss*) /* */
-		./usb/*.o(.bss*) /* */
-		./App/modules/usb.o(.bss*)
-		
-		. = ALIGN(4);
-		. = __tinyusb_data_region_size__ - (_tinyusb_data_end - _tinyusb_data_run_addr);
-		_tinyusb_bss_end = .;
+		FILL(0);
+		. = __tinyusb_data_region_size__ - (_tinyusb_data_end - _tinyusb_bss_run_addr);
 	} >SRAM2
 
 /* -------------------------------------------------------------------------- */
+
+	.fatfs_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_fatfs_bss_run_addr = .;
+		
+		./FatFs/*.o(.bss*) /* */
+		
+		. = ALIGN(4);
+		_fatfs_bss_end = .;
+	} >SRAM2
 
 	.fatfs_data :
 	{
@@ -250,20 +256,25 @@ SECTIONS
 		_fatfs_data_end = .;
 	} >SRAM2 AT> FLASH
 	_fatfs_data_load_addr = LOADADDR(.fatfs_data);
-
-	.fatfs_bss (NOLOAD) :
+	
+	.fatfs_free (NOLOAD) :
 	{
-		. = ALIGN(4);
-		_fatfs_bss_run_addr = .;
-		
-		./FatFs/*.o(.bss*) /* */
-		
-		. = ALIGN(4);
-		. = __fatfs_data_region_size__ - (_fatfs_data_end - _fatfs_data_run_addr);
-		_fatfs_bss_end = .;
+		FILL(0);
+		. = __fatfs_data_region_size__ - (_fatfs_data_end - _fatfs_bss_run_addr);
 	} >SRAM2
 
 /* -------------------------------------------------------------------------- */
+
+	.app_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_app_bss_run_addr = .;
+		
+		./App/*.o(.bss*) /* */
+		
+		. = ALIGN(4);
+		_app_bss_end = .;
+	} >SRAM1
 
 	.app_data :
 	{
@@ -277,18 +288,34 @@ SECTIONS
 	} >SRAM1 AT> FLASH
 	_app_data_load_addr = LOADADDR(.app_data);
 
-	.app_bss (NOLOAD) :
+/* -------------------------------------------------------------------------- */
+
+	._shared_user_heap :
+	{
+		_shared_bss_run_addr = .;
+		. = 1;
+		. = ALIGN(4);
+		PROVIDE ( end = . );
+		PROVIDE ( _end = . );
+		. = . + _Min_Heap_Size;
+		. = ALIGN(4);
+		_eheap = .;
+	} >ITCMRAM
+
+	.shared_bss (NOLOAD) :
 	{
 		. = ALIGN(4);
-		_app_bss_run_addr = .;
 		
-		./App/*.o(.bss*) /* */
+		./Core/*.o(.bss*) /* */
+		./Drivers/*.o(.bss*) /* */
+	    *(.bss)
+	    *(.bss*)
+	    *(COMMON)
+	    *(.shared)
 		
 		. = ALIGN(4);
-		_app_bss_end = .;
-	} >SRAM1
-
-/* -------------------------------------------------------------------------- */
+		_shared_bss_end = .;
+	} >ITCMRAM
 
 	.shared_data :
 	{
@@ -306,33 +333,11 @@ SECTIONS
 		_shared_data_end = .;
 	} >ITCMRAM AT> FLASH
 	_shared_data_load_addr = LOADADDR(.shared_data);
-
-	.shared_bss (NOLOAD) :
+	
+	.shared_free (NOLOAD) :
 	{
-		. = ALIGN(4);
-		_shared_bss_run_addr = .;
-		
-		./Core/*.o(.bss*) /* */
-		./Drivers/*.o(.bss*) /* */
-	    *(.bss)
-	    *(.bss*)
-	    *(COMMON)
-	    *(.shared)
-		
-		. = ALIGN(4);
-		_shared_bss_end = .;
-	} >ITCMRAM
-
-/* -------------------------------------------------------------------------- */
-
-	._user_heap :
-	{
-		. = ALIGN(4);
-		PROVIDE ( end = . );
-		PROVIDE ( _end = . );
-		. = . + _Min_Heap_Size;
-		. = ALIGN(4);
-		_eheap = .;
+		FILL(0);
+		. = __shared_region_size__ - (_shared_data_end - _shared_bss_run_addr);
 	} >ITCMRAM
 
 /* -------------------------------------------------------------------------- */

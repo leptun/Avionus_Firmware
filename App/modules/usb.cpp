@@ -11,8 +11,8 @@
 #define USBD_STACK_SIZE     256 * (CFG_TUSB_DEBUG ? 2 : 1)
 #define CDC_STACK_SZIE      128
 
-extern "C" uint32_t _tinyusb_data_run_addr[];
-extern "C" uint32_t _tinyusb_bss_end[];
+extern "C" uint32_t _tinyusb_bss_run_addr[];
+extern "C" uint32_t _tinyusb_data_end[];
 
 namespace modules {
 namespace usb {
@@ -132,7 +132,7 @@ void Setup() {
 		cdc_taskStack,
 		{
 			/* Base address   Length                    Parameters */
-			{ (uint32_t*)(_tinyusb_data_run_addr), (uint32_t)_tinyusb_bss_end - (uint32_t)_tinyusb_data_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
+			{ (uint32_t*)(_tinyusb_bss_run_addr), (uint32_t)_tinyusb_data_end - (uint32_t)_tinyusb_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
 			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
 		}
 	};
@@ -150,7 +150,7 @@ void Setup() {
 		usb_device_taskStack,
 		{
 			/* Base address   Length                    Parameters */
-			{ _tinyusb_data_run_addr, (uint32_t)_tinyusb_bss_end - (uint32_t)_tinyusb_data_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
+			{ _tinyusb_bss_run_addr, (uint32_t)_tinyusb_data_end - (uint32_t)_tinyusb_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
 			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
 		}
 	};
