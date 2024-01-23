@@ -3,9 +3,13 @@
 #include <task.h>
 #include <util.hpp>
 #include <config.hpp>
+#include <ff.h>
+#include "exti.hpp"
 
 namespace modules {
 namespace clock {
+
+DWORD fat_time;
 
 static TaskHandle_t pxClockTaskHandle;
 static bool cssEnabled = false;
@@ -19,15 +23,42 @@ enum ClockThreadFlags {
 	FLAG_PLLI2SRDY = 0x000020,
 	FLAG_PLLSAIRDY = 0x000040,
 	FLAG_CSS = 0x000080,
-//	FLAG_RTC_TICK = 0x000100,
+	FLAG_RTC_TICK = 0x000100,
 };
 
-//static void configureRTC() {
-//	if (LL_RTC_IsActiveFlag_INITS(RTC)) {
-//		// already initialized
-//		return;
-//	}
-//}
+static void updateFatTime() {
+	fat_time = (DWORD)(__LL_RTC_CONVERT_BCD2BIN(LL_RTC_DATE_GetYear(RTC)) + 20) << 25 |
+		(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_DATE_GetMonth(RTC)) << 21 |
+		(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_DATE_GetDay(RTC)) << 16 |
+		(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_TIME_GetHour(RTC)) << 11 |
+		(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_TIME_GetMinute(RTC)) << 5 |
+		(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_TIME_GetSecond(RTC)) >> 1;
+}
+
+static void configureRTC() {
+	TimeOut_t xTimeOut;
+	TickType_t xTicksToWait;
+	if (LL_RTC_IsActiveFlag_INITS(RTC)) {
+		// already initialized
+		return;
+	}
+
+	LL_PWR_EnableBkUpAccess();
+	LL_RTC_DisableWriteProtection(RTC);
+
+	LL_RTC_DisableIT_WUT(RTC);
+	LL_RTC_WAKEUP_Disable(RTC);
+	vTaskSetTimeOutState(&xTimeOut); xTicksToWait = pdMS_TO_TICKS(10);
+	while (!LL_RTC_IsActiveFlag_WUTW(RTC)) { if (xTaskCheckForTimeOut(&xTimeOut, &xTicksToWait) != pdFALSE) Error_Handler(); }
+	LL_RTC_WAKEUP_SetClock(RTC, LL_RTC_WAKEUPCLOCK_CKSPRE);
+	LL_RTC_WAKEUP_SetAutoReload(RTC, 0); //1s tick period
+	LL_RTC_WAKEUP_Enable(RTC);
+	LL_RTC_ClearFlag_WUT(RTC);
+	LL_RTC_EnableIT_WUT(RTC);
+
+	LL_RTC_EnableWriteProtection(RTC);
+	LL_PWR_DisableBkUpAccess();
+}
 
 static bool configureLClocks(bool useExternalClock) {
 	TimeOut_t xTimeOut;
@@ -46,7 +77,7 @@ static bool configureLClocks(bool useExternalClock) {
 	LL_RCC_LSI_Disable();
 	LL_RCC_LSE_Disable();
 	vTaskSetTimeOutState(&xTimeOut); xTicksToWait = pdMS_TO_TICKS(10);
-	while(LL_RCC_LSI_IsReady() || LL_RCC_LSE_IsReady()) { if (xTaskCheckForTimeOut(&xTimeOut, &xTicksToWait) != pdFALSE) Error_Handler(); }
+	while (LL_RCC_LSI_IsReady() || LL_RCC_LSE_IsReady()) { if (xTaskCheckForTimeOut(&xTimeOut, &xTicksToWait) != pdFALSE) Error_Handler(); }
 
 	if (useExternalClock) {
 		LL_RCC_LSE_SetDriveCapability(LL_RCC_LSEDRIVE_LOW);
@@ -233,6 +264,18 @@ static void taskClockMain(void *pvParameters) {
 	LL_RCC_ClearFlag_PLLSAIRDY();
 	LL_RCC_EnableIT_PLLSAIRDY();
 
+	// Setup wakeup interrupt
+	LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_22);
+	LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_22);
+	LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_22);
+	HAL_NVIC_SetPriority(RTC_WKUP_IRQn, 5, 0);
+	HAL_NVIC_EnableIRQ(RTC_WKUP_IRQn);
+	LL_PWR_EnableBkUpAccess();
+	LL_RTC_DisableWriteProtection(RTC);
+	LL_RTC_ClearFlag_WUT(RTC);
+	LL_RTC_EnableWriteProtection(RTC);
+	LL_PWR_DisableBkUpAccess();
+
 
 	// try to setup the low speed clocks using the LSE
 	if (!configureLClocks(true)) {
@@ -242,6 +285,9 @@ static void taskClockMain(void *pvParameters) {
 			Error_Handler();
 		}
 	}
+
+	configureRTC();
+	updateFatTime();
 
 	// try to setup the high speed clocks using the HSE
 	if (!configureHClocks(true)) {
@@ -255,23 +301,30 @@ static void taskClockMain(void *pvParameters) {
 	if (xTaskNotify(callingTaskHandle, 0, eNoAction) != pdPASS)
 		Error_Handler();
 
-	uint32_t lastSubSecond = LL_RTC_TIME_GetSubSecond(RTC);
 	for (;;) {
-		if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG_CSS, NULL, pdMS_TO_TICKS(1500)) == pdFALSE) {
-			// time to check if the RTC is advancing
-			uint32_t newSubSecond = LL_RTC_TIME_GetSubSecond(RTC);
-			if (newSubSecond == lastSubSecond) {
-				// rtc not advancing, switch to LSI
-				if (!configureLClocks(false)) {
+		uint32_t retFlags;
+		if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG_CSS | FLAG_RTC_TICK, &retFlags, pdMS_TO_TICKS(2000)) == pdFALSE) {
+			// rtc not advancing, switch to LSI
+			if (!configureLClocks(false)) {
+				Error_Handler();
+			}
+			configureRTC();
+		}
+		else {
+			if (retFlags & FLAG_CSS) {
+				//CSS occured, try to reconfigure the clocks to internal
+				if (!configureHClocks(false)) {
 					Error_Handler();
 				}
 			}
-			lastSubSecond = newSubSecond;
-		}
-		else {
-			//CSS occured, try to reconfigure the clocks to internal
-			if (!configureHClocks(false)) {
-				Error_Handler();
+			else if (retFlags & FLAG_RTC_TICK) {
+				LL_PWR_EnableBkUpAccess();
+				LL_RTC_DisableWriteProtection(RTC);
+				LL_RTC_ClearFlag_WUT(RTC);
+				LL_RTC_EnableWriteProtection(RTC);
+				LL_PWR_DisableBkUpAccess();
+
+				updateFatTime();
 			}
 		}
 
@@ -297,6 +350,10 @@ void Setup() {
 	_priv_xClockTaskDefinition.pvParameters = xTaskGetCurrentTaskHandle();
 	xTaskCreateRestricted(&_priv_xClockTaskDefinition, &pxClockTaskHandle);
 	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+}
+
+DWORD GetFatTime() {
+	return fat_time;
 }
 
 extern "C"
@@ -333,12 +390,11 @@ void NMI_Handler() {
 	Error_Handler();
 }
 
-//extern "C"
-//void RTC_WKUP_IRQHandler() {
-//	if (LL_RTC_IsActiveFlag_WUT(RTC) && LL_RTC_IsEnabledIT_WUT(RTC)) {
-//
-//	}
-//}
-
 }
+}
+
+void modules::exti::exti22_handler() {
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	xTaskNotifyIndexedFromISR(modules::clock::pxClockTaskHandle, 0, modules::clock::FLAG_RTC_TICK, eSetBits, &xHigherPriorityTaskWoken);
+	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
