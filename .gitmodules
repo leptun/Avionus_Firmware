@@ -10,3 +10,6 @@
 [submodule "krpc-arduino"]
 	path = krpc-arduino
 	url = https://github.com/krpc/krpc-arduino.git
+[submodule "Fusion"]
+	path = Fusion
+	url = https://github.com/xioTechnologies/Fusion.git
