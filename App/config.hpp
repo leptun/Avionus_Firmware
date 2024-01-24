@@ -5,8 +5,8 @@ namespace config {
 
 static constexpr uint32_t system_clock_frequency = 216000000;
 
-static constexpr uint32_t logic_cycle_frequency = 25;
-static constexpr uint32_t regular_adc_sample_cnt = 400; //samples per cycle
+static constexpr uint32_t logic_cycle_frequency = 20;
+static constexpr uint32_t regular_adc_sample_cnt = 500; //samples per cycle
 
 static constexpr uint32_t servo_update_freq = 50;
 static const util::TIM_CHAN_PAIR servo_channels[] = {
