@@ -1,4 +1,5 @@
 #include "AppMain.hpp"
+#include <fatfs.h>
 #include "modules/exti.hpp"
 #include "modules/clock.hpp"
 #include "modules/adc.hpp"
@@ -7,20 +8,24 @@
 #include "modules/usb.hpp"
 #include "modules/blink.hpp"
 #include "Logging.hpp"
+#include "modules/krpc_client.hpp"
+
 #include <FreeRTOS.h>
 #include <task.h>
 
 namespace AppMain {
 
 static void taskAppMain(void *pvParameters) {
+	fatfs_Init();
 	modules::exti::Setup();
 	modules::clock::Setup();
 	modules::adc::Setup();
 	modules::power::Setup();
 	modules::servo::Setup();
 	modules::usb::Setup();
-	Logging::Setup();
 	modules::blink::Setup();
+	Logging::Setup();
+	modules::krpc_client::Setup();
 
 	for (;;) {
 		modules::servo::SetServoPosition(15, 1000);

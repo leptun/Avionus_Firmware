@@ -1,56 +1,37 @@
 #include "usb.hpp"
-#include "tusb.h"
-#include "FreeRTOS.h"
-#include "semphr.h"
-#include "queue.h"
-#include "task.h"
-#include "timers.h"
+#include <tusb.h>
+#include <FreeRTOS.h>
+#include <task.h>
+#include <semphr.h>
 #include <util.hpp>
 #include <retarget_locks.h>
-#include <stream_buffer.h>
+#include <modules/krpc_client.hpp>
 #include <config.hpp>
-#include <math.h>
 
 #define USBD_STACK_SIZE     256 * (CFG_TUSB_DEBUG ? 2 : 1)
-#define CDC_STACK_SZIE      128
 
 extern "C" uint32_t _tinyusb_bss_run_addr[];
 extern "C" uint32_t _tinyusb_data_end[];
+extern "C" uint32_t _krpc_bss_run_addr[];
+extern "C" uint32_t _krpc_data_end[];
 
 namespace modules {
 namespace usb {
 
-enum CDCThreadFlags {
-	FLAG_KRPC_RX = 0x000001,
-	FLAG_KRPC_TX = 0x000002,
-};
-
-StreamBufferHandle_t krpc_rx_stream;
-StreamBufferHandle_t krpc_tx_stream;
-
-static TaskHandle_t pxcdcTaskHandle;
 static TaskHandle_t pxusbdTaskHandle;
-
+static bool usb_task_initialized;
 static uint32_t UUID[3];
 
 static void usb_device_task(void *pvParameters) {
 	(void) pvParameters;
 
+	retarget_locks_grant_access(NULL);
+
 	// init device stack on configured roothub port
 	// This should be called after scheduler/kernel is started.
 	// Otherwise it could cause kernel issue since USB IRQ handler does use RTOS queue API.
 	tud_init(BOARD_TUD_RHPORT);
-
-	vGrantAccessToStreamBuffer(NULL, krpc_rx_stream);
-	vGrantAccessToStreamBuffer(NULL, krpc_tx_stream);
-	vGrantAccessToTask(NULL, pxcdcTaskHandle);
-	retarget_locks_grant_access(NULL);
-	vCloneAccessToKernelObjects(pxcdcTaskHandle, NULL);
-
-	// start the cdc task
-	if (xTaskNotify(pxcdcTaskHandle, 0, eNoAction) != pdPASS) {
-		Error_Handler();
-	}
+	usb_task_initialized = true;
 
 	portSWITCH_TO_USER_MODE();
 
@@ -58,71 +39,29 @@ static void usb_device_task(void *pvParameters) {
 	while (1) {
 		// put this thread to waiting state until there is new events
 		tud_task();
-
-		// following code only run if tud_task() process at least 1 event
-		tud_cdc_write_flush();
 	}
 }
 static portSTACK_TYPE usb_device_taskStack[ USBD_STACK_SIZE ] __attribute__((aligned(USBD_STACK_SIZE*4))) __attribute__((section(".stack")));
 
-
-static void cdc_task(void *pvParameters) {
-	(void) pvParameters;
-
-	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); //wait for parent task to finish initializing this task
-
-	uint8_t buf[64];
-	for (;;) {
-		uint32_t pendingFlags = 0;
-		util::xTaskNotifyWaitBitsAnyIndexed(1, 0, FLAG_KRPC_RX | FLAG_KRPC_TX, &pendingFlags, portMAX_DELAY);
-		if (pendingFlags & FLAG_KRPC_RX) {
-			size_t count = tud_cdc_read(buf, std::min(sizeof(buf), xStreamBufferSpacesAvailable(krpc_tx_stream)));
-			if (xStreamBufferSend(krpc_rx_stream, buf, count, 0) != count) {
-				Error_Handler();
-			}
-		}
-		if (pendingFlags & FLAG_KRPC_TX) {
-			size_t count = xStreamBufferReceive(krpc_tx_stream, buf, std::min(sizeof(buf), (size_t)tud_cdc_write_available()), 0);
-			tud_cdc_write(buf, count);
-			tud_cdc_write_flush();
-			if (xStreamBufferBytesAvailable(krpc_tx_stream) > 0) {
-				if (xTaskNotifyIndexed(NULL, 1, FLAG_KRPC_TX, eSetBits) != pdPASS) {
-					Error_Handler();
-				}
-			}
-		}
-	}
-}
-static portSTACK_TYPE cdc_taskStack[ CDC_STACK_SZIE ] __attribute__((aligned(CDC_STACK_SZIE*4))) __attribute__((section(".stack")));
-
 extern "C"
 void tud_cdc_rx_cb(uint8_t itf) {
-	if (xTaskNotifyIndexed(pxcdcTaskHandle, 1, FLAG_KRPC_RX, eSetBits) != pdPASS) {
+	switch (itf) {
+	case 0:
+		modules::krpc_client::NotifyCommRx();
+		break;
+	default:
 		Error_Handler();
 	}
 }
 
-static void krpc_rx_callback(StreamBufferHandle_t xStreamBuffer, BaseType_t xIsInsideISR, BaseType_t * const pxHigherPriorityTaskWoken) {
-	if (xIsInsideISR) {
-		if (xTaskNotifyIndexedFromISR(pxcdcTaskHandle, 1, FLAG_KRPC_RX, eSetBits, pxHigherPriorityTaskWoken) != pdPASS) {
-			Error_Handler();
-		}
-	} else {
-		if (xTaskNotifyIndexed(pxcdcTaskHandle, 1, FLAG_KRPC_RX, eSetBits) != pdPASS) {
-			Error_Handler();
-		}
-	}
-}
-
-static void krpc_tx_callback(StreamBufferHandle_t xStreamBuffer, BaseType_t xIsInsideISR, BaseType_t * const pxHigherPriorityTaskWoken) {
-	if (xIsInsideISR) {
-		if (xTaskNotifyIndexedFromISR(pxcdcTaskHandle, 1, FLAG_KRPC_TX, eSetBits, pxHigherPriorityTaskWoken) != pdPASS) {
-			Error_Handler();
-		}
-	} else {
-		if (xTaskNotifyIndexed(pxcdcTaskHandle, 1, FLAG_KRPC_TX, eSetBits) != pdPASS) {
-			Error_Handler();
-		}
+extern "C"
+void tud_cdc_tx_complete_cb(uint8_t itf) {
+	switch (itf) {
+	case 0:
+		modules::krpc_client::NotifyCommTx();
+		break;
+	default:
+		Error_Handler();
 	}
 }
 
@@ -166,27 +105,6 @@ void Setup() {
 	HAL_NVIC_SetPriority(OTG_HS_IRQn, 5, 0);
 	HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
 
-	krpc_rx_stream = xStreamBufferCreateWithCallback(config::usb_stream_buffer_size, 0, NULL, krpc_rx_callback);
-	krpc_tx_stream = xStreamBufferCreateWithCallback(config::usb_stream_buffer_size, 0, krpc_tx_callback, NULL);
-
-	const TaskParameters_t cdc_taskTaskDefinition =
-	{
-		cdc_task,
-		"cdc",
-		(configSTACK_DEPTH_TYPE)sizeof(cdc_taskStack) / sizeof(portSTACK_TYPE),
-		NULL,
-		configMAX_PRIORITIES-2,
-		cdc_taskStack,
-		{
-			/* Base address   Length                    Parameters */
-			{ (uint32_t*)(_tinyusb_bss_run_addr), (uint32_t)_tinyusb_data_end - (uint32_t)_tinyusb_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
-			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
-		}
-	};
-
-	// Create CDC task
-	xTaskCreateRestricted(&cdc_taskTaskDefinition, &pxcdcTaskHandle);
-
 	const TaskParameters_t usb_device_taskTaskDefinition =
 	{
 		usb_device_task,
@@ -199,11 +117,20 @@ void Setup() {
 			/* Base address   Length                    Parameters */
 			{ _tinyusb_bss_run_addr, (uint32_t)_tinyusb_data_end - (uint32_t)_tinyusb_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
 			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
+			{ (uint32_t*)(_krpc_bss_run_addr), (uint32_t)_krpc_data_end - (uint32_t)_krpc_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
 		}
 	};
 
 	// Create a task for tinyusb device stack
 	xTaskCreateRestricted(&usb_device_taskTaskDefinition, &pxusbdTaskHandle);
+}
+
+void GrantAccess(TaskHandle_t task) {
+	while (!usb_task_initialized) {
+		vTaskDelay(1);
+	}
+	vGrantAccessToTask(pxusbdTaskHandle, task);
+	vCloneAccessToKernelObjects(task, pxusbdTaskHandle);
 }
 
 static size_t board_get_unique_id(uint8_t id[], size_t max_len) {

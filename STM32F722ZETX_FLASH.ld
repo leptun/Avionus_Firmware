@@ -52,6 +52,7 @@ __privileged_functions_region_size__  = 64K;
 __shared_region_size__                = 16K;
 __tinyusb_data_region_size__          = 2K;
 __fatfs_data_region_size__            = 2K;
+__krpc_data_region_size__             = 4K;
 
 __FLASH_segment_start__               = ORIGIN( FLASH );
 __FLASH_segment_end__                 = __FLASH_segment_start__ + LENGTH( FLASH );
@@ -261,6 +262,39 @@ SECTIONS
 	{
 		FILL(0);
 		. = __fatfs_data_region_size__ - (_fatfs_data_end - _fatfs_bss_run_addr);
+	} >SRAM2
+
+/* -------------------------------------------------------------------------- */
+
+	.krpc_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_krpc_bss_run_addr = .;
+		
+		./App/modules/krpc_client.o(.bss*)
+		./krpc-arduino/*.o(.bss*) /* */
+		
+		. = ALIGN(4);
+		_krpc_bss_end = .;
+	} >SRAM2
+
+	.krpc_data :
+	{
+		. = ALIGN(4);
+		_krpc_data_run_addr = .;
+		
+		./App/modules/krpc_client.o(.data*)
+		./krpc-arduino/*.o(.data*) /* */
+		
+		. = ALIGN(4);
+		_krpc_data_end = .;
+	} >SRAM2 AT> FLASH
+	_krpc_data_load_addr = LOADADDR(.krpc_data);
+	
+	.krpc_free (NOLOAD) :
+	{
+		FILL(0);
+		. = __krpc_data_region_size__ - (_krpc_data_end - _krpc_bss_run_addr);
 	} >SRAM2
 
 /* -------------------------------------------------------------------------- */
