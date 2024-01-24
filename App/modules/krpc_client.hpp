@@ -6,7 +6,6 @@ namespace krpc_client {
 
 void Setup();
 void NotifyCommRx();
-void NotifyCommTx();
 
 }
 }

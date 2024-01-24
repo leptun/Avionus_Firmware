@@ -31,7 +31,6 @@ namespace krpc_client {
 
 enum FlagDef {
 	FLAG_COMM_RX = 0x000001,
-	FLAG_COMM_TX = 0x000002,
 };
 
 static TaskHandle_t px_krpc_client_TaskHandle __attribute__((section(".shared")));
@@ -81,12 +80,6 @@ void Setup() {
 
 void NotifyCommRx() {
 	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 1, FLAG_COMM_RX, eSetBits) != pdPASS) {
-		Error_Handler();
-	}
-}
-
-void NotifyCommTx() {
-	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 1, FLAG_COMM_TX, eSetBits) != pdPASS) {
 		Error_Handler();
 	}
 }
@@ -161,8 +154,6 @@ krpc_error_t krpc_write(krpc_connection_t connection, const uint8_t *buf,
 		written += tud_cdc_n_write(0, buf + written, count - written);
 		if (written == count)
 			break;
-		else
-			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, modules::krpc_client::FLAG_COMM_RX, NULL, portMAX_DELAY);
 	}
 	tud_cdc_n_write_flush(0);
 	return KRPC_OK;
