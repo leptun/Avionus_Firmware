@@ -34,7 +34,7 @@ enum FlagDef {
 	FLAG_COMM_TX = 0x000002,
 };
 
-static TaskHandle_t px_krpc_client_TaskHandle;
+static TaskHandle_t px_krpc_client_TaskHandle __attribute__((section(".shared")));
 
 static void task_krpc_client_Main(void *pvParameters) {
 	(void) pvParameters;
