@@ -52,6 +52,28 @@ void tud_cdc_rx_cb(uint8_t itf) {
 	}
 }
 
+extern "C"
+void tud_cdc_tx_complete_cb(uint8_t itf) {
+	switch (itf) {
+	case 0:
+		modules::krpc_client::NotifyCommTx();
+		break;
+	default:
+		Error_Handler();
+	}
+}
+
+extern "C"
+void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
+	switch (itf) {
+	case 0:
+		modules::krpc_client::NotifyCommLineState();
+		break;
+	default:
+		Error_Handler();
+	}
+}
+
 void Setup() {
 	memcpy(UUID, (const uint32_t*)UID_BASE, sizeof(UUID));
 

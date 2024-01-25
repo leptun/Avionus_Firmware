@@ -8,11 +8,11 @@
 #include <krpc_cnano/communication.h>
 #include <retarget_locks.h>
 #include <tusb.h>
+#include <modules/airplane.hpp>
 
 #include <FreeRTOS.h>
 #include "semphr.h"
 #include "task.h"
-
 
 #include <assert.h>
 #include <stdint.h>
@@ -29,24 +29,72 @@ static void krpc_memory_init(void);
 namespace modules {
 namespace krpc_client {
 
-enum FlagDef {
-	FLAG_COMM_RX = 0x000001,
+enum FlagDef0 {
+	FLAG0_CYCLE = 0x000001,
+	FLAG0_COMM_LINE_STATE = 0x000002,
 };
 
+enum FlagDef1 {
+	FLAG1_COMM_RX = 0x000001,
+	FLAG1_COMM_TX = 0x000002,
+	FLAG1_COMM_LINE_STATE = 0x000004,
+};
+
+enum class InternalStates {
+	Startup = 0,
+	Init,
+	Ready,
+	Processing,
+} state;
+
 static TaskHandle_t px_krpc_client_TaskHandle __attribute__((section(".shared")));
+static modules::airplane::State plane_state __attribute__((section(".shared")));
+static modules::airplane::Control plane_control __attribute__((section(".shared")));
+
 
 static void task_krpc_client_Main(void *pvParameters) {
 	(void) pvParameters;
 	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); //wait for parent task to finish initializing this task
 
-	krpc_connection_t conn;
-	krpc_open(&conn, NULL);
-	krpc_connect(conn, "Basic example");
-	krpc_schema_Status status;
-	krpc_KRPC_GetStatus(conn, &status);
-	printf("Connected to kRPC server version %s\n", status.version);
+	krpc_connection_t conn = 0;
 
-	for (;;) { vTaskDelay(1000); }
+	for (;;) {
+		switch (state) {
+		case InternalStates::Startup: {
+			state = InternalStates::Init;
+		} break;
+		case InternalStates::Init: {
+			krpc_close(conn);
+			krpc_open(&conn, NULL);
+			vTaskDelay(100);
+			krpc_connect(conn, "Basic example");
+			krpc_schema_Status status;
+			krpc_KRPC_GetStatus(conn, &status);
+			printf("Connected to kRPC server version %s\n", status.version);
+			state = InternalStates::Ready;
+		} break;
+		case InternalStates::Ready: {
+			uint32_t flags = 0;
+			util::xTaskNotifyWaitBitsAnyIndexed(0, FLAG0_CYCLE, FLAG0_COMM_LINE_STATE, &flags, portMAX_DELAY);
+			if (flags & FLAG0_COMM_LINE_STATE) {
+				if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
+					state = InternalStates::Init;
+					break;
+				}
+			}
+			if (flags & FLAG0_CYCLE) {
+				state = InternalStates::Processing;
+				break;
+			}
+		} break;
+		case InternalStates::Processing: {
+			vTaskDelay(100);
+			state = InternalStates::Ready;
+		}
+		default:
+			Error_Handler();
+		}
+	}
 }
 static portSTACK_TYPE krpc_client_taskStack[1024] __attribute__((aligned(1024*4))) __attribute__((section(".stack")));
 
@@ -69,7 +117,6 @@ void Setup() {
 		}
 	};
 
-	// Create CDC task
 	xTaskCreateRestricted(&krpc_clientTaskDefinition, &px_krpc_client_TaskHandle);
 	modules::usb::GrantAccess(px_krpc_client_TaskHandle);
 	retarget_locks_grant_access(NULL);
@@ -78,8 +125,29 @@ void Setup() {
 	}
 }
 
+void NotifyCycle() {
+	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 0, FLAG0_CYCLE, eSetBits) != pdPASS) {
+		Error_Handler();
+	}
+}
+
 void NotifyCommRx() {
-	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 1, FLAG_COMM_RX, eSetBits) != pdPASS) {
+	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 1, FLAG1_COMM_RX, eSetBits) != pdPASS) {
+		Error_Handler();
+	}
+}
+
+void NotifyCommTx() {
+	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 1, FLAG1_COMM_TX, eSetBits) != pdPASS) {
+		Error_Handler();
+	}
+}
+
+void NotifyCommLineState() {
+	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 0, FLAG0_COMM_LINE_STATE, eSetBits) != pdPASS) {
+		Error_Handler();
+	}
+	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 1, FLAG1_COMM_LINE_STATE, eSetBits) != pdPASS) {
 		Error_Handler();
 	}
 }
@@ -119,18 +187,18 @@ void krpc_free(void *ptr) {
 
 krpc_error_t krpc_open(krpc_connection_t *connection,
 		const krpc_connection_config_t *arg) {
-	cdc_line_coding_t config;
 	for (;;) {
-		tud_cdc_n_get_line_coding(0, &config);
-		if (config.bit_rate == 69) {
-			break;
+		if (tud_ready() && tud_cdc_n_get_line_state(0) & 0x02) {
+			return KRPC_OK;
+		} else {
+			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, modules::krpc_client::FLAG1_COMM_LINE_STATE, NULL, portMAX_DELAY);
 		}
-		vTaskDelay(pdMS_TO_TICKS(1000));
 	}
-	return KRPC_OK;
 }
 
 krpc_error_t krpc_close(krpc_connection_t connection) {
+	tud_cdc_n_read_flush(0);
+	tud_cdc_n_write_clear(0);
 	return KRPC_OK;
 }
 
@@ -138,23 +206,31 @@ krpc_error_t krpc_read(krpc_connection_t connection, uint8_t *buf,
 		size_t count) {
 	size_t read = 0;
 	while (true) {
+		if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
+			return KRPC_ERROR_CONNECTION_FAILED;
+		}
 		read += tud_cdc_n_read(0, buf + read, count - read);
-		if (read == count)
-			break;
-		else
-			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, modules::krpc_client::FLAG_COMM_RX, NULL, portMAX_DELAY);
+		if (read == count) {
+			return KRPC_OK;
+		} else {
+			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, modules::krpc_client::FLAG1_COMM_RX | modules::krpc_client::FLAG1_COMM_LINE_STATE, NULL, portMAX_DELAY);
+		}
 	}
-	return KRPC_OK;
 }
 
 krpc_error_t krpc_write(krpc_connection_t connection, const uint8_t *buf,
 		size_t count) {
 	size_t written = 0;
 	while (true) {
+		if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
+			return KRPC_ERROR_CONNECTION_FAILED;
+		}
 		written += tud_cdc_n_write(0, buf + written, count - written);
-		if (written == count)
-			break;
+		if (written == count) {
+			tud_cdc_n_write_flush(0);
+			return KRPC_OK;
+		} else {
+			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, modules::krpc_client::FLAG1_COMM_TX | modules::krpc_client::FLAG1_COMM_LINE_STATE, NULL, portMAX_DELAY);
+		}
 	}
-	tud_cdc_n_write_flush(0);
-	return KRPC_OK;
 }

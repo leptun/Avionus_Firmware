@@ -28,5 +28,6 @@ void init_sections(void) {
 	INIT_SECTION(app);
 	INIT_SECTION(tinyusb);
 	INIT_SECTION(fatfs);
+	INIT_SECTION(krpc);
 	INIT_SECTION(shared);
 }
