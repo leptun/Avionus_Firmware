@@ -13,9 +13,12 @@
 #include <FreeRTOS.h>
 #include <task.h>
 
+#include <stdio.h>
+
 namespace AppMain {
 
 static void taskAppMain(void *pvParameters) {
+	puts("start");
 	fatfs_Init();
 	modules::exti::Setup();
 	modules::clock::Setup();
