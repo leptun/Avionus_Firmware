@@ -31,10 +31,8 @@ static void taskAppMain(void *pvParameters) {
 	modules::krpc_client::Setup();
 
 	for (;;) {
-		modules::servo::SetServoPosition(15, 1000);
-		vTaskDelay(2000);
-		modules::servo::SetServoPosition(15, 2000);
-		vTaskDelay(2000);
+		modules::krpc_client::Cycle();
+		vTaskDelay(50);
 	}
 }
 

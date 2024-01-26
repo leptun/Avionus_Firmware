@@ -5,15 +5,15 @@
 namespace modules {
 namespace airplane {
 
-class State {
-	FusionEuler heading;
+struct Flight {
+	FusionQuaternion rotation;
 	float latitude;
 	float longitude;
-	float elevation;
-	float velocity;
+	float mean_altitude;
+	float speed;
 };
 
-class Control {
+struct Control {
 	float throttle;
 	float pitch;
 	float yaw;

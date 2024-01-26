@@ -4,6 +4,7 @@
 #include <modules/usb.hpp>
 #include <krpc_cnano.h>
 #include <krpc_cnano/services/krpc.h>
+#include <krpc_cnano/services/space_center.h>
 #include <krpc_cnano/memory.h>
 #include <krpc_cnano/communication.h>
 #include <retarget_locks.h>
@@ -41,14 +42,14 @@ enum FlagDef1 {
 };
 
 enum class InternalStates {
-	Startup = 0,
-	Init,
-	Ready,
+	Init = 0,
+	Connected,
+	Flight,
 	Processing,
 } state;
 
 static TaskHandle_t px_krpc_client_TaskHandle __attribute__((section(".shared")));
-static modules::airplane::State plane_state __attribute__((section(".shared")));
+static modules::airplane::Flight plane_flight __attribute__((section(".shared")));
 static modules::airplane::Control plane_control __attribute__((section(".shared")));
 
 
@@ -56,41 +57,100 @@ static void task_krpc_client_Main(void *pvParameters) {
 	(void) pvParameters;
 	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); //wait for parent task to finish initializing this task
 
-	krpc_connection_t conn = 0;
+	krpc_connection_t conn;
+	krpc_SpaceCenter_Vessel_t vessel;
+	krpc_SpaceCenter_Orbit_t orbit;
+	krpc_SpaceCenter_CelestialBody_t body;
+	krpc_SpaceCenter_ReferenceFrame_t body_frame;
+	krpc_SpaceCenter_Flight_t flight;
+	krpc_SpaceCenter_Control_t control;
 
 	for (;;) {
 		switch (state) {
-		case InternalStates::Startup: {
-			state = InternalStates::Init;
-		} break;
 		case InternalStates::Init: {
 			krpc_close(conn);
 			krpc_open(&conn, NULL);
 			vTaskDelay(100);
-			krpc_connect(conn, "Basic example");
+			if (krpc_connect(conn, "Basic example")) { break; }
 			krpc_schema_Status status;
-			krpc_KRPC_GetStatus(conn, &status);
+			if (krpc_KRPC_GetStatus(conn, &status)) { break; }
 			printf("Connected to kRPC server version %s\n", status.version);
-			state = InternalStates::Ready;
+			state = InternalStates::Connected;
 		} break;
-		case InternalStates::Ready: {
+		case InternalStates::Connected: {
+			krpc_KRPC_GameScene_t scene;
+			if (krpc_KRPC_CurrentGameScene(conn, &scene)) { state = InternalStates::Init; break; }
+			if (scene == KRPC_KRPC_GAMESCENE_FLIGHT) {
+				if (krpc_SpaceCenter_ActiveVessel(conn, &vessel)) { state = InternalStates::Init; break; }
+				if (krpc_SpaceCenter_Vessel_Orbit(conn, &orbit, vessel)) { state = InternalStates::Init; break; }
+				if (krpc_SpaceCenter_Orbit_Body(conn, &body, orbit)) { state = InternalStates::Init; break; }
+				if (krpc_SpaceCenter_CelestialBody_ReferenceFrame(conn, &body_frame, body)) { state = InternalStates::Init; break; }
+//				if (krpc_SpaceCenter_Vessel_SurfaceVelocityReferenceFrame(conn, &ref_frame, vessel)) { state = InternalStates::Init; break; }
+				if (krpc_SpaceCenter_Vessel_Flight(conn, &flight, vessel, body_frame)) { state = InternalStates::Init; break; }
+				if (krpc_SpaceCenter_Vessel_Control(conn, &control, vessel)) { state = InternalStates::Init; break; }
+				state = InternalStates::Flight;
+			}
+			else {
+				vTaskDelay(1000);
+			}
+		} break;
+		case InternalStates::Flight: {
 			uint32_t flags = 0;
-			util::xTaskNotifyWaitBitsAnyIndexed(0, FLAG0_CYCLE, FLAG0_COMM_LINE_STATE, &flags, portMAX_DELAY);
-			if (flags & FLAG0_COMM_LINE_STATE) {
-				if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
-					state = InternalStates::Init;
+			if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG0_CYCLE | FLAG0_COMM_LINE_STATE, &flags, pdMS_TO_TICKS(1000)) == pdFALSE) {
+				krpc_KRPC_GameScene_t scene;
+				if (krpc_KRPC_CurrentGameScene(conn, &scene)) { state = InternalStates::Init; break; }
+				if (scene != KRPC_KRPC_GAMESCENE_FLIGHT) {
+					state = InternalStates::Connected;
 					break;
 				}
 			}
-			if (flags & FLAG0_CYCLE) {
-				state = InternalStates::Processing;
-				break;
+			else {
+				if (flags & FLAG0_COMM_LINE_STATE) {
+					if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
+						state = InternalStates::Init;
+						break;
+					}
+				}
+				if (flags & FLAG0_CYCLE) {
+					state = InternalStates::Processing;
+					break;
+				}
 			}
 		} break;
 		case InternalStates::Processing: {
-			vTaskDelay(100);
-			state = InternalStates::Ready;
-		}
+			// control
+//			if (krpc_SpaceCenter_Control_set_Throttle(conn, control, plane_control.throttle)) { state = InternalStates::Init; break; }
+//			if (krpc_SpaceCenter_Control_set_Pitch(conn, control, plane_control.pitch)) { state = InternalStates::Init; break; }
+//			if (krpc_SpaceCenter_Control_set_Yaw(conn, control, plane_control.yaw)) { state = InternalStates::Init; break; }
+//			if (krpc_SpaceCenter_Control_set_Roll(conn, control, plane_control.roll)) { state = InternalStates::Init; break; }
+//			if (krpc_SpaceCenter_Control_set_Gear(conn, control, plane_control.gear)) { state = InternalStates::Init; break; }
+
+			// flight
+			krpc_tuple_double_double_double_double_t rotation;
+			if (krpc_SpaceCenter_Flight_Rotation(conn, &rotation, flight)) { state = InternalStates::Init; break; }
+			plane_flight.rotation.element.x = (float)rotation.e0;
+			plane_flight.rotation.element.y = (float)rotation.e1;
+			plane_flight.rotation.element.z = (float)rotation.e2;
+			plane_flight.rotation.element.w = (float)rotation.e3;
+
+			double latitude;
+			if (krpc_SpaceCenter_Flight_Latitude(conn, &latitude, flight)) { state = InternalStates::Init; break; }
+			plane_flight.latitude = (float)latitude;
+
+			double longitude;
+			if (krpc_SpaceCenter_Flight_Longitude(conn, &longitude, flight)) { state = InternalStates::Init; break; }
+			plane_flight.longitude = (float)longitude;
+
+			double mean_altitude;
+			if (krpc_SpaceCenter_Flight_MeanAltitude(conn, &mean_altitude, flight)) { state = InternalStates::Init; break; }
+			plane_flight.mean_altitude = (float)mean_altitude;
+
+			double speed;
+			if (krpc_SpaceCenter_Flight_Speed(conn, &speed, flight)) { state = InternalStates::Init; break; }
+			plane_flight.speed = (float)speed;
+
+			state = InternalStates::Flight;
+		} break;
 		default:
 			Error_Handler();
 		}
@@ -125,7 +185,7 @@ void Setup() {
 	}
 }
 
-void NotifyCycle() {
+void Cycle() {
 	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 0, FLAG0_CYCLE, eSetBits) != pdPASS) {
 		Error_Handler();
 	}

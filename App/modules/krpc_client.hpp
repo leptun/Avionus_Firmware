@@ -5,6 +5,7 @@ namespace modules {
 namespace krpc_client {
 
 void Setup();
+void Cycle();
 
 void NotifyCommRx();
 void NotifyCommTx();
