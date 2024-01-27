@@ -118,11 +118,12 @@ static void task_krpc_client_Main(void *pvParameters) {
 			}
 		} break;
 		case InternalStates::Processing: {
+			uint32_t tickStart = xTaskGetTickCount();
 			// control
 //			if (krpc_SpaceCenter_Control_set_Throttle(conn, control, plane_control.throttle)) { state = InternalStates::Init; break; }
-//			if (krpc_SpaceCenter_Control_set_Pitch(conn, control, plane_control.pitch)) { state = InternalStates::Init; break; }
-//			if (krpc_SpaceCenter_Control_set_Yaw(conn, control, plane_control.yaw)) { state = InternalStates::Init; break; }
-//			if (krpc_SpaceCenter_Control_set_Roll(conn, control, plane_control.roll)) { state = InternalStates::Init; break; }
+			if (krpc_SpaceCenter_Control_set_Pitch(conn, control, plane_control.pitch)) { state = InternalStates::Init; break; }
+			if (krpc_SpaceCenter_Control_set_Yaw(conn, control, plane_control.yaw)) { state = InternalStates::Init; break; }
+			if (krpc_SpaceCenter_Control_set_Roll(conn, control, plane_control.roll)) { state = InternalStates::Init; break; }
 //			if (krpc_SpaceCenter_Control_set_Gear(conn, control, plane_control.gear)) { state = InternalStates::Init; break; }
 
 			// flight
@@ -148,6 +149,8 @@ static void task_krpc_client_Main(void *pvParameters) {
 			double speed;
 			if (krpc_SpaceCenter_Flight_Speed(conn, &speed, flight)) { state = InternalStates::Init; break; }
 			plane_flight.speed = (float)speed;
+
+			plane_flight.latency = xTaskGetTickCount() - tickStart;
 
 			state = InternalStates::Flight;
 		} break;
