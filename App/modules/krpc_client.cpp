@@ -267,6 +267,7 @@ krpc_error_t krpc_close(krpc_connection_t connection) {
 
 krpc_error_t krpc_read(krpc_connection_t connection, uint8_t *buf,
 		size_t count) {
+	tud_cdc_n_write_flush(0);
 	size_t read = 0;
 	while (true) {
 		if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
@@ -290,10 +291,11 @@ krpc_error_t krpc_write(krpc_connection_t connection, const uint8_t *buf,
 		}
 		written += tud_cdc_n_write(0, buf + written, count - written);
 		if (written == count) {
-			tud_cdc_n_write_flush(0);
 			return KRPC_OK;
 		} else {
 			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, modules::krpc_client::FLAG1_COMM_TX | modules::krpc_client::FLAG1_COMM_LINE_STATE, NULL, portMAX_DELAY);
 		}
 	}
 }
+
+
