@@ -18,15 +18,15 @@
 namespace AppMain {
 
 static void taskAppMain(void *pvParameters) {
-	puts("start");
-	fatfs_Init();
 	modules::exti::Setup();
 	modules::clock::Setup();
+	puts("start");
 	modules::adc::Setup();
 	modules::power::Setup();
 	modules::servo::Setup();
 	modules::usb::Setup();
 	modules::blink::Setup();
+	fatfs_Init();
 	Logging::Setup();
 	modules::krpc_client::Setup();
 
