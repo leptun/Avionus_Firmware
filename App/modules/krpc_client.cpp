@@ -48,6 +48,16 @@ enum class InternalStates {
 	Processing,
 } state;
 
+enum class BulkState {
+	DISABLED = 0,
+	RECEIVE = 1,
+	SEND = 2,
+} bulkState;
+
+#define KRPC_BULK_START for (bulkState = BulkState::SEND; bulkState != BulkState::DISABLED; bulkState = (BulkState)((int)bulkState - 1)) { krpc_error_t ret;
+#define KRPC_BULK_END } if (bulkState != BulkState::DISABLED) { bulkState = BulkState::DISABLED; state = InternalStates::Init; break; }
+#define KRPC_BULK_TEST(x) if (((ret = x)) && ret != KRPC_ERROR_DECODING_FAILED) { break; }
+
 static TaskHandle_t px_krpc_client_TaskHandle __attribute__((section(".shared")));
 static modules::airplane::Flight plane_flight __attribute__((section(".shared")));
 static modules::airplane::Control plane_control __attribute__((section(".shared")));
@@ -124,32 +134,33 @@ static void task_krpc_client_Main(void *pvParameters) {
 		} break;
 		case InternalStates::Processing: {
 			uint32_t tickStart = xTaskGetTickCount();
+			double latitude;
+			double longitude;
+			double mean_altitude;
+			double speed;
 			// control
-//			if (krpc_SpaceCenter_Control_set_Throttle(conn, control, plane_control.throttle)) { state = InternalStates::Init; break; }
-			if (krpc_SpaceCenter_Control_set_Pitch(conn, control, plane_control.pitch)) { state = InternalStates::Init; break; }
-			if (krpc_SpaceCenter_Control_set_Yaw(conn, control, plane_control.yaw)) { state = InternalStates::Init; break; }
-			if (krpc_SpaceCenter_Control_set_Roll(conn, control, plane_control.roll)) { state = InternalStates::Init; break; }
-//			if (krpc_SpaceCenter_Control_set_Gear(conn, control, plane_control.gear)) { state = InternalStates::Init; break; }
+			KRPC_BULK_START;
+//			KRPC_BULK_TEST(krpc_SpaceCenter_Control_set_Throttle(conn, control, plane_control.throttle));
+			KRPC_BULK_TEST(krpc_SpaceCenter_Control_set_Pitch(conn, control, plane_control.pitch));
+			KRPC_BULK_TEST(krpc_SpaceCenter_Control_set_Yaw(conn, control, plane_control.yaw));
+			KRPC_BULK_TEST(krpc_SpaceCenter_Control_set_Roll(conn, control, plane_control.roll));
+//			KRPC_BULK_TEST(krpc_SpaceCenter_Control_set_Gear(conn, control, plane_control.gear));
+			KRPC_BULK_END;
 
 			// flight
-			if (krpc_SpaceCenter_Flight_Pitch(conn, &plane_flight.pitch, flight)) { state = InternalStates::Init; break; }
-			if (krpc_SpaceCenter_Flight_Heading(conn, &plane_flight.heading, flight)) { state = InternalStates::Init; break; }
-			if (krpc_SpaceCenter_Flight_Roll(conn, &plane_flight.roll, flight)) { state = InternalStates::Init; break; }
+			KRPC_BULK_START;
+			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_Pitch(conn, &plane_flight.pitch, flight));
+			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_Heading(conn, &plane_flight.heading, flight));
+			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_Roll(conn, &plane_flight.roll, flight));
+			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_Latitude(conn, &latitude, flight));
+			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_Longitude(conn, &longitude, flight));
+			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_MeanAltitude(conn, &mean_altitude, flight));
+			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_Speed(conn, &speed, flight));
+			KRPC_BULK_END;
 
-			double latitude;
-			if (krpc_SpaceCenter_Flight_Latitude(conn, &latitude, flight)) { state = InternalStates::Init; break; }
 			plane_flight.latitude = (float)latitude;
-
-			double longitude;
-			if (krpc_SpaceCenter_Flight_Longitude(conn, &longitude, flight)) { state = InternalStates::Init; break; }
 			plane_flight.longitude = (float)longitude;
-
-			double mean_altitude;
-			if (krpc_SpaceCenter_Flight_MeanAltitude(conn, &mean_altitude, flight)) { state = InternalStates::Init; break; }
 			plane_flight.mean_altitude = (float)mean_altitude;
-
-			double speed;
-			if (krpc_SpaceCenter_Flight_Speed(conn, &speed, flight)) { state = InternalStates::Init; break; }
 			plane_flight.speed = (float)speed;
 
 			plane_flight.latency = xTaskGetTickCount() - tickStart;
@@ -269,6 +280,9 @@ krpc_error_t krpc_close(krpc_connection_t connection) {
 
 krpc_error_t krpc_read(krpc_connection_t connection, uint8_t *buf,
 		size_t count) {
+	if (modules::krpc_client::bulkState == modules::krpc_client::BulkState::SEND) {
+		return KRPC_ERROR_IO;
+	}
 	tud_cdc_n_write_flush(0);
 	size_t read = 0;
 	while (true) {
@@ -286,6 +300,9 @@ krpc_error_t krpc_read(krpc_connection_t connection, uint8_t *buf,
 
 krpc_error_t krpc_write(krpc_connection_t connection, const uint8_t *buf,
 		size_t count) {
+	if (modules::krpc_client::bulkState == modules::krpc_client::BulkState::RECEIVE) {
+		return KRPC_OK;
+	}
 	size_t written = 0;
 	while (true) {
 		if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
