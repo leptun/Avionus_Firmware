@@ -62,6 +62,9 @@ static void task_krpc_client_Main(void *pvParameters) {
 	krpc_SpaceCenter_Orbit_t orbit;
 	krpc_SpaceCenter_CelestialBody_t body;
 	krpc_SpaceCenter_ReferenceFrame_t body_frame;
+	krpc_SpaceCenter_ReferenceFrame_t ref_frame;
+	krpc_SpaceCenter_ReferenceFrame_t surface_ref_frame;
+	krpc_SpaceCenter_ReferenceFrame_t flight_ref_frame;
 	krpc_SpaceCenter_Flight_t flight;
 	krpc_SpaceCenter_Control_t control;
 
@@ -85,8 +88,10 @@ static void task_krpc_client_Main(void *pvParameters) {
 				if (krpc_SpaceCenter_Vessel_Orbit(conn, &orbit, vessel)) { state = InternalStates::Init; break; }
 				if (krpc_SpaceCenter_Orbit_Body(conn, &body, orbit)) { state = InternalStates::Init; break; }
 				if (krpc_SpaceCenter_CelestialBody_ReferenceFrame(conn, &body_frame, body)) { state = InternalStates::Init; break; }
-//				if (krpc_SpaceCenter_Vessel_SurfaceVelocityReferenceFrame(conn, &ref_frame, vessel)) { state = InternalStates::Init; break; }
-				if (krpc_SpaceCenter_Vessel_Flight(conn, &flight, vessel, body_frame)) { state = InternalStates::Init; break; }
+				if (krpc_SpaceCenter_Vessel_ReferenceFrame(conn, &ref_frame, vessel)) { state = InternalStates::Init; break; }
+				if (krpc_SpaceCenter_Vessel_SurfaceReferenceFrame(conn, &surface_ref_frame, vessel)) { state = InternalStates::Init; break; }
+				if (krpc_SpaceCenter_ReferenceFrame_CreateHybrid(conn, &flight_ref_frame, body_frame, surface_ref_frame, body_frame, body_frame)) { state = InternalStates::Init; break; }
+				if (krpc_SpaceCenter_Vessel_Flight(conn, &flight, vessel, flight_ref_frame)) { state = InternalStates::Init; break; }
 				if (krpc_SpaceCenter_Vessel_Control(conn, &control, vessel)) { state = InternalStates::Init; break; }
 				state = InternalStates::Flight;
 			}
@@ -127,12 +132,9 @@ static void task_krpc_client_Main(void *pvParameters) {
 //			if (krpc_SpaceCenter_Control_set_Gear(conn, control, plane_control.gear)) { state = InternalStates::Init; break; }
 
 			// flight
-			krpc_tuple_double_double_double_double_t rotation;
-			if (krpc_SpaceCenter_Flight_Rotation(conn, &rotation, flight)) { state = InternalStates::Init; break; }
-			plane_flight.rotation.element.x = (float)rotation.e0;
-			plane_flight.rotation.element.y = (float)rotation.e1;
-			plane_flight.rotation.element.z = (float)rotation.e2;
-			plane_flight.rotation.element.w = (float)rotation.e3;
+			if (krpc_SpaceCenter_Flight_Pitch(conn, &plane_flight.pitch, flight)) { state = InternalStates::Init; break; }
+			if (krpc_SpaceCenter_Flight_Heading(conn, &plane_flight.heading, flight)) { state = InternalStates::Init; break; }
+			if (krpc_SpaceCenter_Flight_Roll(conn, &plane_flight.roll, flight)) { state = InternalStates::Init; break; }
 
 			double latitude;
 			if (krpc_SpaceCenter_Flight_Latitude(conn, &latitude, flight)) { state = InternalStates::Init; break; }

@@ -7,7 +7,9 @@ namespace modules {
 namespace airplane {
 
 struct Flight {
-	FusionQuaternion rotation;
+	float pitch;
+	float heading;
+	float roll;
 	float latitude;
 	float longitude;
 	float mean_altitude;
