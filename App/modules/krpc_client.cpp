@@ -145,10 +145,8 @@ static void task_krpc_client_Main(void *pvParameters) {
 			KRPC_BULK_TEST(krpc_SpaceCenter_Control_set_Yaw(conn, control, plane_control.yaw));
 			KRPC_BULK_TEST(krpc_SpaceCenter_Control_set_Roll(conn, control, plane_control.roll));
 //			KRPC_BULK_TEST(krpc_SpaceCenter_Control_set_Gear(conn, control, plane_control.gear));
-			KRPC_BULK_END;
 
 			// flight
-			KRPC_BULK_START;
 			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_Pitch(conn, &plane_flight.pitch, flight));
 			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_Heading(conn, &plane_flight.heading, flight));
 			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_Roll(conn, &plane_flight.roll, flight));
@@ -283,7 +281,9 @@ krpc_error_t krpc_read(krpc_connection_t connection, uint8_t *buf,
 	if (modules::krpc_client::bulkState == modules::krpc_client::BulkState::SEND) {
 		return KRPC_ERROR_IO;
 	}
-	tud_cdc_n_write_flush(0);
+	while (tud_cdc_n_write_available(0) != CFG_TUD_CDC_TX_BUFSIZE) {
+		tud_cdc_n_write_flush(0);
+	}
 	size_t read = 0;
 	while (true) {
 		if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
