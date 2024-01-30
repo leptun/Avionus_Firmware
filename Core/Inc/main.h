@@ -70,10 +70,10 @@ void MX_SDMMC2_SD_Init(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define UI_LED_GPS_Pin GPIO_PIN_2
-#define UI_LED_GPS_GPIO_Port GPIOE
-#define UI_LED_STATUS_Pin GPIO_PIN_3
-#define UI_LED_STATUS_GPIO_Port GPIOE
+#define UI_LED_1_Pin GPIO_PIN_2
+#define UI_LED_1_GPIO_Port GPIOE
+#define UI_LED_2_Pin GPIO_PIN_3
+#define UI_LED_2_GPIO_Port GPIOE
 #define POWER_D5_EN_Pin GPIO_PIN_4
 #define POWER_D5_EN_GPIO_Port GPIOE
 #define POWER_D5_nFAULT_Pin GPIO_PIN_5
@@ -124,10 +124,10 @@ void MX_SDMMC2_SD_Init(void);
 #define RF_NRESET_GPIO_Port GPIOF
 #define RF_NSS_Pin GPIO_PIN_11
 #define RF_NSS_GPIO_Port GPIOE
-#define UI_LED_RX_Pin GPIO_PIN_10
-#define UI_LED_RX_GPIO_Port GPIOD
-#define UI_LED_TX_Pin GPIO_PIN_11
-#define UI_LED_TX_GPIO_Port GPIOD
+#define UI_LED_3_Pin GPIO_PIN_10
+#define UI_LED_3_GPIO_Port GPIOD
+#define UI_LED_4_Pin GPIO_PIN_11
+#define UI_LED_4_GPIO_Port GPIOD
 #define SERVO_CH5_Pin GPIO_PIN_12
 #define SERVO_CH5_GPIO_Port GPIOD
 #define SERVO_CH4_Pin GPIO_PIN_13
