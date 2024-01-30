@@ -5,6 +5,7 @@
 #include <krpc_cnano.h>
 #include <krpc_cnano/services/krpc.h>
 #include <krpc_cnano/services/space_center.h>
+#include <krpc_cnano/services/lidar.h>
 #include <krpc_cnano/memory.h>
 #include <krpc_cnano/communication.h>
 #include <retarget_locks.h>
@@ -69,6 +70,7 @@ static void task_krpc_client_Main(void *pvParameters) {
 
 	krpc_connection_t conn;
 	krpc_SpaceCenter_Vessel_t vessel;
+	krpc_LiDAR_Laser_t laser;
 	krpc_SpaceCenter_Orbit_t orbit;
 	krpc_SpaceCenter_CelestialBody_t body;
 	krpc_SpaceCenter_ReferenceFrame_t body_frame;
@@ -95,6 +97,16 @@ static void task_krpc_client_Main(void *pvParameters) {
 			if (krpc_KRPC_CurrentGameScene(conn, &scene)) { state = InternalStates::Init; break; }
 			if (scene == KRPC_KRPC_GAMESCENE_FLIGHT) {
 				if (krpc_SpaceCenter_ActiveVessel(conn, &vessel)) { state = InternalStates::Init; break; }
+				{
+					krpc_SpaceCenter_Parts_t vessel_parts;
+					if (krpc_SpaceCenter_Vessel_Parts(conn, &vessel_parts, vessel)) { state = InternalStates::Init; break; }
+					krpc_list_object_t vessel_parts_lasers = { 0 };
+					if (krpc_SpaceCenter_Parts_WithName(conn, &vessel_parts_lasers, vessel_parts, "distometer100x")) { state = InternalStates::Init; break; }
+					if (vessel_parts_lasers.size == 0) { state = InternalStates::Init; break; }
+					krpc_SpaceCenter_Part_t laser_part = vessel_parts_lasers.items[0];
+					krpc_free(vessel_parts_lasers.items);
+					if (krpc_LiDAR_Laser(conn, &laser, laser_part)) { state = InternalStates::Init; break; }
+				}
 				if (krpc_SpaceCenter_Vessel_Orbit(conn, &orbit, vessel)) { state = InternalStates::Init; break; }
 				if (krpc_SpaceCenter_Orbit_Body(conn, &body, orbit)) { state = InternalStates::Init; break; }
 				if (krpc_SpaceCenter_CelestialBody_ReferenceFrame(conn, &body_frame, body)) { state = InternalStates::Init; break; }
@@ -138,6 +150,7 @@ static void task_krpc_client_Main(void *pvParameters) {
 			double longitude;
 			double mean_altitude;
 			double speed;
+			krpc_list_double_t laser_point_cloud = { 0 };
 			// control
 			KRPC_BULK_START;
 //			KRPC_BULK_TEST(krpc_SpaceCenter_Control_set_Throttle(conn, control, plane_control.throttle));
@@ -154,12 +167,17 @@ static void task_krpc_client_Main(void *pvParameters) {
 			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_Longitude(conn, &longitude, flight));
 			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_MeanAltitude(conn, &mean_altitude, flight));
 			KRPC_BULK_TEST(krpc_SpaceCenter_Flight_Speed(conn, &speed, flight));
+			KRPC_BULK_TEST(krpc_LiDAR_Laser_Cloud(conn, &laser_point_cloud, laser));
 			KRPC_BULK_END;
 
 			plane_flight.latitude = (float)latitude;
 			plane_flight.longitude = (float)longitude;
 			plane_flight.mean_altitude = (float)mean_altitude;
 			plane_flight.speed = (float)speed;
+			if (laser_point_cloud.size > 0) {
+				plane_flight.tof_distance = float(laser_point_cloud.items[0]);
+			}
+			krpc_free(laser_point_cloud.items);
 
 			plane_flight.latency = xTaskGetTickCount() - tickStart;
 
@@ -254,7 +272,8 @@ void* krpc_recalloc(void *ptr, size_t num, size_t inc, size_t size) {
 }
 
 void krpc_free(void *ptr) {
-	umm_multi_free(&krpc_heap, ptr);
+	if (ptr)
+		umm_multi_free(&krpc_heap, ptr);
 }
 
 /* -------------------------------------------------------------------------- */

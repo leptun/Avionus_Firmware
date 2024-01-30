@@ -14,6 +14,7 @@ struct Flight {
 	float longitude;
 	float mean_altitude;
 	float speed;
+	float tof_distance;
 	uint32_t latency;
 };
 
