@@ -6,7 +6,6 @@
 #include "modules/power.hpp"
 #include "modules/servo.hpp"
 #include "modules/usb.hpp"
-#include "modules/blink.hpp"
 #include "Logging.hpp"
 #include "modules/krpc_client.hpp"
 
@@ -25,7 +24,6 @@ static void taskAppMain(void *pvParameters) {
 	modules::power::Setup();
 	modules::servo::Setup();
 	modules::usb::Setup();
-	modules::blink::Setup();
 	fatfs_Init();
 	Logging::Setup();
 	modules::krpc_client::Setup();
