@@ -39,6 +39,7 @@ extern "C" {
 #include "stm32f7xx_ll_pwr.h"
 #include "stm32f7xx_ll_rtc.h"
 #include "stm32f7xx_ll_tim.h"
+#include "stm32f7xx_ll_usart.h"
 #include "stm32f7xx_ll_gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -79,6 +80,8 @@ void MX_SDMMC2_SD_Init(void);
 #define POWER_D5_nFAULT_Pin GPIO_PIN_5
 #define POWER_D5_nFAULT_GPIO_Port GPIOE
 #define POWER_D5_nFAULT_EXTI_IRQn EXTI9_5_IRQn
+#define REMOTE_PPM_Pin GPIO_PIN_6
+#define REMOTE_PPM_GPIO_Port GPIOE
 #define POWER_D1_EN_Pin GPIO_PIN_13
 #define POWER_D1_EN_GPIO_Port GPIOC
 #define UI_SW_USER_Pin GPIO_PIN_2
@@ -122,8 +125,29 @@ void MX_SDMMC2_SD_Init(void);
 #define RF_TX_SWITCH_GPIO_Port GPIOF
 #define RF_NRESET_Pin GPIO_PIN_15
 #define RF_NRESET_GPIO_Port GPIOF
+#define IMU_NSS_Pin GPIO_PIN_0
+#define IMU_NSS_GPIO_Port GPIOG
+#define IMU_INT1_Pin GPIO_PIN_1
+#define IMU_INT1_GPIO_Port GPIOG
+#define IMU_INT1_EXTI_IRQn EXTI1_IRQn
 #define RF_NSS_Pin GPIO_PIN_11
 #define RF_NSS_GPIO_Port GPIOE
+#define RF_BUSY_Pin GPIO_PIN_15
+#define RF_BUSY_GPIO_Port GPIOE
+#define RF_BUSY_EXTI_IRQn EXTI15_10_IRQn
+#define RF_DIO1_Pin GPIO_PIN_10
+#define RF_DIO1_GPIO_Port GPIOB
+#define RF_DIO1_EXTI_IRQn EXTI15_10_IRQn
+#define RF_DIO2_Pin GPIO_PIN_11
+#define RF_DIO2_GPIO_Port GPIOB
+#define RF_DIO2_EXTI_IRQn EXTI15_10_IRQn
+#define RF_DIO3_Pin GPIO_PIN_12
+#define RF_DIO3_GPIO_Port GPIOB
+#define RF_DIO3_EXTI_IRQn EXTI15_10_IRQn
+#define DEBUG_TX_Pin GPIO_PIN_8
+#define DEBUG_TX_GPIO_Port GPIOD
+#define DEBUG_RX_Pin GPIO_PIN_9
+#define DEBUG_RX_GPIO_Port GPIOD
 #define UI_LED_3_Pin GPIO_PIN_10
 #define UI_LED_3_GPIO_Port GPIOD
 #define UI_LED_4_Pin GPIO_PIN_11
@@ -143,6 +167,11 @@ void MX_SDMMC2_SD_Init(void);
 #define POWER_SERVO_5V_AUX_nFAULT_Pin GPIO_PIN_6
 #define POWER_SERVO_5V_AUX_nFAULT_GPIO_Port GPIOG
 #define POWER_SERVO_5V_AUX_nFAULT_EXTI_IRQn EXTI9_5_IRQn
+#define LIDAR_XSHUT_Pin GPIO_PIN_7
+#define LIDAR_XSHUT_GPIO_Port GPIOG
+#define LIDAR_GPIO1_Pin GPIO_PIN_8
+#define LIDAR_GPIO1_GPIO_Port GPIOG
+#define LIDAR_GPIO1_EXTI_IRQn EXTI9_5_IRQn
 #define SERVO_CH0_Pin GPIO_PIN_6
 #define SERVO_CH0_GPIO_Port GPIOC
 #define SERVO_CH1_Pin GPIO_PIN_7
@@ -159,6 +188,21 @@ void MX_SDMMC2_SD_Init(void);
 #define SERVO_CH10_GPIO_Port GPIOA
 #define SERVO_CH11_Pin GPIO_PIN_11
 #define SERVO_CH11_GPIO_Port GPIOA
+#define DEBUG_GNDDetect_Pin GPIO_PIN_12
+#define DEBUG_GNDDetect_GPIO_Port GPIOA
+#define REMOTE_iBUS_Pin GPIO_PIN_10
+#define REMOTE_iBUS_GPIO_Port GPIOC
+#define GPS_TX_Pin GPIO_PIN_12
+#define GPS_TX_GPIO_Port GPIOC
+#define GPS_NRESET_Pin GPIO_PIN_0
+#define GPS_NRESET_GPIO_Port GPIOD
+#define GPS_RX_Pin GPIO_PIN_2
+#define GPS_RX_GPIO_Port GPIOD
+#define GPS_TIMEPULSE_Pin GPIO_PIN_3
+#define GPS_TIMEPULSE_GPIO_Port GPIOD
+#define GPS_EXTINT_Pin GPIO_PIN_4
+#define GPS_EXTINT_GPIO_Port GPIOD
+#define GPS_EXTINT_EXTI_IRQn EXTI4_IRQn
 #define SD_CARD_CD_Pin GPIO_PIN_13
 #define SD_CARD_CD_GPIO_Port GPIOG
 #define SD_CARD_CD_EXTI_IRQn EXTI15_10_IRQn
@@ -168,6 +212,10 @@ void MX_SDMMC2_SD_Init(void);
 #define POWER_D3_EN_GPIO_Port GPIOG
 #define UI_BUZZER_Pin GPIO_PIN_9
 #define UI_BUZZER_GPIO_Port GPIOB
+#define LIDAR_RX_Pin GPIO_PIN_0
+#define LIDAR_RX_GPIO_Port GPIOE
+#define LIDAR_TX_Pin GPIO_PIN_1
+#define LIDAR_TX_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 
