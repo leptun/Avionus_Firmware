@@ -247,7 +247,9 @@ void HAL_SD_AbortCallback(SD_HandleTypeDef *hsd) {
 void modules::exti::exti13_handler() {
 	BaseType_t xHigherPriorityTaskWoken, xResult;
 
-	(void)HAL_SD_Abort(&hsd2);
+	if ((hsd2.Context & SD_CONTEXT_DMA) != 0U) {
+		(void)HAL_SD_Abort_IT(&hsd2);
+	}
 
 	xResult = xEventGroupSetBitsFromISR(sd_diskio_flags, STA_NOINIT, &xHigherPriorityTaskWoken);
 	if(xResult != pdFAIL) {
