@@ -1,4 +1,5 @@
 #include "Logging.hpp"
+#include "Logging_buf.hpp"
 #include <FreeRTOS.h>
 #include <task.h>
 #include <retarget_locks.h>
@@ -9,8 +10,8 @@
 
 extern "C" uint32_t _fatfs_bss_run_addr[];
 extern "C" uint32_t _fatfs_data_end[];
-extern "C" uint32_t _app_bss_run_addr[];
-extern "C" uint32_t _app_data_end[];
+extern "C" uint32_t _logging_bss_run_addr[];
+extern "C" uint32_t _logging_data_end[];
 
 namespace Logging {
 
@@ -18,7 +19,6 @@ uint8_t retSD;    /* Return value for SD */
 FATFS SDFatFS;    /* File system object for SD logical drive */
 FIL SDFile;       /* File object for SD */
 
-uint8_t aBuf[16384] __attribute__((aligned(16)));
 struct {
 	UINT br_total;
 	UINT bw_total;
@@ -104,7 +104,7 @@ static const TaskParameters_t xLoggingTaskDefinition =
     {
         /* Base address   Length                    Parameters */
 		{ (uint32_t*)(_fatfs_bss_run_addr), (uint32_t)_fatfs_data_end - (uint32_t)_fatfs_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
-		{ (uint32_t*)(_app_bss_run_addr), (uint32_t)_app_data_end - (uint32_t)_app_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
+		{ (uint32_t*)(_logging_bss_run_addr), (uint32_t)_logging_data_end - (uint32_t)_logging_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
         { (uint32_t*)(AHB1PERIPH_BASE), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b10111111 << MPU_RASR_SRD_Pos) }, //GPIOG
 		{ (uint32_t*)(AHB1PERIPH_BASE + 0x6000), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11111101 << MPU_RASR_SRD_Pos) }, //DMA2
 		{ (uint32_t*)(APB2PERIPH_BASE), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b01111111 << MPU_RASR_SRD_Pos) }, //SDMMC2
