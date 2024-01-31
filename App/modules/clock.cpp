@@ -9,7 +9,7 @@
 namespace modules {
 namespace clock {
 
-DWORD fat_time;
+DWORD fat_time __attribute__((section(".shared")));
 
 static TaskHandle_t pxClockTaskHandle;
 static bool cssEnabled = false;
