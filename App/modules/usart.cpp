@@ -89,7 +89,7 @@ BaseType_t USART::rx_push() {
 	rxTail = newTail;
 
 	if (dropped) {
-		printf("usart: dropped %lu bytes\n", dropped);
+//		printf("usart: dropped %lu bytes\n", dropped);
 	}
 
 	return xHigherPriorityTaskWoken;
@@ -104,12 +104,12 @@ void USART::irq_usart() {
 	if (LL_USART_IsActiveFlag_RXNE(hwdef->USARTx) && LL_USART_IsEnabledIT_RXNE(hwdef->USARTx)) {
 		uint8_t b = LL_USART_ReceiveData8(hwdef->USARTx);
 		if (!xStreamBufferSendFromISR(stream_rx, &b, 1, &xHigherPriorityTaskWoken)) {
-			puts("usart: dropped");
+//			puts("usart: dropped");
 		}
 	}
 	if (LL_USART_IsActiveFlag_ORE(hwdef->USARTx) && LL_USART_IsEnabledIT_RXNE(hwdef->USARTx)) {
 		LL_USART_ClearFlag_ORE(hwdef->USARTx);
-		puts("usart: overrun");
+//		puts("usart: overrun");
 	}
 	if (LL_USART_IsActiveFlag_TXE(hwdef->USARTx) && LL_USART_IsEnabledIT_TXE(hwdef->USARTx)) {
 		LL_USART_TransmitData8(hwdef->USARTx, *(txbuf++));
