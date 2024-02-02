@@ -74,14 +74,17 @@ BaseType_t USART::rx_push() {
 	uint32_t dropped = 0;
 	uint32_t newTail = hwdef->rxBufSize - LL_DMA_GetDataLength(hwdef->rxDMA.DMAx, hwdef->rxDMA.Stream);
 
-	if (newTail > rxTail || newTail == 0) {
+	if (newTail == rxTail) {
+		// nothing to do
+	}
+	else if (newTail > rxTail || newTail == 0) {
 		uint32_t len = newTail - rxTail;
-		uint32_t dropped = len;
+		dropped = len;
 		dropped -= xStreamBufferSendFromISR(stream_rx, hwdef->rxBuf + rxTail, len, &xHigherPriorityTaskWoken);
 	}
 	else if (newTail < rxTail) {
 		uint32_t len = hwdef->rxBufSize - rxTail;
-		uint32_t dropped = len;
+		dropped = len;
 		dropped -= xStreamBufferSendFromISR(stream_rx, hwdef->rxBuf + rxTail, len, &xHigherPriorityTaskWoken);
 		dropped += newTail;
 		dropped -= xStreamBufferSendFromISR(stream_rx, hwdef->rxBuf, newTail, &xHigherPriorityTaskWoken);
