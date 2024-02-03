@@ -21,11 +21,11 @@ static void taskAppMain(void *pvParameters) {
 	modules::exti::Setup();
 	modules::clock::Setup();
 	puts("start");
-	modules::usart::usart3.Setup(64);
+	modules::usart::usart3.Setup();
 	modules::usart::usart3.send((const uint8_t *)"test1", 5);
 	modules::usart::usart3.send((const uint8_t *)"test2", 5);
-	modules::usart::uart4.Setup(64);
-	modules::usart::uart5.Setup(64);
+	modules::usart::uart4.Setup();
+	modules::usart::uart5.Setup();
 	modules::adc::Setup();
 	modules::power::Setup();
 	modules::servo::Setup();

@@ -5,12 +5,12 @@
 namespace modules {
 namespace usart {
 
-void USART::Setup(size_t stream_rx_size) {
+void USART::Setup() {
 	hwdef->MX_USARTx_Init();
-	if (stream_rx_size > 0) {
-		stream_rx = xStreamBufferCreate(stream_rx_size, 0);
-		if (hwdef->rxBuf) {
-			assert(hwdef->rxDMA.DMAx);
+	flags = xEventGroupCreate();
+	assert(flags);
+	if (hwdef->rxBuf) {
+		if (hwdef->rxDMA.DMAx) {
 			// receive using DMA circular with interrupts for half, complete and UART idle
 			LL_USART_EnableDMAReq_RX(hwdef->USARTx);
 			LL_DMA_SetPeriphAddress(hwdef->rxDMA.DMAx, hwdef->rxDMA.Stream, LL_USART_DMA_GetRegAddr(hwdef->USARTx, LL_USART_DMA_REG_DATA_RECEIVE));
@@ -42,8 +42,22 @@ void USART::Setup(size_t stream_rx_size) {
 }
 
 void USART::GrantAccess(TaskHandle_t task) {
-	if (stream_rx) {
-		vGrantAccessToTask(task, stream_rx);
+	if (flags) {
+		vGrantAccessToEventGroup(task, flags);
+	}
+}
+
+void USART::receive(uint8_t *buf, size_t len) {
+	while (len > 0) {
+		while (rxHead == rxTail) {
+			xEventGroupWaitBits(flags, FLAG_RX_AVAILABLE, pdTRUE, pdTRUE, portMAX_DELAY);
+		}
+		uint32_t newTail = rxTail;
+		*(buf++) = hwdef->rxBuf[rxTail++];
+		if (newTail > hwdef->rxBufSize) {
+			newTail = 0;
+		}
+		rxTail = newTail;
 	}
 }
 
@@ -51,7 +65,6 @@ void USART::send(const uint8_t *buf, size_t len) {
 	if (len <= 0) {
 		return;
 	}
-	tx_task = xTaskGetCurrentTaskHandle();
 	if (hwdef->txDMA.DMAx) {
 		// transmit using DMA
 		LL_DMA_SetMemoryAddress(hwdef->txDMA.DMAx, hwdef->txDMA.Stream, (uint32_t)buf);
@@ -66,34 +79,18 @@ void USART::send(const uint8_t *buf, size_t len) {
 		LL_USART_EnableDirectionTx(hwdef->USARTx);
 		LL_USART_EnableIT_TXE(hwdef->USARTx);
 	}
-	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); //wait for transmission to complete
+
+	xEventGroupWaitBits(flags, FLAG_TX_COMPLETE, pdTRUE, pdTRUE, portMAX_DELAY);
 }
 
 BaseType_t USART::rx_push() {
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	uint32_t dropped = 0;
-	uint32_t newTail = hwdef->rxBufSize - LL_DMA_GetDataLength(hwdef->rxDMA.DMAx, hwdef->rxDMA.Stream);
 
-	if (newTail == rxTail) {
-		// nothing to do
+	uint32_t newHead = hwdef->rxBufSize - LL_DMA_GetDataLength(hwdef->rxDMA.DMAx, hwdef->rxDMA.Stream);
+	if (newHead != rxHead && xEventGroupSetBitsFromISR(flags, FLAG_RX_AVAILABLE, &xHigherPriorityTaskWoken) != pdPASS) {
+		Error_Handler();
 	}
-	else if (newTail > rxTail || newTail == 0) {
-		uint32_t len = newTail - rxTail;
-		dropped = len;
-		dropped -= xStreamBufferSendFromISR(stream_rx, hwdef->rxBuf + rxTail, len, &xHigherPriorityTaskWoken);
-	}
-	else if (newTail < rxTail) {
-		uint32_t len = hwdef->rxBufSize - rxTail;
-		dropped = len;
-		dropped -= xStreamBufferSendFromISR(stream_rx, hwdef->rxBuf + rxTail, len, &xHigherPriorityTaskWoken);
-		dropped += newTail;
-		dropped -= xStreamBufferSendFromISR(stream_rx, hwdef->rxBuf, newTail, &xHigherPriorityTaskWoken);
-	}
-	rxTail = newTail;
-
-	if (dropped) {
-//		printf("usart: dropped %lu bytes\n", dropped);
-	}
+	rxHead = newHead;
 
 	return xHigherPriorityTaskWoken;
 }
@@ -105,9 +102,14 @@ void USART::irq_usart() {
 		xHigherPriorityTaskWoken |= rx_push();
 	}
 	if (LL_USART_IsActiveFlag_RXNE(hwdef->USARTx) && LL_USART_IsEnabledIT_RXNE(hwdef->USARTx)) {
-		uint8_t b = LL_USART_ReceiveData8(hwdef->USARTx);
-		if (!xStreamBufferSendFromISR(stream_rx, &b, 1, &xHigherPriorityTaskWoken)) {
-//			puts("usart: dropped");
+		uint32_t newHead = rxHead;
+		hwdef->rxBuf[newHead++] = LL_USART_ReceiveData8(hwdef->USARTx);
+		if (newHead >= hwdef->rxBufSize) {
+			newHead = 0;
+		}
+		rxHead = newHead;
+		if (xEventGroupSetBitsFromISR(flags, FLAG_RX_AVAILABLE, &xHigherPriorityTaskWoken) != pdPASS) {
+			Error_Handler();
 		}
 	}
 	if (LL_USART_IsActiveFlag_ORE(hwdef->USARTx) && LL_USART_IsEnabledIT_RXNE(hwdef->USARTx)) {
@@ -125,7 +127,8 @@ void USART::irq_usart() {
 	if (LL_USART_IsActiveFlag_TC(hwdef->USARTx) && LL_USART_IsEnabledIT_TC(hwdef->USARTx)) {
 		LL_USART_DisableIT_TC(hwdef->USARTx);
 		LL_USART_DisableDirectionTx(hwdef->USARTx);
-		if (xTaskNotifyFromISR(tx_task, 0, eNoAction, &xHigherPriorityTaskWoken) != pdPASS) {
+
+		if (xEventGroupSetBitsFromISR(flags, FLAG_TX_COMPLETE, &xHigherPriorityTaskWoken) != pdPASS) {
 			Error_Handler();
 		}
 	}

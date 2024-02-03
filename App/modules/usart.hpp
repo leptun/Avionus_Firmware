@@ -4,7 +4,7 @@
 #include <util.hpp>
 #include <FreeRTOS.h>
 #include <task.h>
-#include <stream_buffer.h>
+#include <event_groups.h>
 
 namespace modules {
 namespace usart {
@@ -19,22 +19,29 @@ struct USART_Def {
 };
 
 class USART {
+	enum EventFlags {
+		FLAG_RX_AVAILABLE = 0x01,
+		FLAG_TX_COMPLETE = 0x02,
+	};
+
 	const USART_Def *hwdef;
-	StreamBufferHandle_t stream_rx;
+	EventGroupHandle_t flags;
+	uint32_t rxHead;
 	uint32_t rxTail;
 	const uint8_t *txbuf;
 	size_t txndtr;
-	TaskHandle_t tx_task;
 
 public:
 	USART(const USART_Def *hwdef) : hwdef(hwdef) { }
-	void Setup(size_t rxStreamSize);
+	void Setup();
 	void GrantAccess(TaskHandle_t task);
 
+	void receive(uint8_t *buf, size_t len);
 	void send(const uint8_t *buf, size_t len);
 
 private:
 	BaseType_t rx_push();
+
 public:
 	void irq_usart();
 	void irq_dma_rx();
