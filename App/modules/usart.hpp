@@ -12,6 +12,7 @@ namespace usart {
 struct USART_Def {
 	void (*MX_USARTx_Init)(void);
 	USART_TypeDef *USARTx;
+	uint32_t periphclk;
 	uint8_t *rxBuf;
 	uint16_t rxBufSize;
 	util::LL_DMA_STREAM rxDMA;
@@ -38,6 +39,7 @@ public:
 
 	void receive(uint8_t *buf, size_t len);
 	void send(const uint8_t *buf, size_t len);
+	void setBaud(uint32_t baud);
 
 private:
 	BaseType_t rx_push();

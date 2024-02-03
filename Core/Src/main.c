@@ -1427,7 +1427,7 @@ void MX_UART5_Init(void)
   /* USER CODE BEGIN UART5_Init 1 */
 
   /* USER CODE END UART5_Init 1 */
-  USART_InitStruct.BaudRate = 115200;
+  USART_InitStruct.BaudRate = 9600;
   USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
   USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
   USART_InitStruct.Parity = LL_USART_PARITY_NONE;
@@ -1631,22 +1631,17 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(POWER_D1_EN_GPIO_Port, POWER_D1_EN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOF, POWER_D2_EN_Pin|POWER_D4_EN_Pin|RF_RX_SWITCH_Pin|RF_TX_SWITCH_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOF, POWER_D2_EN_Pin|POWER_D4_EN_Pin|RF_RX_SWITCH_Pin|RF_TX_SWITCH_Pin
+                          |RF_NRESET_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(RF_NRESET_GPIO_Port, RF_NRESET_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOG, IMU_NSS_Pin|POWER_LEDs_EN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, IMU_NSS_Pin|POWER_LEDs_EN_Pin|LIDAR_XSHUT_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD, UI_LED_3_Pin|UI_LED_4_Pin|GPS_NRESET_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, UI_LED_3_Pin|UI_LED_4_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, POWER_SERVO_5V_AUX_EN_Pin|POWER_D3_EN_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPS_NRESET_GPIO_Port, GPS_NRESET_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOG, POWER_SERVO_5V_AUX_EN_Pin|LIDAR_XSHUT_Pin|POWER_D3_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(UI_BUZZER_GPIO_Port, UI_BUZZER_Pin, GPIO_PIN_RESET);

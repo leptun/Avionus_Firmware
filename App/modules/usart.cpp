@@ -1,6 +1,7 @@
 #include "usart.hpp"
 #include <assert.h>
 #include <stdio.h>
+#include <config.hpp>
 
 namespace modules {
 namespace usart {
@@ -83,6 +84,28 @@ void USART::send(const uint8_t *buf, size_t len) {
 	xEventGroupWaitBits(flags, FLAG_TX_COMPLETE, pdTRUE, pdTRUE, portMAX_DELAY);
 }
 
+void USART::setBaud(uint32_t baud) {
+	LL_USART_DisableDirectionRx(hwdef->USARTx);
+	if (hwdef->rxDMA.DMAx) {
+		LL_USART_DisableDMAReq_RX(hwdef->USARTx);
+	}
+	if (hwdef->txDMA.DMAx) {
+		LL_USART_DisableDMAReq_TX(hwdef->USARTx);
+	}
+	LL_USART_Disable(hwdef->USARTx);
+
+	LL_USART_SetBaudRate(hwdef->USARTx, hwdef->periphclk, LL_USART_GetOverSampling(hwdef->USARTx), baud);
+
+	LL_USART_Enable(hwdef->USARTx);
+	if (hwdef->txDMA.DMAx) {
+		LL_USART_EnableDMAReq_TX(hwdef->USARTx);
+	}
+	if (hwdef->rxDMA.DMAx) {
+		LL_USART_EnableDMAReq_RX(hwdef->USARTx);
+	}
+	LL_USART_EnableDirectionRx(hwdef->USARTx);
+}
+
 BaseType_t USART::rx_push() {
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
@@ -162,6 +185,7 @@ static uint8_t usart3_rxbuf[64];
 static const USART_Def usart3_def = {
 	MX_USART3_UART_Init,
 	USART3,
+	config::clocks::hclk,
 	usart3_rxbuf,
 	sizeof(usart3_rxbuf),
 	util::LL_DMA_STREAM(DMA1, 1), //rx
@@ -177,6 +201,7 @@ static uint8_t uart4_rxbuf[64];
 static const USART_Def uart4_def = {
 	MX_UART4_Init,
 	UART4,
+	config::clocks::pclk1,
 	uart4_rxbuf,
 	sizeof(uart4_rxbuf),
 	util::LL_DMA_STREAM(DMA1, 2), //rx
@@ -186,10 +211,11 @@ extern "C" void UART4_IRQHandler(void) { uart4.irq_usart(); }
 extern "C" void DMA1_Stream2_IRQHandler(void) { uart4.irq_dma_rx(); }
 
 
-static uint8_t uart5_rxbuf[64];
+static uint8_t uart5_rxbuf[config::gps_rxbuf_size];
 static const USART_Def uart5_def = {
 	MX_UART5_Init,
 	UART5,
+	config::clocks::pclk1,
 	uart5_rxbuf,
 	sizeof(uart5_rxbuf),
 	util::LL_DMA_STREAM(DMA1, 0), //rx
