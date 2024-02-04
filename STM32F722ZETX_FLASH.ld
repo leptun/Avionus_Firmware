@@ -169,8 +169,8 @@ SECTIONS
 		_freertos_bss_run_addr = .;
 		
 		*(.stack)
-		./Kernel/*.o(.bss*) /* */
-		./FreeRTOS-Kernel/*.o(.bss*) /* */
+		./glue/FreeRTOS-Kernel/*.o(.bss*) /* */
+		./lib/FreeRTOS-Kernel/*.o(.bss*) /* */
 		
 		. = ALIGN(4);
 		_freertos_bss_end = .;
@@ -181,8 +181,8 @@ SECTIONS
 		. = ALIGN(4);
 		_freertos_data_run_addr = .;
 		
-		./Kernel/*.o(.data*) /* */
-		./FreeRTOS-Kernel/*.o(.data*) /* */
+		./glue/FreeRTOS-Kernel/*.o(.data*) /* */
+		./lib/FreeRTOS-Kernel/*.o(.data*) /* */
 		
 		. = ALIGN(4);
 		_freertos_data_end = .;
@@ -206,8 +206,8 @@ SECTIONS
 		. = ALIGN(4);
 		_tinyusb_bss_run_addr = .;
 		
-		./tinyusb/src/*.o(.bss*) /* */
-		./usb/*.o(.bss*) /* */
+		./lib/tinyusb/*.o(.bss*) /* */
+		./glue/tinyusb/*.o(.bss*) /* */
 		./App/modules/usb.o(.bss*)
 		
 		. = ALIGN(4);
@@ -219,8 +219,8 @@ SECTIONS
 		. = ALIGN(4);
 		_tinyusb_data_run_addr = .;
 		
-		./tinyusb/src/*.o(.data*) /* */
-		./usb/*.o(.data*) /* */
+		./lib/tinyusb/*.o(.data*) /* */
+		./glue/tinyusb/*.o(.data*) /* */
 		./App/modules/usb.o(.data*)
 		
 		. = ALIGN(4);
@@ -241,7 +241,8 @@ SECTIONS
 		. = ALIGN(4);
 		_fatfs_bss_run_addr = .;
 		
-		./FatFs/*.o(.bss*) /* */
+		./glue/FatFs/*.o(.bss*) /* */
+		./lib/FatFs/*.o(.bss*) /* */
 		
 		. = ALIGN(4);
 		_fatfs_bss_end = .;
@@ -252,7 +253,8 @@ SECTIONS
 		. = ALIGN(4);
 		_fatfs_data_run_addr = .;
 		
-		./FatFs/*.o(.data*) /* */
+		./glue/FatFs/*.o(.data*) /* */
+		./lib/FatFs/*.o(.data*) /* */
 		
 		. = ALIGN(4);
 		_fatfs_data_end = .;
@@ -273,7 +275,7 @@ SECTIONS
 		_krpc_bss_run_addr = .;
 		
 		./App/modules/krpc_client.o(.bss*)
-		./krpc-arduino/*.o(.bss*) /* */
+		./lib/krpc-arduino/*.o(.bss*) /* */
 		
 		. = ALIGN(4);
 		_krpc_bss_end = .;
@@ -285,7 +287,7 @@ SECTIONS
 		_krpc_data_run_addr = .;
 		
 		./App/modules/krpc_client.o(.data*)
-		./krpc-arduino/*.o(.data*) /* */
+		./lib/krpc-arduino/*.o(.data*) /* */
 		
 		. = ALIGN(4);
 		_krpc_data_end = .;

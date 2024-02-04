@@ -12,6 +12,7 @@ bfs::Ubx gnss;
 
 void Setup() {
 	com.Setup();
+	HAL_GPIO_WritePin(GPS_NRESET_GPIO_Port, GPS_NRESET_Pin, GPIO_PIN_SET);
 }
 
 }

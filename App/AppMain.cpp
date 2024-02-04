@@ -5,6 +5,7 @@
 #include "modules/usart.hpp"
 #include "modules/adc.hpp"
 #include "modules/power.hpp"
+#include "modules/gps.hpp"
 #include "modules/servo.hpp"
 #include "modules/usb.hpp"
 #include "Logging.hpp"
@@ -27,6 +28,7 @@ static void taskAppMain(void *pvParameters) {
 	modules::usart::uart4.Setup();
 	modules::adc::Setup();
 	modules::power::Setup();
+	modules::gps::Setup();
 	modules::servo::Setup();
 	modules::usb::Setup();
 	fatfs_Init();

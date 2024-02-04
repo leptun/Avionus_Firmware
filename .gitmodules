@@ -1,15 +1,15 @@
 [submodule "FreeRTOS-Kernel"]
-	path = FreeRTOS-Kernel
+	path = lib/FreeRTOS-Kernel
 	url = https://github.com/leptun/FreeRTOS-Kernel.git
 [submodule "tinyusb"]
-	path = tinyusb
+	path = lib/tinyusb
 	url = https://github.com/hathach/tinyusb.git
 [submodule "umm_malloc"]
-	path = umm_malloc
+	path = lib/umm_malloc
 	url = https://github.com/rhempel/umm_malloc.git
 [submodule "krpc-arduino"]
-	path = krpc-arduino
+	path = lib/krpc-arduino
 	url = https://github.com/krpc/krpc-arduino.git
 [submodule "Fusion"]
-	path = Fusion
+	path = lib/Fusion
 	url = https://github.com/xioTechnologies/Fusion.git
