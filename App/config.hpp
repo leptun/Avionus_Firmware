@@ -2,6 +2,7 @@
 #include "util.hpp"
 #include <inttypes.h>
 #include <stddef.h>
+#include <modules/usart.hpp>
 
 namespace config {
 
@@ -44,5 +45,6 @@ static TIM_TypeDef * const adc_timer = TIM6;
 
 static constexpr uint32_t usb_stream_buffer_size = 64;
 
+static modules::usart::USART * const gps_usart = &modules::usart::uart5;
 static constexpr size_t gps_rxbuf_size = 256;
 }

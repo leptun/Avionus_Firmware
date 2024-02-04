@@ -40,6 +40,12 @@ public:
 	void receive(uint8_t *buf, size_t len);
 	void send(const uint8_t *buf, size_t len);
 	void setBaud(uint32_t baud);
+	inline bool rx_empty() {
+		return rxHead == rxTail;
+	}
+	uint32_t rx_pending() {
+		return (rxHead + hwdef->rxBufSize - rxTail) % hwdef->rxBufSize;
+	}
 
 private:
 	BaseType_t rx_push();

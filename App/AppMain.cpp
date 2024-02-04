@@ -25,7 +25,6 @@ static void taskAppMain(void *pvParameters) {
 	modules::usart::usart3.send((const uint8_t *)"test1", 5);
 	modules::usart::usart3.send((const uint8_t *)"test2", 5);
 	modules::usart::uart4.Setup();
-	modules::usart::uart5.Setup();
 	modules::adc::Setup();
 	modules::power::Setup();
 	modules::servo::Setup();
