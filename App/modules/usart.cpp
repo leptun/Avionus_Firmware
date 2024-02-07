@@ -180,16 +180,15 @@ void USART::irq_dma_tx() {
 	}
 }
 
-
 static uint8_t usart3_rxbuf[64];
-static const USART_Def usart3_def = {
+static constexpr USART_Def usart3_def = {
 	MX_USART3_UART_Init,
-	USART3,
+	util::ioCast<USART_TypeDef>(USART3_BASE),
 	config::clocks::hclk,
 	usart3_rxbuf,
 	sizeof(usart3_rxbuf),
-	util::LL_DMA_STREAM(DMA1, 1), //rx
-	util::LL_DMA_STREAM(DMA1, 4), //tx
+	util::LL_DMA_STREAM(util::ioCast<DMA_TypeDef>(DMA1_BASE), 1), //rx
+	util::LL_DMA_STREAM(util::ioCast<DMA_TypeDef>(DMA1_BASE), 4), //tx
 };
 USART usart3(&usart3_def);
 extern "C" void USART3_IRQHandler(void) { usart3.irq_usart(); }
@@ -198,13 +197,13 @@ extern "C" void DMA1_Stream4_IRQHandler(void) { usart3.irq_dma_tx(); }
 
 
 static uint8_t uart4_rxbuf[64];
-static const USART_Def uart4_def = {
+static constexpr USART_Def uart4_def = {
 	MX_UART4_Init,
-	UART4,
+	util::ioCast<USART_TypeDef>(UART4_BASE),
 	config::clocks::pclk1,
 	uart4_rxbuf,
 	sizeof(uart4_rxbuf),
-	util::LL_DMA_STREAM(DMA1, 2), //rx
+	util::LL_DMA_STREAM(util::ioCast<DMA_TypeDef>(DMA1_BASE), 2), //rx
 };
 USART uart4(&uart4_def);
 extern "C" void UART4_IRQHandler(void) { uart4.irq_usart(); }
@@ -212,13 +211,13 @@ extern "C" void DMA1_Stream2_IRQHandler(void) { uart4.irq_dma_rx(); }
 
 
 static uint8_t uart5_rxbuf[config::gps_rxbuf_size];
-static const USART_Def uart5_def = {
+static constexpr USART_Def uart5_def = {
 	MX_UART5_Init,
-	UART5,
+	util::ioCast<USART_TypeDef>(UART5_BASE),
 	config::clocks::pclk1,
 	uart5_rxbuf,
 	sizeof(uart5_rxbuf),
-	util::LL_DMA_STREAM(DMA1, 0), //rx
+	util::LL_DMA_STREAM(util::ioCast<DMA_TypeDef>(DMA1_BASE), 0), //rx
 };
 USART uart5(&uart5_def);
 extern "C" void UART5_IRQHandler(void) { uart5.irq_usart(); }

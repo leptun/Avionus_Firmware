@@ -64,6 +64,8 @@ __privileged_functions_end__          = __FLASH_segment_start__ + __privileged_f
 __SHARED_SRAM_segment_start__         = ORIGIN( ITCMRAM );
 __SHARED_SRAM_segment_end__           = __SHARED_SRAM_segment_start__ + __shared_region_size__;
 
+null_ptr = 0;
+
 
 /* Sections */
 SECTIONS

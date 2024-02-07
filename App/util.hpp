@@ -1,6 +1,9 @@
 #pragma once
 #include "main.h"
+#include <inttypes.h>
 #include <FreeRTOS.h>
+
+extern uint8_t null_ptr;
 
 namespace util {
 
@@ -17,20 +20,27 @@ struct TIM_CHAN_PAIR {
 };
 
 struct LL_DMA_STREAM {
-	DMA_TypeDef *DMAx;
-	uint32_t Stream;
-	volatile uint32_t *ISR;
-	volatile uint32_t *IFCR;
-	uint8_t bitOffset;
+	DMA_TypeDef * const DMAx;
+	const uint32_t Stream;
+	volatile uint32_t * const ISR;
+	volatile uint32_t * const IFCR;
+	const uint8_t bitOffset;
 
-	constexpr LL_DMA_STREAM() : DMAx(0) { }
-
-	constexpr LL_DMA_STREAM(DMA_TypeDef *DMAx, uint32_t Stream) : DMAx(DMAx), Stream(Stream) {
-		const uint8_t flagBitshiftOffset[8U] = {0U, 6U, 16U, 22U, 0U, 6U, 16U, 22U};
-		ISR = (Stream > 3) ? &DMAx->HISR : &DMAx->LISR;
-		IFCR = (Stream > 3) ? &DMAx->HIFCR : &DMAx->LIFCR;
-		bitOffset = flagBitshiftOffset[Stream];
-	}
+private:
+	static constexpr uint8_t flagBitshiftOffset[8U] = {0U, 6U, 16U, 22U, 0U, 6U, 16U, 22U};
+public:
+	constexpr LL_DMA_STREAM() :
+			DMAx(0),
+			Stream(0),
+			ISR(0),
+			IFCR(0),
+			bitOffset(0) {}
+	constexpr LL_DMA_STREAM(DMA_TypeDef *DMAx, uint32_t Stream) :
+			DMAx(DMAx),
+			Stream(Stream),
+			ISR((Stream > 3) ? &DMAx->HISR : &DMAx->LISR),
+			IFCR((Stream > 3) ? &DMAx->HIFCR : &DMAx->LIFCR),
+			bitOffset(flagBitshiftOffset[Stream]) {}
 
 	uint32_t irq_handler() const {
 		uint32_t mask =
@@ -48,6 +58,11 @@ struct LL_DMA_STREAM {
 		*IFCR = mask << bitOffset;
 	}
 };
+
+template<typename T>
+constexpr T * ioCast(unsigned long addr) {
+	return static_cast<T *>(static_cast<void *>(&null_ptr + addr));
+}
 
 BaseType_t xTaskNotifyWaitBitsAllIndexed(UBaseType_t uxIndexToWaitOn, uint32_t ulBitsToClearOnEntry, uint32_t ulBitsToClearOnExit, uint32_t *pulNotificationValue, TickType_t xTicksToWait);
 BaseType_t xTaskNotifyWaitBitsAnyIndexed(UBaseType_t uxIndexToWaitOn, uint32_t ulBitsToClearOnEntry, uint32_t ulBitsToClearOnExit, uint32_t *pulNotificationValue, TickType_t xTicksToWait);

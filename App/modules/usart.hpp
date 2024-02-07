@@ -10,13 +10,13 @@ namespace modules {
 namespace usart {
 
 struct USART_Def {
-	void (*MX_USARTx_Init)(void);
-	USART_TypeDef *USARTx;
-	uint32_t periphclk;
-	uint8_t *rxBuf;
-	uint16_t rxBufSize;
-	util::LL_DMA_STREAM rxDMA;
-	util::LL_DMA_STREAM txDMA;
+	void (* const MX_USARTx_Init)(void);
+	USART_TypeDef * const USARTx;
+	const uint32_t periphclk;
+	uint8_t * const rxBuf;
+	const uint16_t rxBufSize;
+	const util::LL_DMA_STREAM rxDMA;
+	const util::LL_DMA_STREAM txDMA;
 };
 
 class USART {
