@@ -63,7 +63,6 @@
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src"/>
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src/krpc_cnano"/>
 									<listOptionValue builtIn="false" value="../lib/Fusion/Fusion"/>
-									<listOptionValue builtIn="false" value="../lib/ublox/src"/>
 									<listOptionValue builtIn="false" value="../glue"/>
 									<listOptionValue builtIn="false" value="../glue/FreeRTOS-Kernel"/>
 									<listOptionValue builtIn="false" value="../glue/tinyusb"/>
@@ -102,7 +101,6 @@
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src"/>
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src/krpc_cnano"/>
 									<listOptionValue builtIn="false" value="../lib/Fusion/Fusion"/>
-									<listOptionValue builtIn="false" value="../lib/ublox/src"/>
 									<listOptionValue builtIn="false" value="../glue"/>
 									<listOptionValue builtIn="false" value="../glue/FreeRTOS-Kernel"/>
 									<listOptionValue builtIn="false" value="../glue/tinyusb"/>
@@ -209,7 +207,6 @@
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src"/>
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src/krpc_cnano"/>
 									<listOptionValue builtIn="false" value="../lib/Fusion/Fusion"/>
-									<listOptionValue builtIn="false" value="../lib/ublox/src"/>
 									<listOptionValue builtIn="false" value="../glue"/>
 									<listOptionValue builtIn="false" value="../glue/FreeRTOS-Kernel"/>
 									<listOptionValue builtIn="false" value="../glue/tinyusb"/>
@@ -247,7 +244,6 @@
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src"/>
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src/krpc_cnano"/>
 									<listOptionValue builtIn="false" value="../lib/Fusion/Fusion"/>
-									<listOptionValue builtIn="false" value="../lib/ublox/src"/>
 									<listOptionValue builtIn="false" value="../glue"/>
 									<listOptionValue builtIn="false" value="../glue/FreeRTOS-Kernel"/>
 									<listOptionValue builtIn="false" value="../glue/tinyusb"/>
