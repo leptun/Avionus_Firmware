@@ -40,22 +40,21 @@ static void taskAppMain(void *pvParameters) {
 		vTaskDelay(50);
 	}
 }
-
 static portSTACK_TYPE xAppMainTaskStack[ 256 ] __attribute__((aligned(256*4))) __attribute__((section(".stack")));
-static const TaskParameters_t xAppMainTaskDefinition = {
-	taskAppMain,
-	"main",
-    (configSTACK_DEPTH_TYPE)sizeof(xAppMainTaskStack) / sizeof(portSTACK_TYPE),
-    NULL,
-    0 | portPRIVILEGE_BIT,
-	xAppMainTaskStack,
-    {
-        /* Base address   Length                    Parameters */
-//        { (uint32_t*)(AHB1PERIPH_BASE), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11101111 << MPU_RASR_SRD_Pos) },
-    }
-};
 
 void Setup() {
+	const TaskParameters_t xAppMainTaskDefinition = {
+		taskAppMain,
+		"main",
+	    (configSTACK_DEPTH_TYPE)sizeof(xAppMainTaskStack) / sizeof(portSTACK_TYPE),
+	    NULL,
+	    0 | portPRIVILEGE_BIT,
+		xAppMainTaskStack,
+	    {
+	        /* Base address   Length                    Parameters */
+	//        { (uint32_t*)(AHB1PERIPH_BASE), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11101111 << MPU_RASR_SRD_Pos) },
+	    }
+	};
 	xTaskCreateRestricted(&xAppMainTaskDefinition, NULL);
 	LL_DBGMCU_APB1_GRP1_FreezePeriph(
 //			LL_DBGMCU_APB1_GRP1_TIM2_STOP |
