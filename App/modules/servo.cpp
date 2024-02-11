@@ -5,7 +5,7 @@
 namespace modules {
 namespace servo {
 
-void Setup() {
+void Servo::Setup() {
 	// Initialize servo timers
 	constexpr uint32_t timer_cnt_freq = 1000000;
 	constexpr uint32_t timer_upd_freq = config::servo_update_freq;
@@ -27,12 +27,15 @@ void Setup() {
 	}
 }
 
-int SetServoPosition(uint32_t servo, uint32_t pos_us) {
+int Servo::SetPosition(uint32_t servo, uint32_t pos_us) {
 	if (servo >= COUNT_OF(config::servo_channels)) {
 		return -1;
 	}
 	if (pos_us > 2500) {
 		return -2;
+	}
+	if (pos_us < 500) {
+		return -3;
 	}
 
 	util::TIM_CHAN_PAIR ch = config::servo_channels[servo];

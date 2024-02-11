@@ -71,8 +71,8 @@ public:
 	constexpr AtomicFlags() : flags_thread(0), flags_handler(0) {}
 
 	uint32_t Get() const {
-			return flags_thread ^ flags_handler;
-		}
+		return flags_thread ^ flags_handler;
+	}
 	void Set(uint32_t flags) {
 		flags &= ~Get();
 		flags_thread ^= flags;

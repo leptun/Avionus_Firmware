@@ -11,7 +11,7 @@ namespace clock {
 
 DWORD fat_time __attribute__((section(".shared")));
 
-static TaskHandle_t pxClockTaskHandle;
+static TaskHandle_t pxTaskHandle;
 static bool cssEnabled = false;
 
 enum ClockThreadFlags {
@@ -347,7 +347,7 @@ static const TaskParameters_t xClockTaskDefinition =
 void Setup() {
 	TaskParameters_t _priv_xClockTaskDefinition = xClockTaskDefinition;
 	_priv_xClockTaskDefinition.pvParameters = xTaskGetCurrentTaskHandle();
-	xTaskCreateRestricted(&_priv_xClockTaskDefinition, &pxClockTaskHandle);
+	xTaskCreateRestricted(&_priv_xClockTaskDefinition, &pxTaskHandle);
 	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
 }
 
@@ -368,7 +368,7 @@ void RCC_IRQHandler() {
 	}
 
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	xTaskNotifyIndexedFromISR(pxClockTaskHandle, 0, flags, eSetBits, &xHigherPriorityTaskWoken);
+	xTaskNotifyIndexedFromISR(pxTaskHandle, 0, flags, eSetBits, &xHigherPriorityTaskWoken);
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
@@ -394,6 +394,6 @@ void NMI_Handler() {
 
 void hw::exti::exti22_handler() {
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	xTaskNotifyIndexedFromISR(hw::clock::pxClockTaskHandle, 0, hw::clock::FLAG_RTC_TICK, eSetBits, &xHigherPriorityTaskWoken);
+	xTaskNotifyIndexedFromISR(hw::clock::pxTaskHandle, 0, hw::clock::FLAG_RTC_TICK, eSetBits, &xHigherPriorityTaskWoken);
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

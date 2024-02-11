@@ -7,9 +7,7 @@
 #include "hw/usb.hpp"
 #include <fatfs.h>
 #include "Logging.hpp"
-#include "modules/gps.hpp"
-#include "modules/servo.hpp"
-#include "modules/krpc_client.hpp"
+#include "modules/module_manager.hpp"
 
 #include <FreeRTOS.h>
 #include <task.h>
@@ -17,6 +15,8 @@
 #include <stdio.h>
 
 namespace AppMain {
+
+TaskHandle_t pxTaskHandle;
 
 static void taskAppMain(void *pvParameters) {
 	hw::exti::Setup();
@@ -31,13 +31,9 @@ static void taskAppMain(void *pvParameters) {
 	hw::usb::Setup();
 	fatfs_Init();
 	Logging::Setup();
-	modules::gps::Setup();
-	modules::servo::Setup();
-	modules::krpc_client::Setup();
 
 	for (;;) {
-		modules::krpc_client::Cycle();
-		vTaskDelay(50);
+		vTaskDelay(1000);
 	}
 }
 static portSTACK_TYPE xAppMainTaskStack[ 256 ] __attribute__((aligned(256*4))) __attribute__((section(".stack")));

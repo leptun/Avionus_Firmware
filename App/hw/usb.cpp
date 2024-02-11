@@ -16,7 +16,7 @@ extern "C" uint32_t _tinyusb_data_end[];
 namespace hw {
 namespace usb {
 
-static TaskHandle_t pxusbdTaskHandle;
+static TaskHandle_t pxTaskHandle;
 static bool usb_task_initialized;
 static uint32_t UUID[3];
 
@@ -130,15 +130,15 @@ void Setup() {
 	};
 
 	// Create a task for tinyusb device stack
-	xTaskCreateRestricted(&usb_device_taskTaskDefinition, &pxusbdTaskHandle);
+	xTaskCreateRestricted(&usb_device_taskTaskDefinition, &pxTaskHandle);
 }
 
 void GrantAccess(TaskHandle_t task) {
 	while (!usb_task_initialized) {
 		vTaskDelay(1);
 	}
-	vGrantAccessToTask(pxusbdTaskHandle, task);
-	vCloneAccessToKernelObjects(task, pxusbdTaskHandle);
+	vGrantAccessToTask(pxTaskHandle, task);
+	vCloneAccessToKernelObjects(task, pxTaskHandle);
 }
 
 static size_t board_get_unique_id(uint8_t id[], size_t max_len) {
