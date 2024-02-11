@@ -3,7 +3,7 @@
 #include <FreeRTOS.h>
 #include <event_groups.h>
 
-namespace modules {
+namespace hw {
 namespace exti {
 
 void Setup();

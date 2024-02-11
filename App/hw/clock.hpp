@@ -1,7 +1,7 @@
 #pragma once
 #include <ff.h>
 
-namespace modules {
+namespace hw {
 namespace clock {
 
 void Setup();

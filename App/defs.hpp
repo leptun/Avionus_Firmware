@@ -1,10 +1,8 @@
 #pragma once
-
 #include <inttypes.h>
 #include <FusionMath.h>
 
-namespace modules {
-namespace airplane {
+namespace defs {
 
 struct Flight {
 	float pitch;
@@ -27,5 +25,4 @@ struct Control {
 	bool gear;
 };
 
-}
 }

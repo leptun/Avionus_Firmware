@@ -2,7 +2,7 @@
 #include "ff_mem.h"
 #include "ffsystem.h"
 #include "diskio_sdmmc.h"
-#include <modules/clock.hpp>
+#include <hw/clock.hpp>
 
 void fatfs_Init(void) {
 	ff_meminit();
@@ -17,5 +17,5 @@ void fatfs_GrantAccess(TaskHandle_t task) {
 }
 
 DWORD get_fattime(void) {
-	return modules::clock::GetFatTime();
+	return hw::clock::GetFatTime();
 }

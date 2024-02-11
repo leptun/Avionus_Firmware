@@ -1,14 +1,14 @@
 #include "AppMain.hpp"
+#include "hw/exti.hpp"
+#include "hw/clock.hpp"
+#include "hw/usart.hpp"
+#include "hw/adc.hpp"
+#include "hw/power.hpp"
+#include "hw/usb.hpp"
 #include <fatfs.h>
-#include "modules/exti.hpp"
-#include "modules/clock.hpp"
-#include "modules/usart.hpp"
-#include "modules/adc.hpp"
-#include "modules/power.hpp"
+#include "Logging.hpp"
 #include "modules/gps.hpp"
 #include "modules/servo.hpp"
-#include "modules/usb.hpp"
-#include "Logging.hpp"
 #include "modules/krpc_client.hpp"
 
 #include <FreeRTOS.h>
@@ -19,20 +19,20 @@
 namespace AppMain {
 
 static void taskAppMain(void *pvParameters) {
-	modules::exti::Setup();
-	modules::clock::Setup();
+	hw::exti::Setup();
+	hw::clock::Setup();
 	puts("start");
-	modules::usart::usart3.Setup();
-	modules::usart::usart3.send((const uint8_t *)"test1", 5);
-	modules::usart::usart3.send((const uint8_t *)"test2", 5);
-	modules::usart::uart4.Setup();
-	modules::adc::Setup();
-	modules::power::Setup();
-	modules::gps::Setup();
-	modules::servo::Setup();
-	modules::usb::Setup();
+	hw::usart::usart3.Setup();
+	hw::usart::usart3.send((const uint8_t *)"test1", 5);
+	hw::usart::usart3.send((const uint8_t *)"test2", 5);
+	hw::usart::uart4.Setup();
+	hw::adc::Setup();
+	hw::power::Setup();
+	hw::usb::Setup();
 	fatfs_Init();
 	Logging::Setup();
+	modules::gps::Setup();
+	modules::servo::Setup();
 	modules::krpc_client::Setup();
 
 	for (;;) {

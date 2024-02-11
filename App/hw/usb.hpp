@@ -4,7 +4,7 @@
 #include <stream_buffer.h>
 #include <task.h>
 
-namespace modules {
+namespace hw {
 namespace usb {
 
 void Setup();

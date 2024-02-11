@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <config.hpp>
 
-namespace modules {
+namespace hw {
 namespace usart {
 
 void USART::Setup() {

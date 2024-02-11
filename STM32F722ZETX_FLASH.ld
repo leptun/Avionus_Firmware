@@ -210,7 +210,7 @@ SECTIONS
 		
 		./lib/tinyusb/*.o(.bss*) /* */
 		./glue/tinyusb/*.o(.bss*) /* */
-		./App/modules/usb.o(.bss*)
+		./App/hw/usb.o(.bss*)
 		
 		. = ALIGN(4);
 		_tinyusb_bss_end = .;
@@ -223,7 +223,7 @@ SECTIONS
 		
 		./lib/tinyusb/*.o(.data*) /* */
 		./glue/tinyusb/*.o(.data*) /* */
-		./App/modules/usb.o(.data*)
+		./App/hw/usb.o(.data*)
 		
 		. = ALIGN(4);
 		_tinyusb_data_end = .;

@@ -4,9 +4,9 @@
 #include <util.hpp>
 #include <config.hpp>
 #include <ff.h>
-#include "exti.hpp"
+#include <hw/exti.hpp>
 
-namespace modules {
+namespace hw {
 namespace clock {
 
 DWORD fat_time __attribute__((section(".shared")));
@@ -327,7 +327,6 @@ static void taskClockMain(void *pvParameters) {
 				updateFatTime();
 			}
 		}
-
 	}
 }
 
@@ -393,8 +392,8 @@ void NMI_Handler() {
 }
 }
 
-void modules::exti::exti22_handler() {
+void hw::exti::exti22_handler() {
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	xTaskNotifyIndexedFromISR(modules::clock::pxClockTaskHandle, 0, modules::clock::FLAG_RTC_TICK, eSetBits, &xHigherPriorityTaskWoken);
+	xTaskNotifyIndexedFromISR(hw::clock::pxClockTaskHandle, 0, hw::clock::FLAG_RTC_TICK, eSetBits, &xHigherPriorityTaskWoken);
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

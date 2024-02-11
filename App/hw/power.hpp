@@ -1,6 +1,6 @@
 #pragma once
 
-namespace modules {
+namespace hw {
 namespace power {
 
 enum class PowerDomainControl {

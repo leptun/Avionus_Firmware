@@ -2,7 +2,7 @@
 #include <main.h>
 #include <config.hpp>
 
-namespace modules {
+namespace hw {
 namespace adc {
 
 void Setup() {

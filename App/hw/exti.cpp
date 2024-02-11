@@ -1,6 +1,6 @@
 #include "exti.hpp"
 
-namespace modules {
+namespace hw {
 namespace exti {
 
 

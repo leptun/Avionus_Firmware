@@ -13,7 +13,7 @@
 extern "C" uint32_t _tinyusb_bss_run_addr[];
 extern "C" uint32_t _tinyusb_data_end[];
 
-namespace modules {
+namespace hw {
 namespace usb {
 
 static TaskHandle_t pxusbdTaskHandle;

@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <ff.h>
 #include <fatfs.h>
-#include <modules/exti.hpp>
+#include <hw/exti.hpp>
 
 extern "C" uint32_t _fatfs_bss_run_addr[];
 extern "C" uint32_t _fatfs_data_end[];
@@ -119,7 +119,7 @@ void Setup() {
 
 	fatfs_GrantAccess(loggingTask);
 	retarget_locks_grant_access(loggingTask);
-	modules::exti::GrantAccess(loggingTask);
+	hw::exti::GrantAccess(loggingTask);
 	if (xTaskNotify(loggingTask, 0, eNoAction) != pdPASS) {
 		Error_Handler();
 	}

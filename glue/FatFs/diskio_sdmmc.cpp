@@ -6,7 +6,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "event_groups.h"
-#include <modules/exti.hpp>
+#include <hw/exti.hpp>
 
 
 #define SDMMC_TIMEOUT_MS 5000
@@ -244,7 +244,7 @@ void HAL_SD_AbortCallback(SD_HandleTypeDef *hsd) {
 	}
 }
 
-void modules::exti::exti13_handler() {
+void hw::exti::exti13_handler() {
 	BaseType_t xHigherPriorityTaskWoken, xResult;
 
 	if ((hsd2.Context & SD_CONTEXT_DMA) != 0U) {

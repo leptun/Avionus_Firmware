@@ -6,7 +6,7 @@
 #include <task.h>
 #include <event_groups.h>
 
-namespace modules {
+namespace hw {
 namespace usart {
 
 struct USART_Def {

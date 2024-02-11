@@ -1,7 +1,7 @@
 #include "power.hpp"
 #include <util.hpp>
 
-namespace modules {
+namespace hw {
 namespace power {
 
 static const util::IO EN_PINS[] = {

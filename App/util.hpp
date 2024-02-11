@@ -64,6 +64,33 @@ constexpr T * ioCast(unsigned long addr) {
 	return static_cast<T *>(static_cast<void *>(&null_ptr + addr));
 }
 
+class AtomicFlags {
+	uint32_t flags_thread;
+	uint32_t flags_handler;
+public:
+	constexpr AtomicFlags() : flags_thread(0), flags_handler(0) {}
+
+	uint32_t Get() const {
+			return flags_thread ^ flags_handler;
+		}
+	void Set(uint32_t flags) {
+		flags &= ~Get();
+		flags_thread ^= flags;
+	}
+	void SetFromISR(uint32_t flags) {
+		flags &= ~Get();
+		flags_handler ^= flags;
+	}
+	void Clear(uint32_t flags) {
+		flags &= Get();
+		flags_thread ^= flags;
+	}
+	void ClearFromISR(uint32_t flags) {
+		flags &= Get();
+		flags_handler ^= flags;
+	}
+};
+
 BaseType_t xTaskNotifyWaitBitsAllIndexed(UBaseType_t uxIndexToWaitOn, uint32_t ulBitsToClearOnEntry, uint32_t ulBitsToClearOnExit, uint32_t *pulNotificationValue, TickType_t xTicksToWait);
 BaseType_t xTaskNotifyWaitBitsAnyIndexed(UBaseType_t uxIndexToWaitOn, uint32_t ulBitsToClearOnEntry, uint32_t ulBitsToClearOnExit, uint32_t *pulNotificationValue, TickType_t xTicksToWait);
 

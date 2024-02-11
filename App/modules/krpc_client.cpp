@@ -1,7 +1,7 @@
 #include "krpc_client.hpp"
 #include <config.hpp>
 #include <umm_malloc.h>
-#include <modules/usb.hpp>
+#include <hw/usb.hpp>
 #include <krpc_cnano.h>
 #include <krpc_cnano/services/krpc.h>
 #include <krpc_cnano/services/space_center.h>
@@ -10,7 +10,7 @@
 #include <krpc_cnano/communication.h>
 #include <retarget_locks.h>
 #include <tusb.h>
-#include <modules/airplane.hpp>
+#include <defs.hpp>
 
 #include <FreeRTOS.h>
 #include "semphr.h"
@@ -60,8 +60,8 @@ enum class BulkState {
 #define KRPC_BULK_TEST(x) if (((ret = x)) && ret != KRPC_ERROR_DECODING_FAILED) { break; }
 
 static TaskHandle_t px_krpc_client_TaskHandle __attribute__((section(".shared")));
-static modules::airplane::Flight plane_flight __attribute__((section(".shared")));
-static modules::airplane::Control plane_control __attribute__((section(".shared")));
+static defs::Flight plane_flight __attribute__((section(".shared")));
+static defs::Control plane_control __attribute__((section(".shared")));
 
 
 static void task_krpc_client_Main(void *pvParameters) {
@@ -210,7 +210,7 @@ void Setup() {
 	};
 
 	xTaskCreateRestricted(&krpc_clientTaskDefinition, &px_krpc_client_TaskHandle);
-	modules::usb::GrantAccess(px_krpc_client_TaskHandle);
+	hw::usb::GrantAccess(px_krpc_client_TaskHandle);
 	retarget_locks_grant_access(NULL);
 	if (xTaskNotify(px_krpc_client_TaskHandle, 0, eNoAction) != pdPASS) {
 		Error_Handler();
