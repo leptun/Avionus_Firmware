@@ -25,7 +25,24 @@ static void taskAppMain(void *pvParameters) {
 	hw::adc::Setup();
 	hw::usb::Setup();
 	modules::Init();
-	modules::sv.SetPosition(15, 1500);
+
+	// servo test
+	modules::sv.SetPosition(0, 1000);
+	modules::sv.SetPosition(1, 1100);
+	modules::sv.SetPosition(2, 1200);
+	modules::sv.SetPosition(3, 1300);
+	modules::sv.SetPosition(4, 1400);
+	modules::sv.SetPosition(5, 1500);
+	modules::sv.SetPosition(6, 1600);
+	modules::sv.SetPosition(7, 1700);
+	modules::sv.SetPosition(8, 1800);
+	modules::sv.SetPosition(9, 1900);
+	modules::sv.SetPosition(10, 2000);
+	modules::sv.SetPosition(11, 2100);
+	modules::sv.SetPosition(12, 2200);
+	modules::sv.SetPosition(13, 2300);
+	modules::sv.SetPosition(14, 2400);
+	modules::sv.SetPosition(15, 2500);
 
 	for (;;) {
 		uint32_t pulNotificationValue;

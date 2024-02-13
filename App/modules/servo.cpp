@@ -20,10 +20,8 @@ void Servo::Init() {
 		if (IS_TIM_BREAK_INSTANCE(ch.tim)) {
 			LL_TIM_EnableAllOutputs(ch.tim);
 		}
-		ch.SetCompare(arr + 1);
-		servoPositions[i] = arr + 1;
+		ch.SetCompare(ch.MaxVal());
 		LL_TIM_GenerateEvent_UPDATE(ch.tim);
-		LL_TIM_CC_EnableChannel(ch.tim, ch.chan);
 	}
 	state = State::ready;
 
@@ -72,15 +70,18 @@ bool Servo::SetPosition(uint32_t servo, uint32_t pos_us) {
 void Servo::ApplyPositions() {
 	for (uint32_t servo = 0; servo < COUNT_OF(config::servo_channels); servo++) {
 		uint32_t pos_us = servoPositions[servo];
-		if (pos_us < config::servo_min || pos_us > config::servo_max) {
-			continue;
-		}
 		util::TIM_CHAN_PAIR ch = config::servo_channels[servo];
-		LL_TIM_OC_DisablePreload(ch.tim, ch.chan);
-		ch.SetCompare(pos_us - 1);
-		LL_TIM_OC_EnablePreload(ch.tim, ch.chan);
-		ch.SetCompare(config::servo_pulse_length - config::servo_idle_time); //arr+1
-		LL_TIM_ClearFlag_UPDATE(ch.tim);
+		if (pos_us < config::servo_min || pos_us > config::servo_max) {
+			LL_TIM_CC_DisableChannel(ch.tim, ch.chan);
+		}
+		else {
+			LL_TIM_OC_DisablePreload(ch.tim, ch.chan);
+			ch.SetCompare(pos_us - 1);
+			LL_TIM_OC_EnablePreload(ch.tim, ch.chan);
+			ch.SetCompare(ch.MaxVal());
+			LL_TIM_ClearFlag_UPDATE(ch.tim);
+			LL_TIM_CC_EnableChannel(ch.tim, ch.chan);
+		}
 	}
 
 	// start the pulse sequence
