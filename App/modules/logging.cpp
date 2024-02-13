@@ -1,5 +1,4 @@
-#include "Logging.hpp"
-#include "Logging_buf.hpp"
+#include "logging.hpp"
 #include <FreeRTOS.h>
 #include <task.h>
 #include <retarget_locks.h>
@@ -13,7 +12,11 @@ extern "C" uint32_t _fatfs_data_end[];
 extern "C" uint32_t _logging_bss_run_addr[];
 extern "C" uint32_t _logging_data_end[];
 
-namespace Logging {
+namespace modules {
+namespace logging {
+
+uint8_t aBuf[16384] __attribute__((aligned(16))) __attribute__((section(".app_bss")));
+uint8_t bBuf[16384] __attribute__((aligned(16))) __attribute__((section(".app_bss")));
 
 uint8_t retSD;    /* Return value for SD */
 FATFS SDFatFS;    /* File system object for SD logical drive */
@@ -95,6 +98,7 @@ static portSTACK_TYPE xLoggingTaskStack[ 256 ] __attribute__((aligned(256*4))) _
 
 
 void Setup() {
+	fatfs_Init();
 	TaskHandle_t loggingTask;
 	const TaskParameters_t xLoggingTaskDefinition =
 	{
@@ -125,4 +129,5 @@ void Setup() {
 	}
 }
 
+}
 }

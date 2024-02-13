@@ -1,6 +1,8 @@
 #include "gps.hpp"
-#include <config.hpp>
 #include <inttypes.h>
+#include <config.hpp>
+#include <pins.hpp>
+
 
 namespace modules {
 namespace gps {
@@ -57,7 +59,7 @@ static UbxGNSS gnss;
 
 void Setup() {
 	com.Setup();
-	HAL_GPIO_WritePin(GPS_NRESET_GPIO_Port, GPS_NRESET_Pin, GPIO_PIN_SET);
+	pins::GPS::NRESET.Write(true);
 }
 
 }

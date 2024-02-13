@@ -7,6 +7,7 @@
 #include "task.h"
 #include "event_groups.h"
 #include <hw/exti.hpp>
+#include <pins.hpp>
 
 
 #define SDMMC_TIMEOUT_MS 5000
@@ -36,11 +37,11 @@ void diskio_sdmmc_grant_access(TaskHandle_t task) {
 }
 
 static bool sdmmc_card_detected() {
-	return HAL_GPIO_ReadPin(SD_CARD_CD_GPIO_Port, SD_CARD_CD_Pin) == GPIO_PIN_RESET;
+	return !pins::SD_CARD::CD.Read();
 }
 
 static bool sdmmc_card_write_protected() {
-	return HAL_GPIO_ReadPin(SD_CARD_WP_GPIO_Port, SD_CARD_WP_Pin) == GPIO_PIN_SET;
+	return pins::SD_CARD::WP.Read();
 }
 
 static void sdmmc_config_dma_stream(const void *buff) {

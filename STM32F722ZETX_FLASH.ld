@@ -309,7 +309,7 @@ SECTIONS
 		. = ALIGN(4);
 		_logging_bss_run_addr = .;
 		
-		./App/Logging.o(.bss*)
+		./App/modules/logging.o(.bss*)
 		
 		. = ALIGN(4);
 		_logging_bss_end = .;
@@ -320,7 +320,7 @@ SECTIONS
 		. = ALIGN(4);
 		_logging_data_run_addr = .;
 		
-		./App/Logging.o(.data*)
+		./App/modules/logging.o(.data*)
 		
 		. = ALIGN(4);
 		_logging_data_end = .;
@@ -340,7 +340,7 @@ SECTIONS
 		. = ALIGN(4);
 		_app_bss_run_addr = .;
 		
-		./App/*.o(.bss*) /* */
+		./App/*.o(.app_bss* .bss*) /* */
 		
 		. = ALIGN(4);
 		_app_bss_end = .;

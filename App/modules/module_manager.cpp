@@ -1,21 +1,28 @@
 #include "module_manager.hpp"
-#include <modules/gps.hpp>
-#include <modules/krpc_client.hpp>
-#include <modules/servo.hpp>
+#include "module.hpp"
+#include "modules.hpp"
 #include <AppMain.hpp>
 
 namespace modules {
 
-servo::Servo sv;
-
-Module * moduleList[] = {
+static Module *const moduleList[] = {
 	&sv
 };
 
-void Update() {
+void Init() {
 	for (Module *mod : moduleList) {
-		mod->Update();
+		mod->Init();
 	}
+}
+
+void Update() {
+	bool moreWork;
+	do {
+		moreWork = false;
+		for (Module *mod : moduleList) {
+			moreWork |= mod->Update();
+		}
+	} while (moreWork);
 }
 
 void Cycle() {
@@ -25,7 +32,9 @@ void Cycle() {
 }
 
 void NotifyWork() {
-	xTaskNotifyIndexed(AppMain::pxTaskHandle, 0, AppMain::FLAG_MODULES, eSetBits);
+	if (xTaskNotifyIndexed(AppMain::pxTaskHandle, 0, AppMain::FLAG_MODULES, eSetBits) != pdPASS) {
+		Error_Handler();
+	}
 }
 
 }

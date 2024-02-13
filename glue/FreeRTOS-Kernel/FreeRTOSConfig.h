@@ -46,8 +46,8 @@
 /* Ensure definitions are only used by the compiler, and not by the assembler. */
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
   #include <stdint.h>
-  extern uint32_t SystemCoreClock;
 #endif
+extern uint32_t SystemCoreClock;
 #define configENABLE_FPU                         1
 #define configENABLE_MPU                         1
 
@@ -181,7 +181,7 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 
 #include <main.h>
 
-#define traceLOW_POWER_IDLE_BEGIN() HAL_GPIO_WritePin(UI_LED_1_GPIO_Port, UI_LED_1_Pin, GPIO_PIN_RESET);
-#define traceLOW_POWER_IDLE_END() HAL_GPIO_WritePin(UI_LED_1_GPIO_Port, UI_LED_1_Pin, GPIO_PIN_SET);
+#define traceLOW_POWER_IDLE_BEGIN() LL_GPIO_ResetOutputPin(UI_LED_1_GPIO_Port, UI_LED_1_Pin);
+#define traceLOW_POWER_IDLE_END() LL_GPIO_SetOutputPin(UI_LED_1_GPIO_Port, UI_LED_1_Pin);
 
 #endif /* FREERTOS_CONFIG_H */

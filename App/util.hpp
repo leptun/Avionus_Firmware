@@ -2,6 +2,7 @@
 #include "main.h"
 #include <inttypes.h>
 #include <FreeRTOS.h>
+#include <pins.hpp>
 
 extern uint8_t null_ptr;
 
@@ -9,14 +10,34 @@ namespace util {
 
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
-struct IO {
-	GPIO_TypeDef *port;
-	uint16_t pin;
-};
-
-struct TIM_CHAN_PAIR {
+class TIM_CHAN_PAIR {
+public:
 	TIM_TypeDef *tim;
 	uint32_t chan;
+	void SetCompare(uint32_t val) const {
+		switch (chan) {
+		case LL_TIM_CHANNEL_CH1:
+		case LL_TIM_CHANNEL_CH1N:
+			LL_TIM_OC_SetCompareCH1(tim, val);
+			break;
+		case LL_TIM_CHANNEL_CH2:
+		case LL_TIM_CHANNEL_CH2N:
+			LL_TIM_OC_SetCompareCH2(tim, val);
+			break;
+		case LL_TIM_CHANNEL_CH3:
+		case LL_TIM_CHANNEL_CH3N:
+			LL_TIM_OC_SetCompareCH3(tim, val);
+			break;
+		case LL_TIM_CHANNEL_CH4:
+			LL_TIM_OC_SetCompareCH4(tim, val);
+			break;
+		default:
+			Error_Handler();
+		}
+	}
+	uint32_t MaxVal() const {
+		return IS_TIM_32B_COUNTER_INSTANCE(tim) ? 0xFFFFFFFFul : 0xFFFFul;
+	}
 };
 
 struct LL_DMA_STREAM {
@@ -95,7 +116,7 @@ BaseType_t xTaskNotifyWaitBitsAllIndexed(UBaseType_t uxIndexToWaitOn, uint32_t u
 BaseType_t xTaskNotifyWaitBitsAnyIndexed(UBaseType_t uxIndexToWaitOn, uint32_t ulBitsToClearOnEntry, uint32_t ulBitsToClearOnExit, uint32_t *pulNotificationValue, TickType_t xTicksToWait);
 
 static inline bool isDebugging() {
-	return !HAL_GPIO_ReadPin(DEBUG_GNDDetect_GPIO_Port, DEBUG_GNDDetect_Pin);
+	return !pins::DBG::GNDDetect.Read();
 }
 
 }
