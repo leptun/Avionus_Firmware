@@ -13,7 +13,7 @@ protected:
 		powerup,
 		initializing,
 		ready,
-		cycling,
+		busy,
 		fault,
 	} state;
 

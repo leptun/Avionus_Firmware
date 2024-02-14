@@ -51,9 +51,6 @@ void Servo::Cycle() {
 	if (state != State::ready) {
 		return;
 	}
-	state = State::cycling;
-	ApplyPositions();
-	state = State::ready;
 	flags.Set(FLAG_CHECK_POWER);
 	NotifyWork();
 }
@@ -67,10 +64,19 @@ bool Servo::SetPosition(uint32_t servo, uint32_t pos_us) {
 }
 
 void Servo::ApplyPositions() {
+	// if any of the timers are enabled already, that's no bueno. Skip this push cycle.
+	for (const util::TIM_CHAN_PAIR &ch : config::servo_channels) {
+		if (LL_TIM_IsEnabledCounter(ch.tim)) {
+			return;
+		}
+	}
+
+	// for each servo, push its position if it's valid. If not, then disable that timer channel
 	for (uint32_t servo = 0; servo < COUNT_OF(config::servo_channels); servo++) {
 		uint32_t pos_us = servoPositions[servo];
 		util::TIM_CHAN_PAIR ch = config::servo_channels[servo];
 		if (pos_us < config::servo_min || pos_us > config::servo_max) {
+			pos_us = 0; //needed for arr math later on
 			LL_TIM_CC_DisableChannel(ch.tim, ch.chan);
 		}
 		else {
@@ -79,23 +85,23 @@ void Servo::ApplyPositions() {
 			LL_TIM_OC_EnablePreload(ch.tim, ch.chan);
 			ch.SetCompare(ch.MaxVal());
 
-			uint32_t arr = pos_us - 1 + config::servo_right_porch;
-			if (LL_TIM_IsActiveFlag_UPDATE(ch.tim)) {
-				// first time this timer is used in this cycle
-				LL_TIM_SetAutoReload(ch.tim, arr);
-				LL_TIM_ClearFlag_UPDATE(ch.tim);
-			} else {
-				// increase ARR if it's bigger than the currently set ARR
-				if (arr > LL_TIM_GetAutoReload(ch.tim)) {
-					LL_TIM_SetAutoReload(ch.tim, arr);
-				}
-			}
-
 			LL_TIM_CC_EnableChannel(ch.tim, ch.chan);
+		}
+
+		uint32_t arr = pos_us + config::servo_right_porch - 1;
+		if (LL_TIM_IsActiveFlag_UPDATE(ch.tim)) {
+			// first time this timer is used in this cycle
+			LL_TIM_SetAutoReload(ch.tim, arr);
+			LL_TIM_ClearFlag_UPDATE(ch.tim);
+		} else {
+			// increase ARR if it's bigger than the currently set ARR
+			if (arr > LL_TIM_GetAutoReload(ch.tim)) {
+				LL_TIM_SetAutoReload(ch.tim, arr);
+			}
 		}
 	}
 
-	// start the pulse sequence
+	// start the pulse sequence for all timers
 	for (uint32_t servo = 0; servo < COUNT_OF(config::servo_channels); servo++) {
 		util::TIM_CHAN_PAIR ch = config::servo_channels[servo];
 		if (!LL_TIM_IsEnabledCounter(ch.tim) && !LL_TIM_IsActiveFlag_UPDATE(ch.tim)) {
