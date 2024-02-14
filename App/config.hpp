@@ -24,8 +24,8 @@ static constexpr uint32_t regular_adc_sample_cnt = 500; //samples per cycle
 static constexpr uint32_t servo_update_freq = 50;
 static constexpr uint32_t servo_min = 500; //us
 static constexpr uint32_t servo_max = 2500; //us
-static constexpr uint32_t servo_idle_time = 500; //us
-static constexpr uint32_t servo_pulse_length = servo_idle_time + servo_max + servo_idle_time;
+static constexpr uint32_t servo_left_porch = 500; //us
+static constexpr uint32_t servo_right_porch = 500; //us
 inline constexpr util::TIM_CHAN_PAIR servo_channels[] = {
 		{ TIM3, LL_TIM_CHANNEL_CH1 },
 		{ TIM3, LL_TIM_CHANNEL_CH2 },

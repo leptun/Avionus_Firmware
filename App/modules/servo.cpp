@@ -11,12 +11,11 @@ void Servo::Init() {
 	// Initialize servo timers
 	constexpr uint32_t timer_cnt_freq = 1000000;
 	constexpr uint16_t psc = __LL_TIM_CALC_PSC(config::system_clock_frequency, timer_cnt_freq);
-	constexpr uint32_t arr = config::servo_pulse_length - config::servo_idle_time - 1;
 
 	for (uint32_t i = 0; i < COUNT_OF(config::servo_channels); i++) {
 		util::TIM_CHAN_PAIR ch = config::servo_channels[i];
 		LL_TIM_SetPrescaler(ch.tim, psc);
-		LL_TIM_SetAutoReload(ch.tim, arr);
+		LL_TIM_SetAutoReload(ch.tim, ch.MaxVal());
 		if (IS_TIM_BREAK_INSTANCE(ch.tim)) {
 			LL_TIM_EnableAllOutputs(ch.tim);
 		}
@@ -79,7 +78,19 @@ void Servo::ApplyPositions() {
 			ch.SetCompare(pos_us - 1);
 			LL_TIM_OC_EnablePreload(ch.tim, ch.chan);
 			ch.SetCompare(ch.MaxVal());
-			LL_TIM_ClearFlag_UPDATE(ch.tim);
+
+			uint32_t arr = pos_us - 1 + config::servo_right_porch;
+			if (LL_TIM_IsActiveFlag_UPDATE(ch.tim)) {
+				// first time this timer is used in this cycle
+				LL_TIM_SetAutoReload(ch.tim, arr);
+				LL_TIM_ClearFlag_UPDATE(ch.tim);
+			} else {
+				// increase ARR if it's bigger than the currently set ARR
+				if (arr > LL_TIM_GetAutoReload(ch.tim)) {
+					LL_TIM_SetAutoReload(ch.tim, arr);
+				}
+			}
+
 			LL_TIM_CC_EnableChannel(ch.tim, ch.chan);
 		}
 	}
@@ -88,7 +99,7 @@ void Servo::ApplyPositions() {
 	for (uint32_t servo = 0; servo < COUNT_OF(config::servo_channels); servo++) {
 		util::TIM_CHAN_PAIR ch = config::servo_channels[servo];
 		if (!LL_TIM_IsEnabledCounter(ch.tim) && !LL_TIM_IsActiveFlag_UPDATE(ch.tim)) {
-			LL_TIM_SetCounter(ch.tim, ch.MaxVal() - config::servo_idle_time + 1);
+			LL_TIM_SetCounter(ch.tim, ch.MaxVal() - config::servo_left_porch);
 			LL_TIM_EnableCounter(ch.tim);
 		}
 	}
