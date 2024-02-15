@@ -46,6 +46,7 @@ MEMORY
 	SRAM1 (rw) : ORIGIN = 0x20010000, LENGTH = 176K
 	SRAM2 (rw) : ORIGIN = 0x2003C000, LENGTH = 16K
 	FLASH (rx) : ORIGIN = 0x00200000, LENGTH = 512K
+	XFLASH (rx) : ORIGIN = 0x90000000, LENGTH = 16M
 }
 
 __privileged_functions_region_size__  = 64K;
@@ -357,6 +358,16 @@ SECTIONS
 		_app_data_end = .;
 	} >SRAM1 AT> FLASH
 	_app_data_load_addr = LOADADDR(.app_data);
+
+/* -------------------------------------------------------------------------- */
+
+  .xflashrodata :
+  {
+    . = ALIGN(4);
+    *(.xflashrodata)
+    *(.xflashrodata*)
+    . = ALIGN(4);
+  } >XFLASH
 
 /* -------------------------------------------------------------------------- */
 

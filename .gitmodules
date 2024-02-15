@@ -13,3 +13,6 @@
 [submodule "Fusion"]
 	path = lib/Fusion
 	url = https://github.com/xioTechnologies/Fusion.git
+[submodule "Avionus_QSPILoader"]
+	path = lib/Avionus_QSPILoader
+	url = https://github.com/leptun/Avionus_QSPILoader.git
