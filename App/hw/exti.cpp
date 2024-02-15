@@ -1,4 +1,5 @@
 #include "exti.hpp"
+#include <main.h>
 
 namespace hw {
 namespace exti {

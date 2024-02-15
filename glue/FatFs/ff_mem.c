@@ -2,6 +2,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
+#include <main.h>
 
 #if FF_USE_LFN == 3	/* Use dynamic memory allocation */
 

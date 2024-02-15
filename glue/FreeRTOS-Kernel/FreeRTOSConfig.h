@@ -179,9 +179,9 @@ to all Cortex-M ports, and do not rely on any particular library functions. */
 See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY 	( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
 
-#include <main.h>
 
-#define traceLOW_POWER_IDLE_BEGIN() LL_GPIO_ResetOutputPin(UI_LED_1_GPIO_Port, UI_LED_1_Pin);
-#define traceLOW_POWER_IDLE_END() LL_GPIO_SetOutputPin(UI_LED_1_GPIO_Port, UI_LED_1_Pin);
+#include <glue.h>
+#define configPRE_SLEEP_PROCESSING( x ) glue_configPRE_SLEEP_PROCESSING();
+#define configPOST_SLEEP_PROCESSING( x ) glue_configPOST_SLEEP_PROCESSING();
 
 #endif /* FREERTOS_CONFIG_H */

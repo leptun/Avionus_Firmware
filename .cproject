@@ -56,6 +56,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F7xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../App"/>
+									<listOptionValue builtIn="false" value="../lib/Avionus_QSPILoader/Core/Inc"/>
 									<listOptionValue builtIn="false" value="../lib/FreeRTOS-Kernel/include"/>
 									<listOptionValue builtIn="false" value="../lib/tinyusb/src"/>
 									<listOptionValue builtIn="false" value="../lib/FatFs"/>
@@ -94,6 +95,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F7xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../App"/>
+									<listOptionValue builtIn="false" value="../lib/Avionus_QSPILoader/Core/Inc"/>
 									<listOptionValue builtIn="false" value="../lib/FreeRTOS-Kernel/include"/>
 									<listOptionValue builtIn="false" value="../lib/tinyusb/src"/>
 									<listOptionValue builtIn="false" value="../lib/FatFs"/>
@@ -136,15 +138,16 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Fusion/Fusion"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/umm_malloc/src"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/Common"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/tinyusb/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="App"/>
-						<entry excluding="Avionus_QSPILoader|krpc-arduino/src/communication.cpp|tinyusb|umm_malloc|Fusion|FreeRTOS-Kernel/portable|FreeRTOS-Kernel/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="glue"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="glue"/>
+						<entry excluding="Avionus_QSPILoader|krpc-arduino/src/communication.cpp|tinyusb|umm_malloc|Fusion|FreeRTOS-Kernel/portable|FreeRTOS-Kernel/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
+						<entry excluding="system_stm32f7xx.c|syscalls.c|stm32f7xx_it.c|stm32f7xx_hal_msp.c|main.c|Loader_Src.c|gpio.c|Dev_Inf.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Avionus_QSPILoader/Core/Src"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/Common"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Fusion/Fusion"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/tinyusb/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/umm_malloc/src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -200,6 +203,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F7xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../App"/>
+									<listOptionValue builtIn="false" value="../lib/Avionus_QSPILoader/Core/Inc"/>
 									<listOptionValue builtIn="false" value="../lib/FreeRTOS-Kernel/include"/>
 									<listOptionValue builtIn="false" value="../lib/tinyusb/src"/>
 									<listOptionValue builtIn="false" value="../lib/FatFs"/>
@@ -237,6 +241,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F7xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../App"/>
+									<listOptionValue builtIn="false" value="../lib/Avionus_QSPILoader/Core/Inc"/>
 									<listOptionValue builtIn="false" value="../lib/FreeRTOS-Kernel/include"/>
 									<listOptionValue builtIn="false" value="../lib/tinyusb/src"/>
 									<listOptionValue builtIn="false" value="../lib/FatFs"/>
@@ -278,15 +283,16 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Fusion/Fusion"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/umm_malloc/src"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/Common"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/tinyusb/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="App"/>
-						<entry excluding="Avionus_QSPILoader|krpc-arduino/src/communication.cpp|tinyusb|umm_malloc|Fusion|FreeRTOS-Kernel/portable|FreeRTOS-Kernel/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="glue"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="glue"/>
+						<entry excluding="Avionus_QSPILoader|krpc-arduino/src/communication.cpp|tinyusb|umm_malloc|Fusion|FreeRTOS-Kernel/portable|FreeRTOS-Kernel/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
+						<entry excluding="system_stm32f7xx.c|syscalls.c|stm32f7xx_it.c|stm32f7xx_hal_msp.c|main.c|Loader_Src.c|gpio.c|Dev_Inf.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Avionus_QSPILoader/Core/Src"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/Common"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Fusion/Fusion"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/tinyusb/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/umm_malloc/src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

@@ -6,6 +6,7 @@
 #include <ff.h>
 #include <fatfs.h>
 #include <hw/exti.hpp>
+#include <main.h>
 
 extern "C" uint32_t _fatfs_bss_run_addr[];
 extern "C" uint32_t _fatfs_data_end[];
