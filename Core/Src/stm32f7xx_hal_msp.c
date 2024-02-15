@@ -294,9 +294,6 @@ void HAL_QSPI_MspInit(QSPI_HandleTypeDef* hqspi)
     GPIO_InitStruct.Alternate = GPIO_AF10_QUADSPI;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    /* QUADSPI interrupt Init */
-    HAL_NVIC_SetPriority(QUADSPI_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(QUADSPI_IRQn);
   /* USER CODE BEGIN QUADSPI_MspInit 1 */
 
   /* USER CODE END QUADSPI_MspInit 1 */
@@ -341,8 +338,6 @@ void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* hqspi)
 
     HAL_GPIO_DeInit(GPIOC, GPIO_PIN_11);
 
-    /* QUADSPI interrupt DeInit */
-    HAL_NVIC_DisableIRQ(QUADSPI_IRQn);
   /* USER CODE BEGIN QUADSPI_MspDeInit 1 */
 
   /* USER CODE END QUADSPI_MspDeInit 1 */
