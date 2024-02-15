@@ -1591,13 +1591,7 @@ static void MX_GPIO_Init(void)
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
 
   /**/
-  LL_GPIO_SetOutputPin(UI_LED_1_GPIO_Port, UI_LED_1_Pin);
-
-  /**/
-  LL_GPIO_SetOutputPin(POWER_D1_EN_GPIO_Port, POWER_D1_EN_Pin);
-
-  /**/
-  LL_GPIO_SetOutputPin(POWER_LEDs_EN_GPIO_Port, POWER_LEDs_EN_Pin);
+  LL_GPIO_ResetOutputPin(UI_LED_1_GPIO_Port, UI_LED_1_Pin);
 
   /**/
   LL_GPIO_ResetOutputPin(UI_LED_2_GPIO_Port, UI_LED_2_Pin);
@@ -1648,6 +1642,15 @@ static void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(UI_BUZZER_GPIO_Port, UI_BUZZER_Pin);
 
   /**/
+  LL_GPIO_SetOutputPin(REMOTE_PPM_GPIO_Port, REMOTE_PPM_Pin);
+
+  /**/
+  LL_GPIO_SetOutputPin(POWER_D1_EN_GPIO_Port, POWER_D1_EN_Pin);
+
+  /**/
+  LL_GPIO_SetOutputPin(POWER_LEDs_EN_GPIO_Port, POWER_LEDs_EN_Pin);
+
+  /**/
   GPIO_InitStruct.Pin = UI_LED_1_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
@@ -1673,11 +1676,10 @@ static void MX_GPIO_Init(void)
 
   /**/
   GPIO_InitStruct.Pin = REMOTE_PPM_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_DOWN;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_3;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(REMOTE_PPM_GPIO_Port, &GPIO_InitStruct);
 
   /**/
