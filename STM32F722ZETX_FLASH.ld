@@ -67,27 +67,47 @@ __SHARED_SRAM_segment_end__           = __SHARED_SRAM_segment_start__ + __shared
 
 null_ptr = 0;
 
+/* -------------------------------------------------------------------------- */
 
 /* Sections */
 SECTIONS
 {
+	.xflashrodata :
+	{
+		. = ALIGN(4);
+		*(.xflashrodata .xflashrodata*)
+		. = ALIGN(4);
+  } >XFLASH
+  
+/* -------------------------------------------------------------------------- */
+  
     /* The startup code and FreeRTOS kernel code are placed into privileged
      * flash. */
     .privileged_functions :
     {
         . = ALIGN(4);
+        _privileged_functions_text_run_addr = .;
+        
         KEEP(*(.isr_vector)) /* Startup code */
         . = ALIGN(4);
         *(privileged_functions)
+        
         . = ALIGN(4);
+        _privileged_functions_text_end = .;
+    } >FLASH
+    
+    .privileged_functions_free :
+    {
         FILL(0xADDE);
         /* Ensure that un-privileged code is placed after the region reserved
          * for privileged kernel code. */
         /* Note that dot (.) actually refers to the byte offset from the start
          * of the current section (.privileged_functions in this case). As a
          * result, setting dot (.) to a value sets the size of the section. */
-        . = __privileged_functions_region_size__;
+        . = __privileged_functions_region_size__ - (_privileged_functions_text_end - _privileged_functions_text_run_addr);
     } >FLASH
+
+/* -------------------------------------------------------------------------- */
 
   /* The program code and other data into "FLASH" Rom type memory */
   .text :
@@ -98,26 +118,19 @@ SECTIONS
     *(freertos_system_calls)
     __syscalls_flash_end__ = .;
     . = ALIGN(4);
-    *(.text)           /* .text sections (code) */
-    *(.text*)          /* .text* sections (code) */
-    *(.glue_7)         /* glue arm to thumb code */
-    *(.glue_7t)        /* glue thumb to arm code */
-    *(.eh_frame)
-
+    *(.text .text* .glue_7 .glue_7t .eh_frame)
     KEEP (*(.init))
     KEEP (*(.fini))
 
     . = ALIGN(4);
-    _etext = .;        /* define a global symbols at end of code */
+    _etext = .;
   } >FLASH
 
   /* Constant data into "FLASH" Rom type memory */
   .rodata :
   {
     . = ALIGN(4);
-    *(.rodata)         /* .rodata sections (constants, strings, etc.) */
-    *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
-    *(.force_rodata .force_rodata*)
+    *(.rodata .rodata* .force_rodata .force_rodata*)
     . = ALIGN(4);
   } >FLASH
 
@@ -358,16 +371,6 @@ SECTIONS
 		_app_data_end = .;
 	} >SRAM1 AT> FLASH
 	_app_data_load_addr = LOADADDR(.app_data);
-
-/* -------------------------------------------------------------------------- */
-
-  .xflashrodata :
-  {
-    . = ALIGN(4);
-    *(.xflashrodata)
-    *(.xflashrodata*)
-    . = ALIGN(4);
-  } >XFLASH
 
 /* -------------------------------------------------------------------------- */
 
