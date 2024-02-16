@@ -77,8 +77,17 @@ SECTIONS
 		. = ALIGN(4);
 		*(.xflashrodata .xflashrodata*)
 		. = ALIGN(4);
-  } >XFLASH
-  
+	} >XFLASH
+	
+	.text :
+	{
+		/* Place the FreeRTOS System Calls first in the unprivileged region. */
+		. = ALIGN(4);
+		*(.xflashtext .xflashtext*)
+		./Core/Src/main.o(.text .text*)
+		./Core/Src/stm32f7xx_hal_msp.o(.text .text*)
+		. = ALIGN(4);
+	} >XFLASH
 /* -------------------------------------------------------------------------- */
   
     /* The startup code and FreeRTOS kernel code are placed into privileged
