@@ -13,8 +13,6 @@ void Avionus_QSPILoader_init() {
 		Error_Handler();
 	}
 
-	activeStreams = util::isDebugging() ? 1 : 0;
-
 	if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK) {
 		Error_Handler();
 	}
