@@ -32,6 +32,7 @@ void Avionus_QSPILoader_idleTaskEnterLowPower() {
 
 		SET_BIT(hqspi.Instance->CR, QUADSPI_CR_ABORT);
 		while (READ_BIT(hqspi.Instance->CR, QUADSPI_CR_ABORT)) {}
+		SET_BIT(hqspi.Instance->FCR, QUADSPI_FCR_CTCF); // prevent accidental transfer complete interrupt if that is enabled for some reason
 	}
 }
 
