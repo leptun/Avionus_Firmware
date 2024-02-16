@@ -68,7 +68,7 @@ static void task_krpc_client_Main(void *pvParameters) {
 	(void) pvParameters;
 	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); //wait for parent task to finish initializing this task
 
-	krpc_connection_t conn;
+	krpc_connection_t conn = 0;
 	krpc_SpaceCenter_Vessel_t vessel;
 	krpc_LiDAR_Laser_t laser;
 	krpc_SpaceCenter_Orbit_t orbit;

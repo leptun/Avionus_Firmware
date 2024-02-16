@@ -21,6 +21,7 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "task.h"
+#include <main.h>
 
 
 struct __lock {
