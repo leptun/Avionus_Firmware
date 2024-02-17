@@ -182,12 +182,19 @@ typedef unsigned long    UBaseType_t;
     #define configTEX_S_C_B_SRAM          ( 0x07UL )
 #endif
 
-#define portSTACK_REGION                  ( configTOTAL_MPU_REGIONS - 3UL )
-#define portSHARED_DATA_REGION            ( configTOTAL_MPU_REGIONS - 2UL )
+/* TEX, Shareable (S), Cacheable (C) and Bufferable (B) bits for TCMRAM
+ * region. */
+#ifndef configTEX_S_C_B_TCMRAM
+	/* Default to TEX=001, S=0, C=0, B=0 for backward compatibility. */
+	#define configTEX_S_C_B_TCMRAM        ( 0x08UL )
+#endif
+
+#define portSRAM_REGION                   ( 0 )
+#define portSTACK_REGION                  ( configTOTAL_MPU_REGIONS - 2UL )
 #define portUNPRIVILEGED_FLASH_REGION     ( configTOTAL_MPU_REGIONS - 1UL )
-#define portFIRST_CONFIGURABLE_REGION     ( 0UL )
-#define portLAST_CONFIGURABLE_REGION      ( configTOTAL_MPU_REGIONS - 4UL )
-#define portNUM_CONFIGURABLE_REGIONS      ( portLAST_CONFIGURABLE_REGION + 1 )
+#define portFIRST_CONFIGURABLE_REGION     ( 1UL )
+#define portLAST_CONFIGURABLE_REGION      ( configTOTAL_MPU_REGIONS - 3UL )
+#define portNUM_CONFIGURABLE_REGIONS      ( portLAST_CONFIGURABLE_REGION - portFIRST_CONFIGURABLE_REGION + 1 )
 #define portTOTAL_NUM_REGIONS_IN_TCB      ( portNUM_CONFIGURABLE_REGIONS + 1 ) /* Plus 1 to create space for the stack region. */
 
 typedef struct MPU_REGION_REGISTERS

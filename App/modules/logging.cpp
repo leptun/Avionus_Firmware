@@ -111,8 +111,8 @@ void Setup() {
 		xLoggingTaskStack,
 	    {
 	        /* Base address   Length                    Parameters */
-			{ (uint32_t*)(_fatfs_bss_run_addr), (uint32_t)_fatfs_data_end - (uint32_t)_fatfs_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
-			{ (uint32_t*)(_logging_bss_run_addr), (uint32_t)_logging_data_end - (uint32_t)_logging_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | portMPU_REGION_CACHEABLE_BUFFERABLE },
+			{ (uint32_t*)(_fatfs_bss_run_addr), (uint32_t)_fatfs_data_end - (uint32_t)_fatfs_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | configTEX_S_C_B_SRAM },
+			{ (uint32_t*)(_logging_bss_run_addr), (uint32_t)_logging_data_end - (uint32_t)_logging_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | configTEX_S_C_B_SRAM },
 	        { (uint32_t*)(AHB1PERIPH_BASE), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b10111111 << MPU_RASR_SRD_Pos) }, //GPIOG
 			{ (uint32_t*)(AHB1PERIPH_BASE + 0x6000), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11111101 << MPU_RASR_SRD_Pos) }, //DMA2
 			{ (uint32_t*)(APB2PERIPH_BASE), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b01111111 << MPU_RASR_SRD_Pos) }, //SDMMC2

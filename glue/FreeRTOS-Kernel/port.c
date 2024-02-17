@@ -1527,8 +1527,6 @@ static void prvSetupMPU( void )
         extern uint32_t __privileged_functions_end__[];
         extern uint32_t __FLASH_segment_start__[];
         extern uint32_t __FLASH_segment_end__[];
-        extern uint32_t __SHARED_SRAM_segment_start__[];
-        extern uint32_t __SHARED_SRAM_segment_end__[];
     #endif /* if defined( __ARMCC_VERSION ) */
 
     /* The only permitted number of regions are 8 or 16. */
@@ -1540,6 +1538,17 @@ static void prvSetupMPU( void )
     /* Check the expected MPU is present. */
     if( portMPU_TYPE_REG == portEXPECTED_MPU_TYPE_VALUE )
     {
+		/* Make SRAM cacheable and allow privileged RW */
+		portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) 0x20000000 ) | /* Base address. */
+										  ( portMPU_REGION_VALID ) |
+										  ( portSRAM_REGION );
+
+		portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_PRIVILEGED_READ_WRITE ) |
+									   ( portMPU_REGION_EXECUTE_NEVER ) |
+									   ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
+									   ( prvGetMPURegionSizeSetting( 0x40000 )) | // DTCMRAM + SRAM1 + SRAM2
+									   ( portMPU_REGION_ENABLE );
+
         /* First setup the unprivileged flash for unprivileged read only access. */
         portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __FLASH_segment_start__ ) | /* Base address. */
                                           ( portMPU_REGION_VALID ) |
@@ -1549,17 +1558,6 @@ static void prvSetupMPU( void )
                                        ( ( configTEX_S_C_B_FLASH & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
                                        ( prvGetMPURegionSizeSetting( ( uint32_t ) __FLASH_segment_end__ - ( uint32_t ) __FLASH_segment_start__ ) ) |
 									   ( (0x01 << mpuMPU_RASR_SRD_LOCATION) ) |
-                                       ( portMPU_REGION_ENABLE );
-
-        /* Setup shared ram for unprivileged RW */
-        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __SHARED_SRAM_segment_start__ ) | /* Base address. */
-                                          ( portMPU_REGION_VALID ) |
-                                          ( portSHARED_DATA_REGION );
-
-        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_WRITE ) |
-                                       ( portMPU_REGION_EXECUTE_NEVER ) |
-                                       ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
-                                       ( prvGetMPURegionSizeSetting( ( uint32_t ) __SHARED_SRAM_segment_end__ - ( uint32_t ) __SHARED_SRAM_segment_start__ ) ) |
                                        ( portMPU_REGION_ENABLE );
 
         /* Enable the memory fault exception. */
@@ -1658,64 +1656,46 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
     int32_t lIndex;
     uint32_t ul;
 
+    /* This function is called automatically when the task is created - in
+     * which case the stack region parameters will be valid.  At all other
+     * times the stack parameters will not be valid and it is assumed that the
+     * stack region has already been configured. */
+    if( ulStackDepth > 0 )
+    {
+        /* Define the region that allows access to the stack. */
+        xMPUSettings->xRegion[ 0 ].ulRegionBaseAddress =
+            ( ( uint32_t ) pxBottomOfStack ) |
+            ( portMPU_REGION_VALID ) |
+            ( portSTACK_REGION ); /* Region number. */
+
+        xMPUSettings->xRegion[ 0 ].ulRegionAttribute =
+            ( portMPU_REGION_READ_WRITE ) |
+            ( portMPU_REGION_EXECUTE_NEVER ) |
+            ( prvGetMPURegionSizeSetting( ulStackDepth * ( uint32_t ) sizeof( StackType_t ) ) ) |
+            ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
+            ( portMPU_REGION_ENABLE );
+
+        xMPUSettings->xRegionSettings[ 0 ].ulRegionStartAddress = ( uint32_t ) pxBottomOfStack;
+        xMPUSettings->xRegionSettings[ 0 ].ulRegionEndAddress = ( uint32_t ) ( ( uint32_t ) ( pxBottomOfStack ) +
+                                                                               ( ulStackDepth * ( uint32_t ) sizeof( StackType_t ) ) - 1UL );
+        xMPUSettings->xRegionSettings[ 0 ].ulRegionPermissions = ( tskMPU_READ_PERMISSION |
+                                                                   tskMPU_WRITE_PERMISSION );
+    }
+
     if( xRegions == NULL )
     {
         /* Invalidate user configurable regions. */
-        for( ul = 0UL; ul < portTOTAL_NUM_REGIONS_IN_TCB; ul++ )
+        for( ul = 1UL; ul < portTOTAL_NUM_REGIONS_IN_TCB; ul++ )
         {
-            xMPUSettings->xRegion[ ul ].ulRegionBaseAddress = ( ( ul ) | portMPU_REGION_VALID );
+            xMPUSettings->xRegion[ ul ].ulRegionBaseAddress = ( ( ul - 1UL + portFIRST_CONFIGURABLE_REGION ) | portMPU_REGION_VALID );
             xMPUSettings->xRegion[ ul ].ulRegionAttribute = 0UL;
             xMPUSettings->xRegionSettings[ ul ].ulRegionStartAddress = 0UL;
             xMPUSettings->xRegionSettings[ ul ].ulRegionEndAddress = 0UL;
             xMPUSettings->xRegionSettings[ ul ].ulRegionPermissions = 0UL;
         }
-
-//        /* No MPU regions are specified so allow access to all RAM. */
-//        xMPUSettings->xRegion[ 0 ].ulRegionBaseAddress =
-//            ( ( uint32_t ) __SRAM_segment_start__ ) | /* Base address. */
-//            ( portMPU_REGION_VALID ) |
-//            ( portSTACK_REGION ); /* Region number. */
-//
-//        xMPUSettings->xRegion[ 0 ].ulRegionAttribute =
-//            ( portMPU_REGION_READ_WRITE ) |
-//            ( portMPU_REGION_EXECUTE_NEVER ) |
-//            ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
-//            ( prvGetMPURegionSizeSetting( ( uint32_t ) __SRAM_segment_end__ - ( uint32_t ) __SRAM_segment_start__ ) ) |
-//            ( portMPU_REGION_ENABLE );
-//
-//        xMPUSettings->xRegionSettings[ 0 ].ulRegionStartAddress = ( uint32_t ) __SRAM_segment_start__;
-//        xMPUSettings->xRegionSettings[ 0 ].ulRegionEndAddress = ( uint32_t ) __SRAM_segment_end__;
-//        xMPUSettings->xRegionSettings[ 0 ].ulRegionPermissions = ( tskMPU_READ_PERMISSION |
-//                                                                   tskMPU_WRITE_PERMISSION );
     }
     else
     {
-        /* This function is called automatically when the task is created - in
-         * which case the stack region parameters will be valid.  At all other
-         * times the stack parameters will not be valid and it is assumed that the
-         * stack region has already been configured. */
-        if( ulStackDepth > 0 )
-        {
-            /* Define the region that allows access to the stack. */
-            xMPUSettings->xRegion[ 0 ].ulRegionBaseAddress =
-                ( ( uint32_t ) pxBottomOfStack ) |
-                ( portMPU_REGION_VALID ) |
-                ( portSTACK_REGION ); /* Region number. */
-
-            xMPUSettings->xRegion[ 0 ].ulRegionAttribute =
-                ( portMPU_REGION_READ_WRITE ) |
-                ( portMPU_REGION_EXECUTE_NEVER ) |
-                ( prvGetMPURegionSizeSetting( ulStackDepth * ( uint32_t ) sizeof( StackType_t ) ) ) |
-                ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
-                ( portMPU_REGION_ENABLE );
-
-            xMPUSettings->xRegionSettings[ 0 ].ulRegionStartAddress = ( uint32_t ) pxBottomOfStack;
-            xMPUSettings->xRegionSettings[ 0 ].ulRegionEndAddress = ( uint32_t ) ( ( uint32_t ) ( pxBottomOfStack ) +
-                                                                                   ( ulStackDepth * ( uint32_t ) sizeof( StackType_t ) ) - 1UL );
-            xMPUSettings->xRegionSettings[ 0 ].ulRegionPermissions = ( tskMPU_READ_PERMISSION |
-                                                                       tskMPU_WRITE_PERMISSION );
-        }
-
         lIndex = 0;
 
         for( ul = 1UL; ul <= portNUM_CONFIGURABLE_REGIONS; ul++ )
@@ -1753,7 +1733,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
             else
             {
                 /* Invalidate the region. */
-                xMPUSettings->xRegion[ ul ].ulRegionBaseAddress = ( ( ul - 1UL ) | portMPU_REGION_VALID );
+                xMPUSettings->xRegion[ ul ].ulRegionBaseAddress = ( ( ul - 1UL + portFIRST_CONFIGURABLE_REGION ) | portMPU_REGION_VALID );
                 xMPUSettings->xRegion[ ul ].ulRegionAttribute = 0UL;
                 xMPUSettings->xRegionSettings[ ul ].ulRegionStartAddress = 0UL;
                 xMPUSettings->xRegionSettings[ ul ].ulRegionEndAddress = 0UL;
