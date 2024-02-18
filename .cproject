@@ -137,17 +137,20 @@
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec.328813530" name="MCU Output Converter Motorola S-rec with symbols" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1952267406.258592267" name="tim.c" rcbsApplicability="disable" resourcePath="lib/Avionus_QSPILoader/Core/Src/tim.c" toolsToInvoke="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1358135656.239120202">
+						<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1358135656.239120202" name="MCU GCC Compiler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1358135656"/>
+					</fileInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Fusion/Fusion"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/umm_malloc/src"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/Common"/>
-						<entry excluding="system_stm32f7xx.c|syscalls.c|stm32f7xx_it.c|stm32f7xx_hal_msp.c|main.c|Loader_Src.c|gpio.c|Dev_Inf.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Avionus_QSPILoader/Core/Src"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/tinyusb/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="App"/>
-						<entry excluding="Avionus_QSPILoader|krpc-arduino/src/communication.cpp|tinyusb|umm_malloc|Fusion|FreeRTOS-Kernel/portable|FreeRTOS-Kernel/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="glue"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="glue"/>
+						<entry excluding="Avionus_QSPILoader|krpc-arduino/src/communication.cpp|tinyusb|umm_malloc|Fusion|FreeRTOS-Kernel/portable|FreeRTOS-Kernel/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
+						<entry excluding="tim.c|system_stm32f7xx.c|syscalls.c|stm32f7xx_it.c|stm32f7xx_hal_msp.c|main.c|Loader_Src.c|gpio.c|Dev_Inf.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Avionus_QSPILoader/Core/Src"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/Common"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Fusion/Fusion"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/tinyusb/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/umm_malloc/src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -284,17 +287,20 @@
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec.618349541" name="MCU Output Converter Motorola S-rec with symbols" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.release.1232014980.1175465349" name="tim.c" rcbsApplicability="disable" resourcePath="lib/Avionus_QSPILoader/Core/Src/tim.c" toolsToInvoke="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1986718307.327105131">
+						<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1986718307.327105131" name="MCU GCC Compiler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1986718307"/>
+					</fileInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Fusion/Fusion"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/umm_malloc/src"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/Common"/>
-						<entry excluding="system_stm32f7xx.c|syscalls.c|stm32f7xx_it.c|stm32f7xx_hal_msp.c|main.c|Loader_Src.c|gpio.c|Dev_Inf.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Avionus_QSPILoader/Core/Src"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/tinyusb/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="App"/>
-						<entry excluding="Avionus_QSPILoader|krpc-arduino/src/communication.cpp|tinyusb|umm_malloc|Fusion|FreeRTOS-Kernel/portable|FreeRTOS-Kernel/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="glue"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="glue"/>
+						<entry excluding="Avionus_QSPILoader|krpc-arduino/src/communication.cpp|tinyusb|umm_malloc|Fusion|FreeRTOS-Kernel/portable|FreeRTOS-Kernel/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
+						<entry excluding="tim.c|system_stm32f7xx.c|syscalls.c|stm32f7xx_it.c|stm32f7xx_hal_msp.c|main.c|Loader_Src.c|gpio.c|Dev_Inf.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Avionus_QSPILoader/Core/Src"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/Common"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Fusion/Fusion"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/tinyusb/src"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/umm_malloc/src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
