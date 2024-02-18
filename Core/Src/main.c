@@ -870,6 +870,10 @@ static void MX_TIM1_Init(void)
   LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_RESET);
   LL_TIM_SetTriggerOutput2(TIM1, LL_TIM_TRGO2_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM1);
+  LL_TIM_OC_DisablePreload(TIM1, LL_TIM_CHANNEL_CH1);
+  LL_TIM_OC_DisablePreload(TIM1, LL_TIM_CHANNEL_CH2);
+  LL_TIM_OC_DisablePreload(TIM1, LL_TIM_CHANNEL_CH3);
+  LL_TIM_OC_DisablePreload(TIM1, LL_TIM_CHANNEL_CH4);
   TIM_BDTRInitStruct.OSSRState = LL_TIM_OSSR_DISABLE;
   TIM_BDTRInitStruct.OSSIState = LL_TIM_OSSI_DISABLE;
   TIM_BDTRInitStruct.LockLevel = LL_TIM_LOCKLEVEL_OFF;
@@ -978,6 +982,10 @@ static void MX_TIM2_Init(void)
   LL_TIM_SetOnePulseMode(TIM2, LL_TIM_ONEPULSEMODE_SINGLE);
   LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM2);
+  LL_TIM_OC_DisablePreload(TIM2, LL_TIM_CHANNEL_CH1);
+  LL_TIM_OC_DisablePreload(TIM2, LL_TIM_CHANNEL_CH2);
+  LL_TIM_OC_DisablePreload(TIM2, LL_TIM_CHANNEL_CH3);
+  LL_TIM_OC_DisablePreload(TIM2, LL_TIM_CHANNEL_CH4);
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
@@ -1074,6 +1082,10 @@ static void MX_TIM3_Init(void)
   LL_TIM_SetOnePulseMode(TIM3, LL_TIM_ONEPULSEMODE_SINGLE);
   LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM3);
+  LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH1);
+  LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH2);
+  LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH3);
+  LL_TIM_OC_DisablePreload(TIM3, LL_TIM_CHANNEL_CH4);
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
@@ -1170,6 +1182,10 @@ static void MX_TIM4_Init(void)
   LL_TIM_SetOnePulseMode(TIM4, LL_TIM_ONEPULSEMODE_SINGLE);
   LL_TIM_SetTriggerOutput(TIM4, LL_TIM_TRGO_RESET);
   LL_TIM_DisableMasterSlaveMode(TIM4);
+  LL_TIM_OC_DisablePreload(TIM4, LL_TIM_CHANNEL_CH1);
+  LL_TIM_OC_DisablePreload(TIM4, LL_TIM_CHANNEL_CH2);
+  LL_TIM_OC_DisablePreload(TIM4, LL_TIM_CHANNEL_CH3);
+  LL_TIM_OC_DisablePreload(TIM4, LL_TIM_CHANNEL_CH4);
   /* USER CODE BEGIN TIM4_Init 2 */
 
   /* USER CODE END TIM4_Init 2 */

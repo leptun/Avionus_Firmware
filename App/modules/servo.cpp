@@ -15,11 +15,11 @@ void Servo::Init() {
 	for (uint32_t i = 0; i < COUNT_OF(config::servo_channels); i++) {
 		util::TIM_CHAN_PAIR ch = config::servo_channels[i];
 		LL_TIM_SetPrescaler(ch.tim, psc);
-		LL_TIM_SetAutoReload(ch.tim, ch.MaxVal());
+		LL_TIM_SetAutoReload(ch.tim, -1);
 		if (IS_TIM_BREAK_INSTANCE(ch.tim)) {
 			LL_TIM_EnableAllOutputs(ch.tim);
 		}
-		ch.SetCompare(ch.MaxVal());
+		ch.SetCompare(-1);
 		LL_TIM_GenerateEvent_UPDATE(ch.tim);
 	}
 	state = State::ready;
@@ -76,15 +76,11 @@ void Servo::ApplyPositions() {
 		uint32_t pos_us = servoPositions[servo];
 		util::TIM_CHAN_PAIR ch = config::servo_channels[servo];
 		if (pos_us < config::servo_min || pos_us > config::servo_max) {
-			pos_us = 0; //needed for arr math later on
 			LL_TIM_CC_DisableChannel(ch.tim, ch.chan);
+			continue;
 		}
 		else {
-			LL_TIM_OC_DisablePreload(ch.tim, ch.chan);
 			ch.SetCompare(pos_us - 1);
-			LL_TIM_OC_EnablePreload(ch.tim, ch.chan);
-			ch.SetCompare(ch.MaxVal());
-
 			LL_TIM_CC_EnableChannel(ch.tim, ch.chan);
 		}
 
@@ -105,7 +101,7 @@ void Servo::ApplyPositions() {
 	for (uint32_t servo = 0; servo < COUNT_OF(config::servo_channels); servo++) {
 		util::TIM_CHAN_PAIR ch = config::servo_channels[servo];
 		if (!LL_TIM_IsEnabledCounter(ch.tim) && !LL_TIM_IsActiveFlag_UPDATE(ch.tim)) {
-			LL_TIM_SetCounter(ch.tim, ch.MaxVal() - config::servo_left_porch);
+			LL_TIM_SetCounter(ch.tim, -config::servo_left_porch - 1);
 			LL_TIM_EnableCounter(ch.tim);
 		}
 	}
