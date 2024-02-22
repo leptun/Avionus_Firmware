@@ -334,7 +334,7 @@ static portSTACK_TYPE xClockTaskStack[128] __attribute__((aligned(128*4))) __att
 static const TaskParameters_t xClockTaskDefinition =
 {
 	taskClockMain,
-	"sys",
+	"clock",
 	(configSTACK_DEPTH_TYPE)sizeof(xClockTaskStack) / sizeof(portSTACK_TYPE),
     NULL,
     0 | portPRIVILEGE_BIT,

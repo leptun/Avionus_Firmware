@@ -11,6 +11,7 @@
 #include <retarget_locks.h>
 #include <tusb.h>
 #include <defs.hpp>
+#include <regions.h>
 
 #include <FreeRTOS.h>
 #include "semphr.h"
@@ -189,25 +190,24 @@ static void task_krpc_client_Main(void *pvParameters) {
 	}
 }
 static portSTACK_TYPE krpc_client_taskStack[1024] __attribute__((aligned(1024*4))) __attribute__((section(".stack")));
-
+static const TaskParameters_t krpc_clientTaskDefinition =
+{
+	task_krpc_client_Main,
+	"krpc",
+	(configSTACK_DEPTH_TYPE)sizeof(krpc_client_taskStack) / sizeof(portSTACK_TYPE),
+	NULL,
+	1,
+	krpc_client_taskStack,
+	{
+		/* Base address   Length                    Parameters */
+		{ _tinyusb_bss_run_addr, __tinyusb_data_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | configTEX_S_C_B_SRAM },
+		{ _krpc_bss_run_addr, __krpc_data_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | configTEX_S_C_B_SRAM },
+		{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
+	}
+};
 
 void Setup() {
 	krpc_memory_init();
-	const TaskParameters_t krpc_clientTaskDefinition =
-	{
-		task_krpc_client_Main,
-		"krpc",
-		(configSTACK_DEPTH_TYPE)sizeof(krpc_client_taskStack) / sizeof(portSTACK_TYPE),
-		NULL,
-		1,
-		krpc_client_taskStack,
-		{
-			/* Base address   Length                    Parameters */
-			{ (uint32_t*)(_tinyusb_bss_run_addr), (uint32_t)_tinyusb_data_end - (uint32_t)_tinyusb_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | configTEX_S_C_B_SRAM },
-			{ (uint32_t*)(_krpc_bss_run_addr), (uint32_t)_krpc_data_end - (uint32_t)_krpc_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | configTEX_S_C_B_SRAM },
-			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
-		}
-	};
 
 	xTaskCreateRestricted(&krpc_clientTaskDefinition, &px_krpc_client_TaskHandle);
 	hw::usb::GrantAccess(px_krpc_client_TaskHandle);

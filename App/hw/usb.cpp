@@ -7,6 +7,7 @@
 #include <retarget_locks.h>
 #include <modules/krpc_client.hpp>
 #include <config.hpp>
+#include <regions.h>
 
 #define USBD_STACK_SIZE     256 * (CFG_TUSB_DEBUG ? 2 : 1)
 
@@ -42,6 +43,21 @@ static void usb_device_task(void *pvParameters) {
 	}
 }
 static portSTACK_TYPE usb_device_taskStack[ USBD_STACK_SIZE ] __attribute__((aligned(USBD_STACK_SIZE*4))) __attribute__((section(".stack")));
+static const TaskParameters_t usb_device_taskTaskDefinition =
+{
+	usb_device_task,
+	"usbd",
+	(configSTACK_DEPTH_TYPE)sizeof(usb_device_taskStack) / sizeof(portSTACK_TYPE),
+	NULL,
+	(configMAX_PRIORITIES-1) | portPRIVILEGE_BIT,
+	usb_device_taskStack,
+	{
+		/* Base address   Length                    Parameters */
+		{ _tinyusb_bss_run_addr, __tinyusb_data_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | configTEX_S_C_B_SRAM },
+		{ _shared_bss_run_addr, __shared_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | configTEX_S_C_B_TCMRAM },
+		{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
+	}
+};
 
 extern "C"
 void tud_cdc_rx_cb(uint8_t itf) {
@@ -115,22 +131,6 @@ void Setup() {
 	/* USB_OTG_HS interrupt Init */
 	HAL_NVIC_SetPriority(OTG_HS_IRQn, 5, 0);
 	HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
-
-	const TaskParameters_t usb_device_taskTaskDefinition =
-	{
-		usb_device_task,
-		"usbd",
-		(configSTACK_DEPTH_TYPE)sizeof(usb_device_taskStack) / sizeof(portSTACK_TYPE),
-		NULL,
-		(configMAX_PRIORITIES-1) | portPRIVILEGE_BIT,
-		usb_device_taskStack,
-		{
-			/* Base address   Length                    Parameters */
-			{ _tinyusb_bss_run_addr, (uint32_t)_tinyusb_data_end - (uint32_t)_tinyusb_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | configTEX_S_C_B_SRAM },
-			{ _shared_bss_run_addr, (uint32_t)_shared_data_end - (uint32_t)_shared_bss_run_addr, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | configTEX_S_C_B_TCMRAM },
-			{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
-		}
-	};
 
 	// Create a task for tinyusb device stack
 	xTaskCreateRestricted(&usb_device_taskTaskDefinition, &pxTaskHandle);

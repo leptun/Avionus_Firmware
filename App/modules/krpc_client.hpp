@@ -1,7 +1,7 @@
 #pragma once
 #include <inttypes.h>
 
-namespace modules{
+namespace modules {
 namespace krpc_client {
 
 void Setup();

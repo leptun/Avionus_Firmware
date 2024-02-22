@@ -1,0 +1,6 @@
+__privileged_functions_region_size__  = 64 * 1024,
+__shared_region_size__                = 16 * 1024,
+__tinyusb_data_region_size__          = 2 * 1024,
+__fatfs_data_region_size__            = 2 * 1024,
+__krpc_data_region_size__             = 4 * 1024,
+__logging_data_region_size__          = 2 * 1024,

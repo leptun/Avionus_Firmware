@@ -49,21 +49,7 @@ MEMORY
 	XFLASH (rx) : ORIGIN = 0x90000000, LENGTH = 16M
 }
 
-__privileged_functions_region_size__  = 64K;
-__shared_region_size__                = 16K;
-__tinyusb_data_region_size__          = 2K;
-__fatfs_data_region_size__            = 2K;
-__krpc_data_region_size__             = 4K;
-__logging_data_region_size__          = 2K;
-
-__FLASH_segment_start__               = ORIGIN( FLASH );
-__FLASH_segment_end__                 = __FLASH_segment_start__ + LENGTH( FLASH );
-
-__privileged_functions_start__        = __FLASH_segment_start__;
-__privileged_functions_end__          = __FLASH_segment_start__ + __privileged_functions_region_size__;
-
-__SHARED_SRAM_segment_start__         = ORIGIN( ITCMRAM );
-__SHARED_SRAM_segment_end__           = __SHARED_SRAM_segment_start__ + __shared_region_size__;
+INCLUDE ../glue/_regions.ld
 
 null_ptr = 0;
 
@@ -71,7 +57,7 @@ null_ptr = 0;
 
 /* Sections */
 SECTIONS
-{	
+{
 	.xflash_text_rodata :
 	{
 		/* Place the FreeRTOS System Calls first in the unprivileged region. */
@@ -89,6 +75,9 @@ SECTIONS
     {
         . = ALIGN(4);
         _privileged_functions_text_run_addr = .;
+        __FLASH_segment_start__ = .;
+        __FLASH_segment_end__ = __FLASH_segment_start__ + LENGTH( FLASH );
+        __privileged_functions_start__ = __FLASH_segment_start__;
         
         KEEP(*(.isr_vector)) /* Startup code */
         . = ALIGN(4);
@@ -107,6 +96,7 @@ SECTIONS
          * of the current section (.privileged_functions in this case). As a
          * result, setting dot (.) to a value sets the size of the section. */
         . = __privileged_functions_region_size__ - (_privileged_functions_text_end - _privileged_functions_text_run_addr);
+        __privileged_functions_end__ = .;
     } >FLASH
 
 /* -------------------------------------------------------------------------- */
@@ -379,6 +369,7 @@ SECTIONS
 	._shared_user_heap :
 	{
 		_shared_bss_run_addr = .;
+		__SHARED_SRAM_segment_start__ = .;
 		. = 1;
 		. = ALIGN(4);
 		PROVIDE ( end = . );
@@ -424,6 +415,7 @@ SECTIONS
 	{
 		FILL(0);
 		. = __shared_region_size__ - (_shared_data_end - _shared_bss_run_addr);
+		__SHARED_SRAM_segment_end__ = .;
 	} >ITCMRAM
 
 /* -------------------------------------------------------------------------- */
