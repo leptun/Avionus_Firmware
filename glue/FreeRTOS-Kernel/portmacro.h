@@ -189,6 +189,8 @@ typedef unsigned long    UBaseType_t;
 	#define configTEX_S_C_B_TCMRAM        ( 0x08UL )
 #endif
 
+#define CACHE_CONF(val) ((val & portMPU_RASR_TEX_S_C_B_MASK) << portMPU_RASR_TEX_S_C_B_LOCATION)
+
 #define portSRAM_REGION                   ( 0 )
 #define portSTACK_REGION                  ( configTOTAL_MPU_REGIONS - 2UL )
 #define portUNPRIVILEGED_FLASH_REGION     ( configTOTAL_MPU_REGIONS - 1UL )
