@@ -20,6 +20,7 @@ protected:
 	// The handle of the task that manages this module
 	TaskHandle_t task;
 public:
+	// Initialization to be called only once
 	virtual void Init() {
 		task = xTaskGetCurrentTaskHandle();
 		state = State::init;
@@ -33,9 +34,6 @@ public:
 	virtual void Cycle() {}
 
 private:
-	// module initialization code
-	virtual void Setup() {}
-
 	// check if all dependencies are met
 	virtual bool DependenciesMet() { return true; }
 

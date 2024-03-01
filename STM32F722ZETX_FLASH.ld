@@ -284,6 +284,7 @@ SECTIONS
 		
 		./App/modules/krpc_client.o(.bss*)
 		./lib/krpc-arduino/*.o(.bss*) /* */
+		*(.krpc)
 		
 		. = ALIGN(4);
 		_krpc_bss_end = .;

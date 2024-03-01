@@ -6,7 +6,8 @@
 namespace modules {
 
 static Module *const moduleList[] = {
-	&sv
+	&sv,
+	&krpc,
 };
 
 void Init() {

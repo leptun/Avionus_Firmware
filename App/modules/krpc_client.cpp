@@ -27,49 +27,23 @@ extern "C" uint32_t _tinyusb_data_end[];
 extern "C" uint32_t _krpc_bss_run_addr[];
 extern "C" uint32_t _krpc_data_end[];
 
+#define KRPC_BULK_START for (bulkState = BulkState::SEND; bulkState != BulkState::DISABLED; bulkState = (BulkState)((int)bulkState - 1)) { krpc_error_t ret;
+#define KRPC_BULK_END } if (bulkState != BulkState::DISABLED) { bulkState = BulkState::DISABLED; state = InternalStates::Init; break; }
+#define KRPC_BULK_TEST(x) if (((ret = x)) && ret != KRPC_ERROR_DECODING_FAILED) { break; }
+
 static void krpc_memory_init(void);
 
 namespace modules {
 namespace krpc_client {
 
-enum FlagDef0 {
-	FLAG0_CYCLE = 0x000001,
-	FLAG0_COMM_LINE_STATE = 0x000002,
-};
-
-enum FlagDef1 {
-	FLAG1_COMM_RX = 0x000001,
-	FLAG1_COMM_TX = 0x000002,
-	FLAG1_COMM_LINE_STATE = 0x000004,
-};
-
-enum class InternalStates {
-	Init = 0,
-	Connected,
-	Flight,
-	Processing,
-} state;
-
-enum class BulkState {
-	DISABLED = 0,
-	RECEIVE = 1,
-	SEND = 2,
-} bulkState;
-
-#define KRPC_BULK_START for (bulkState = BulkState::SEND; bulkState != BulkState::DISABLED; bulkState = (BulkState)((int)bulkState - 1)) { krpc_error_t ret;
-#define KRPC_BULK_END } if (bulkState != BulkState::DISABLED) { bulkState = BulkState::DISABLED; state = InternalStates::Init; break; }
-#define KRPC_BULK_TEST(x) if (((ret = x)) && ret != KRPC_ERROR_DECODING_FAILED) { break; }
-
-static TaskHandle_t px_krpc_client_TaskHandle __attribute__((section(".shared")));
-static defs::Flight plane_flight __attribute__((section(".shared")));
-static defs::Control plane_control __attribute__((section(".shared")));
-
-
-static void task_krpc_client_Main(void *pvParameters) {
+void KrpcClient::task_krpc_client_Main_StaticWrapper(void *pvParameters) {
 	(void) pvParameters;
-	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); //wait for parent task to finish initializing this task
+	KrpcClient *_this = (KrpcClient *)ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+	_this->task_krpc_client_Main();
+}
 
-	krpc_connection_t conn = 0;
+void KrpcClient::task_krpc_client_Main() {
+	krpc_connection_t conn = (krpc_connection_t)this;
 	krpc_SpaceCenter_Vessel_t vessel;
 	krpc_LiDAR_Laser_t laser;
 	krpc_SpaceCenter_Orbit_t orbit;
@@ -84,8 +58,8 @@ static void task_krpc_client_Main(void *pvParameters) {
 	for (;;) {
 		switch (state) {
 		case InternalStates::Init: {
-			krpc_close(conn);
-			krpc_open(&conn, NULL);
+			::krpc_close(conn);
+			::krpc_open(&conn, NULL);
 			vTaskDelay(100);
 			if (krpc_connect(conn, "Basic example")) { break; }
 			krpc_schema_Status status;
@@ -190,9 +164,9 @@ static void task_krpc_client_Main(void *pvParameters) {
 	}
 }
 static portSTACK_TYPE krpc_client_taskStack[1024] __attribute__((aligned(1024*4))) __attribute__((section(".stack")));
-static const TaskParameters_t krpc_clientTaskDefinition =
+const TaskParameters_t KrpcClient::krpc_clientTaskDefinition =
 {
-	task_krpc_client_Main,
+	task_krpc_client_Main_StaticWrapper,
 	"krpc",
 	(configSTACK_DEPTH_TYPE)sizeof(krpc_client_taskStack) / sizeof(portSTACK_TYPE),
 	NULL,
@@ -206,36 +180,40 @@ static const TaskParameters_t krpc_clientTaskDefinition =
 	}
 };
 
-void Setup() {
+void KrpcClient::Init() {
 	krpc_memory_init();
 
 	xTaskCreateRestricted(&krpc_clientTaskDefinition, &px_krpc_client_TaskHandle);
 	hw::usb::GrantAccess(px_krpc_client_TaskHandle);
-	retarget_locks_grant_access(NULL);
-	if (xTaskNotify(px_krpc_client_TaskHandle, 0, eNoAction) != pdPASS) {
+	retarget_locks_grant_access(px_krpc_client_TaskHandle);
+	if (xTaskNotify(px_krpc_client_TaskHandle, (uint32_t)this, eSetValueWithOverwrite) != pdPASS) {
 		Error_Handler();
 	}
 }
 
-void Cycle() {
+bool KrpcClient::Update() {
+	return false;
+}
+
+void KrpcClient::Cycle() {
 	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 0, FLAG0_CYCLE, eSetBits) != pdPASS) {
 		Error_Handler();
 	}
 }
 
-void NotifyCommRx() {
+void KrpcClient::NotifyCommRx() {
 	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 1, FLAG1_COMM_RX, eSetBits) != pdPASS) {
 		Error_Handler();
 	}
 }
 
-void NotifyCommTx() {
+void KrpcClient::NotifyCommTx() {
 	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 1, FLAG1_COMM_TX, eSetBits) != pdPASS) {
 		Error_Handler();
 	}
 }
 
-void NotifyCommLineState() {
+void KrpcClient::NotifyCommLineState() {
 	if (px_krpc_client_TaskHandle && xTaskNotifyIndexed(px_krpc_client_TaskHandle, 0, FLAG0_COMM_LINE_STATE, eSetBits) != pdPASS) {
 		Error_Handler();
 	}
@@ -244,12 +222,67 @@ void NotifyCommLineState() {
 	}
 }
 
+krpc_error_t KrpcClient::krpc_open() {
+	for (;;) {
+		if (tud_ready() && tud_cdc_n_get_line_state(0) & 0x02) {
+			return KRPC_OK;
+		} else {
+			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, modules::krpc_client::KrpcClient::FLAG1_COMM_LINE_STATE, NULL, portMAX_DELAY);
+		}
+	}
+}
+
+krpc_error_t KrpcClient::krpc_close() {
+	tud_cdc_n_read_flush(0);
+	tud_cdc_n_write_clear(0);
+	return KRPC_OK;
+}
+
+krpc_error_t KrpcClient::krpc_read(uint8_t *buf, size_t count) {
+	if (bulkState == BulkState::SEND) {
+		return KRPC_ERROR_IO;
+	}
+	while (tud_cdc_n_write_available(0) != CFG_TUD_CDC_TX_BUFSIZE) {
+		tud_cdc_n_write_flush(0);
+	}
+	size_t read = 0;
+	while (true) {
+		if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
+			return KRPC_ERROR_CONNECTION_FAILED;
+		}
+		read += tud_cdc_n_read(0, buf + read, count - read);
+		if (read == count) {
+			return KRPC_OK;
+		} else {
+			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, FLAG1_COMM_RX | FLAG1_COMM_LINE_STATE, NULL, portMAX_DELAY);
+		}
+	}
+}
+
+krpc_error_t KrpcClient::krpc_write(const uint8_t *buf, size_t count) {
+	if (bulkState == BulkState::RECEIVE) {
+		return KRPC_OK;
+	}
+	size_t written = 0;
+	while (true) {
+		if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
+			return KRPC_ERROR_CONNECTION_FAILED;
+		}
+		written += tud_cdc_n_write(0, buf + written, count - written);
+		if (written == count) {
+			return KRPC_OK;
+		} else {
+			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, FLAG1_COMM_TX | FLAG1_COMM_LINE_STATE, NULL, portMAX_DELAY);
+		}
+	}
+}
+
 }
 }
 
 /* -------------------------------------------------------------------------- */
 
-static uint8_t krpc_heap_buf[4032] __attribute__((aligned(4)));
+static uint8_t krpc_heap_buf[4000] __attribute__((aligned(4)));
 static umm_heap krpc_heap;
 
 static void krpc_memory_init(void) {
@@ -278,62 +311,24 @@ void krpc_free(void *ptr) {
 
 /* -------------------------------------------------------------------------- */
 
-krpc_error_t krpc_open(krpc_connection_t *connection,
-		const krpc_connection_config_t *arg) {
-	for (;;) {
-		if (tud_ready() && tud_cdc_n_get_line_state(0) & 0x02) {
-			return KRPC_OK;
-		} else {
-			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, modules::krpc_client::FLAG1_COMM_LINE_STATE, NULL, portMAX_DELAY);
-		}
-	}
+krpc_error_t krpc_open(krpc_connection_t *connection, const krpc_connection_config_t *arg) {
+	modules::krpc_client::KrpcClient *_this = (modules::krpc_client::KrpcClient *)*connection;
+	return _this->krpc_open();
 }
 
 krpc_error_t krpc_close(krpc_connection_t connection) {
-	tud_cdc_n_read_flush(0);
-	tud_cdc_n_write_clear(0);
-	return KRPC_OK;
+	modules::krpc_client::KrpcClient *_this = (modules::krpc_client::KrpcClient *)connection;
+	return _this->krpc_close();
 }
 
-krpc_error_t krpc_read(krpc_connection_t connection, uint8_t *buf,
-		size_t count) {
-	if (modules::krpc_client::bulkState == modules::krpc_client::BulkState::SEND) {
-		return KRPC_ERROR_IO;
-	}
-	while (tud_cdc_n_write_available(0) != CFG_TUD_CDC_TX_BUFSIZE) {
-		tud_cdc_n_write_flush(0);
-	}
-	size_t read = 0;
-	while (true) {
-		if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
-			return KRPC_ERROR_CONNECTION_FAILED;
-		}
-		read += tud_cdc_n_read(0, buf + read, count - read);
-		if (read == count) {
-			return KRPC_OK;
-		} else {
-			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, modules::krpc_client::FLAG1_COMM_RX | modules::krpc_client::FLAG1_COMM_LINE_STATE, NULL, portMAX_DELAY);
-		}
-	}
+krpc_error_t krpc_read(krpc_connection_t connection, uint8_t *buf, size_t count) {
+	modules::krpc_client::KrpcClient *_this = (modules::krpc_client::KrpcClient *)connection;
+	return _this->krpc_read(buf, count);
 }
 
-krpc_error_t krpc_write(krpc_connection_t connection, const uint8_t *buf,
-		size_t count) {
-	if (modules::krpc_client::bulkState == modules::krpc_client::BulkState::RECEIVE) {
-		return KRPC_OK;
-	}
-	size_t written = 0;
-	while (true) {
-		if (!(tud_ready() && tud_cdc_n_get_line_state(0) & 0x02)) {
-			return KRPC_ERROR_CONNECTION_FAILED;
-		}
-		written += tud_cdc_n_write(0, buf + written, count - written);
-		if (written == count) {
-			return KRPC_OK;
-		} else {
-			util::xTaskNotifyWaitBitsAnyIndexed(1, 0, modules::krpc_client::FLAG1_COMM_TX | modules::krpc_client::FLAG1_COMM_LINE_STATE, NULL, portMAX_DELAY);
-		}
-	}
+krpc_error_t krpc_write(krpc_connection_t connection, const uint8_t *buf, size_t count) {
+	modules::krpc_client::KrpcClient *_this = (modules::krpc_client::KrpcClient *)connection;
+	return _this->krpc_write(buf, count);
 }
 
 

@@ -5,7 +5,7 @@
 #include <semphr.h>
 #include <util.hpp>
 #include <retarget_locks.h>
-#include <modules/krpc_client.hpp>
+#include <modules/modules.hpp>
 #include <config.hpp>
 #include <regions.h>
 
@@ -63,7 +63,7 @@ extern "C"
 void tud_cdc_rx_cb(uint8_t itf) {
 	switch (itf) {
 	case 0:
-		modules::krpc_client::NotifyCommRx();
+		modules::krpc.NotifyCommRx();
 		break;
 	default:
 		Error_Handler();
@@ -74,7 +74,7 @@ extern "C"
 void tud_cdc_tx_complete_cb(uint8_t itf) {
 	switch (itf) {
 	case 0:
-		modules::krpc_client::NotifyCommTx();
+		modules::krpc.NotifyCommTx();
 		break;
 	default:
 		Error_Handler();
@@ -85,7 +85,7 @@ extern "C"
 void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
 	switch (itf) {
 	case 0:
-		modules::krpc_client::NotifyCommLineState();
+		modules::krpc.NotifyCommLineState();
 		break;
 	default:
 		Error_Handler();
