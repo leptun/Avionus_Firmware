@@ -89,10 +89,12 @@ static void MX_I2C2_Init(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-/* Enable the CPU Cache */
+
+  /* Enable the CPU Cache */
 
   /* Enable I-Cache---------------------------------------------------------*/
   SCB_EnableICache();
@@ -203,6 +205,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
+   /* Set Timers Clock Prescalers */
+  LL_RCC_SetTIMPrescaler(LL_RCC_TIM_PRESCALER_FOUR_TIMES);
 }
 
 /**

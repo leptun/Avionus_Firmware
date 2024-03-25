@@ -20,7 +20,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
 /* USER CODE BEGIN Includes */
 
 #include <FreeRTOS.h>
@@ -78,6 +77,7 @@ extern DMA_HandleTypeDef hdma_spi4_tx;
   */
 void HAL_MspInit(void)
 {
+
   /* USER CODE BEGIN MspInit 0 */
 	__HAL_RCC_BKPSRAM_CLK_ENABLE();
   /* USER CODE END MspInit 0 */
