@@ -13,6 +13,7 @@ extern "C" {
 
 void fatfs_Init(void);
 void fatfs_GrantAccess(TaskHandle_t task);
+void fatfs_updateFatTime(DWORD val);
 
 
 #ifdef __cplusplus

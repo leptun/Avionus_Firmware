@@ -7,6 +7,7 @@
 #include "hw/usb.hpp"
 #include "modules/module_manager.hpp"
 #include "modules/modules.hpp"
+#include "modules/logging.hpp"
 
 #include <FreeRTOS.h>
 #include <task.h>
@@ -43,6 +44,10 @@ static void taskAppMain(void *pvParameters) {
 	modules::sv.SetPosition(13, 2300);
 	modules::sv.SetPosition(14, 2400);
 	modules::sv.SetPosition(15, 2500);
+
+	// sd test
+//	hw::power::D3.Enable();
+//	modules::logging::Setup();
 
 	for (;;) {
 		uint32_t pulNotificationValue;

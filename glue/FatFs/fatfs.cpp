@@ -4,6 +4,8 @@
 #include "diskio_sdmmc.h"
 #include <hw/clock.hpp>
 
+static DWORD fat_time;
+
 void fatfs_Init(void) {
 	ff_meminit();
 	ff_system_init();
@@ -17,5 +19,9 @@ void fatfs_GrantAccess(TaskHandle_t task) {
 }
 
 DWORD get_fattime(void) {
-	return hw::clock::GetFatTime();
+	return fat_time;
+}
+
+void fatfs_updateFatTime(DWORD val) {
+	fat_time = val;
 }

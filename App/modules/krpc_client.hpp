@@ -46,7 +46,6 @@ private:
 		SEND = 2,
 	} bulkState;
 
-	TaskHandle_t px_krpc_client_TaskHandle;
 	defs::Flight plane_flight;
 	defs::Control plane_control;
 

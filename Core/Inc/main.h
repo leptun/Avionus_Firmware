@@ -55,6 +55,9 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 
+extern SD_HandleTypeDef hsd2 __attribute__((section(".fatfs")));
+extern DMA_HandleTypeDef hdma_sdmmc2 __attribute__((section(".fatfs")));
+
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

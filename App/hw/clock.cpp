@@ -5,11 +5,10 @@
 #include <config.hpp>
 #include <ff.h>
 #include <hw/exti.hpp>
+#include <FatFs/fatfs.h>
 
 namespace hw {
 namespace clock {
-
-DWORD fat_time __attribute__((section(".shared")));
 
 static TaskHandle_t pxTaskHandle;
 static bool cssEnabled = false;
@@ -26,13 +25,15 @@ enum ClockThreadFlags {
 	FLAG_RTC_TICK = 0x000100,
 };
 
-static void updateFatTime() {
-	fat_time = (DWORD)(__LL_RTC_CONVERT_BCD2BIN(LL_RTC_DATE_GetYear(RTC)) + 20) << 25 |
-		(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_DATE_GetMonth(RTC)) << 21 |
-		(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_DATE_GetDay(RTC)) << 16 |
-		(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_TIME_GetHour(RTC)) << 11 |
-		(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_TIME_GetMinute(RTC)) << 5 |
-		(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_TIME_GetSecond(RTC)) >> 1;
+static void rtcTickHandler() {
+	fatfs_updateFatTime(
+			(DWORD)(__LL_RTC_CONVERT_BCD2BIN(LL_RTC_DATE_GetYear(RTC)) + 20) << 25 |
+			(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_DATE_GetMonth(RTC)) << 21 |
+			(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_DATE_GetDay(RTC)) << 16 |
+			(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_TIME_GetHour(RTC)) << 11 |
+			(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_TIME_GetMinute(RTC)) << 5 |
+			(DWORD)__LL_RTC_CONVERT_BCD2BIN(LL_RTC_TIME_GetSecond(RTC)) >> 1
+	);
 }
 
 static void configureRTC() {
@@ -216,12 +217,12 @@ static void taskClockMain(void *pvParameters) {
 	TimeOut_t xTimeOut;
 	TickType_t xTicksToWait;
 
-	// Enable backup SRAM regulator
-	if (!LL_PWR_IsEnabledBkUpRegulator()) {
-		LL_PWR_EnableBkUpAccess();
-		LL_PWR_EnableBkUpRegulator();
-		LL_PWR_DisableBkUpAccess();
-	}
+//	// Enable backup SRAM regulator
+//	if (!LL_PWR_IsEnabledBkUpRegulator()) {
+//		LL_PWR_EnableBkUpAccess();
+//		LL_PWR_EnableBkUpRegulator();
+//		LL_PWR_DisableBkUpAccess();
+//	}
 
 	// Set flash latency
 	LL_FLASH_SetLatency(LL_FLASH_LATENCY_7);
@@ -287,7 +288,7 @@ static void taskClockMain(void *pvParameters) {
 	}
 
 	configureRTC();
-	updateFatTime();
+	rtcTickHandler();
 
 	// try to setup the high speed clocks using the HSE
 	if (!configureHClocks(true)) {
@@ -324,7 +325,7 @@ static void taskClockMain(void *pvParameters) {
 				LL_RTC_EnableWriteProtection(RTC);
 				LL_PWR_DisableBkUpAccess();
 
-				updateFatTime();
+				rtcTickHandler();
 			}
 		}
 	}
@@ -349,10 +350,6 @@ void Setup() {
 	_priv_xClockTaskDefinition.pvParameters = xTaskGetCurrentTaskHandle();
 	xTaskCreateRestricted(&_priv_xClockTaskDefinition, &pxTaskHandle);
 	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
-}
-
-DWORD GetFatTime() {
-	return fat_time;
 }
 
 extern "C"

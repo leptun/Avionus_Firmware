@@ -5,7 +5,6 @@ namespace hw {
 namespace clock {
 
 void Setup();
-DWORD GetFatTime();
 
 }
 }

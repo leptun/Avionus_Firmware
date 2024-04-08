@@ -36,6 +36,8 @@ static void krpc_memory_init(void);
 namespace modules {
 namespace krpc_client {
 
+static TaskHandle_t px_krpc_client_TaskHandle __attribute__((section(".shared")));
+
 void KrpcClient::task_krpc_client_Main_StaticWrapper(void *pvParameters) {
 	(void) pvParameters;
 	KrpcClient *_this = (KrpcClient *)ulTaskNotifyTake(pdTRUE, portMAX_DELAY);

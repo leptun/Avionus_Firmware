@@ -12,7 +12,7 @@
 
 #include <umm_malloc.h>		/* with POSIX API */
 
-static uint8_t fatfs_heap_buf[1920] __attribute__((aligned(4)));
+static uint8_t fatfs_heap_buf[3072] __attribute__((aligned(4)));
 static umm_heap fatfs_heap;
 static SemaphoreHandle_t fatfs_heap_lock;
 

@@ -199,6 +199,59 @@ SECTIONS
 
 /* -------------------------------------------------------------------------- */
 
+	.xflashmgr_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_xflashmgr_bss_run_addr = .;
+		
+		./glue/Avionus_QSPILoader/*.o(.bss*) /* */
+		./lib/Avionus_QSPILoader/*.o(.bss*) /* */
+		*(.xflashmgr)
+		
+		. = ALIGN(4);
+		_xflashmgr_bss_end = .;
+	} >DTCMRAM
+
+	.xflashmgr_data :
+	{
+		. = ALIGN(4);
+		_xflashmgr_data_run_addr = .;
+		
+		./glue/Avionus_QSPILoader/*.o(.data*) /* */
+		./lib/Avionus_QSPILoader/*.o(.data*) /* */
+		
+		. = ALIGN(4);
+		_xflashmgr_data_end = .;
+	} >DTCMRAM AT> FLASH
+	_xflashmgr_data_load_addr = LOADADDR(.xflashmgr_data);
+
+/* -------------------------------------------------------------------------- */
+
+	.noncache_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_noncache_bss_run_addr = .;
+		
+		*(.noncache)
+		
+		. = ALIGN(4);
+		_noncache_bss_end = .;
+	} >DTCMRAM
+
+	.noncache_data :
+	{
+		. = ALIGN(4);
+		_noncache_data_run_addr = .;
+		
+		*(.noncache_data)
+		
+		. = ALIGN(4);
+		_noncache_data_end = .;
+	} >DTCMRAM AT> FLASH
+	_noncache_data_load_addr = LOADADDR(.noncache_data);
+
+/* -------------------------------------------------------------------------- */
+
 	.MSP_stack :
 	{
 		. = ALIGN(8);
@@ -209,41 +262,6 @@ SECTIONS
 
 /* -------------------------------------------------------------------------- */
 
-	.tinyusb_bss (NOLOAD) :
-	{
-		. = ALIGN(4);
-		_tinyusb_bss_run_addr = .;
-		
-		./lib/tinyusb/*.o(.bss*) /* */
-		./glue/tinyusb/*.o(.bss*) /* */
-		./App/hw/usb.o(.bss*)
-		
-		. = ALIGN(4);
-		_tinyusb_bss_end = .;
-	} >SRAM2
-
-	.tinyusb_data :
-	{
-		. = ALIGN(4);
-		_tinyusb_data_run_addr = .;
-		
-		./lib/tinyusb/*.o(.data*) /* */
-		./glue/tinyusb/*.o(.data*) /* */
-		./App/hw/usb.o(.data*)
-		
-		. = ALIGN(4);
-		_tinyusb_data_end = .;
-	} >SRAM2 AT> FLASH
-	_tinyusb_data_load_addr = LOADADDR(.tinyusb_data);
-	
-	.tinyusb_free (NOLOAD) :
-	{
-		FILL(0);
-		. = __tinyusb_data_region_size__ - (_tinyusb_data_end - _tinyusb_bss_run_addr);
-	} >SRAM2
-
-/* -------------------------------------------------------------------------- */
-
 	.fatfs_bss (NOLOAD) :
 	{
 		. = ALIGN(4);
@@ -251,6 +269,7 @@ SECTIONS
 		
 		./glue/FatFs/*.o(.bss*) /* */
 		./lib/FatFs/*.o(.bss*) /* */
+		*(.fatfs)
 		
 		. = ALIGN(4);
 		_fatfs_bss_end = .;
@@ -311,12 +330,49 @@ SECTIONS
 
 /* -------------------------------------------------------------------------- */
 
+	.tinyusb_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_tinyusb_bss_run_addr = .;
+		
+		./lib/tinyusb/*.o(.bss*) /* */
+		./glue/tinyusb/*.o(.bss*) /* */
+		./App/hw/usb.o(.bss*)
+		*(.tinyusb)
+		
+		. = ALIGN(4);
+		_tinyusb_bss_end = .;
+	} >SRAM2
+
+	.tinyusb_data :
+	{
+		. = ALIGN(4);
+		_tinyusb_data_run_addr = .;
+		
+		./lib/tinyusb/*.o(.data*) /* */
+		./glue/tinyusb/*.o(.data*) /* */
+		./App/hw/usb.o(.data*)
+		
+		. = ALIGN(4);
+		_tinyusb_data_end = .;
+	} >SRAM2 AT> FLASH
+	_tinyusb_data_load_addr = LOADADDR(.tinyusb_data);
+	
+	.tinyusb_free (NOLOAD) :
+	{
+		FILL(0);
+		. = __tinyusb_data_region_size__ - (_tinyusb_data_end - _tinyusb_bss_run_addr);
+	} >SRAM2
+
+/* -------------------------------------------------------------------------- */
+
 	.logging_bss (NOLOAD) :
 	{
 		. = ALIGN(4);
 		_logging_bss_run_addr = .;
 		
 		./App/modules/logging.o(.bss*)
+		*(.logging)
 		
 		. = ALIGN(4);
 		_logging_bss_end = .;
@@ -347,7 +403,8 @@ SECTIONS
 		. = ALIGN(4);
 		_app_bss_run_addr = .;
 		
-		./App/*.o(.app_bss* .bss*) /* */
+		./App/*.o(.bss*) /* */
+		*(.app)
 		
 		. = ALIGN(4);
 		_app_bss_end = .;

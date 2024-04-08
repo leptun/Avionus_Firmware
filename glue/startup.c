@@ -44,6 +44,8 @@ void init_sections(void) {
     __HAL_RCC_PWR_CLK_DISABLE();
 
 	INIT_SECTION(freertos);
+	INIT_SECTION(xflashmgr);
+	INIT_SECTION(noncache);
 	INIT_SECTION(app);
 	INIT_SECTION(tinyusb);
 	INIT_SECTION(fatfs);
