@@ -123,6 +123,18 @@ typedef void ( * portISR_t )( void );
 #define portINITIAL_CONTROL_IF_UNPRIVILEGED       ( 0x03 )
 #define portINITIAL_CONTROL_IF_PRIVILEGED         ( 0x02 )
 
+/* Constants used for the MemManage handler. */
+#define portSCB_CFSR_REG                          ( *( ( volatile uint32_t * ) 0xe000ed28 ) )
+#define portSCB_MMFAR_REG                         ( *( ( volatile uint32_t ** ) 0xe000ed34 ) )
+#define portSCB_DEMCR_REG                         ( *( ( volatile uint32_t * ) 0xe000edfc ) )
+#define portCFSR_IACCVIOL_MASK                    ( 1UL << 0UL )
+#define portCFSR_DACCVIOL_MASK                    ( 1UL << 1UL )
+#define portCFSR_MUNSTKERR_MASK                   ( 1UL << 3UL )
+#define portCFSR_MSTKERR_MASK                     ( 1UL << 4UL )
+#define portCFSR_MLSPERR_MASK                     ( 1UL << 5UL )
+#define portCFSR_MMARVALID_MASK                   ( 1UL << 7UL )
+#define portDEMCR_VC_MMERR_MASK                   ( 1UL << 4UL )
+
 /* Constants used to check the installation of the FreeRTOS interrupt handlers. */
 #define portSCB_VTOR_REG                          ( *( ( portISR_t ** ) 0xE000ED08 ) )
 #define portVECTOR_INDEX_SVC                      ( 11 )
@@ -199,6 +211,7 @@ void vPortSetupTimerInterrupt( void );
 void xPortPendSVHandler( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
 void xPortSysTickHandler( void ) PRIVILEGED_FUNCTION;
 void vPortSVCHandler( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
+void vPortMemManageHandler( void ) __attribute__( ( naked ) ) PRIVILEGED_FUNCTION;
 
 /*
  * Starts the scheduler by restoring the context of the first task to run.
@@ -210,6 +223,12 @@ static void prvRestoreContextOfFirstTask( void ) __attribute__( ( naked ) ) PRIV
  * and a C wrapper for simplicity of coding and maintenance.
  */
 void vSVCHandler_C( uint32_t * pulRegisters ) __attribute__( ( noinline ) ) PRIVILEGED_FUNCTION;
+
+/*
+ * C portion of the SVC handler.  The SVC handler is split between an asm entry
+ * and a C wrapper for simplicity of coding and maintenance.
+ */
+void vMemManageHandler_C( uint32_t * pulRegisters ) __attribute__( ( noinline ) ) PRIVILEGED_FUNCTION;
 
 /*
  * Function to enable the VFP.
@@ -1227,6 +1246,99 @@ void xPortPendSVHandler( void )
 }
 /*-----------------------------------------------------------*/
 
+void vPortMemManageHandler( void ) /* __attribute__( ( naked ) ) PRIVILEGED_FUNCTION */
+{
+    __asm volatile
+    (
+        ".syntax unified                \n"
+        ".extern vMemManageHandler_C    \n"
+        "                               \n"
+        "tst lr, #4                     \n"
+        "ite eq                         \n"
+        "mrseq r0, msp                  \n"
+        "mrsne r0, psp                  \n"
+        "                               \n"
+        "ldr r1, [r0, #24]              \n"
+        "b vMemManageHandler_C          \n"
+        "                               \n"
+        : /* No outputs. */
+        : "i" ( NUM_SYSTEM_CALLS ), "i" ( portSVC_SYSTEM_CALL_EXIT )
+        : "r0", "r1", "r2", "memory"
+    );
+}
+
+void vMemManageHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
+{
+#if defined( __ARMCC_VERSION )
+    /* Declaration when these variable are defined in code instead of being
+     * exported from linker scripts. */
+    extern uint32_t * __privileged_functions_start__;
+    extern uint32_t * __privileged_functions_end__;
+    extern uint32_t * __FLASH_segment_start__;
+    extern uint32_t * __FLASH_segment_end__;
+    extern uint32_t * __XFLASH_segment_start__;
+    extern uint32_t * __XFLASH_segment_end__;
+#else
+    /* Declaration when these variable are exported from linker scripts. */
+    extern uint32_t __privileged_functions_start__[];
+    extern uint32_t __privileged_functions_end__[];
+    extern uint32_t __FLASH_segment_start__[];
+    extern uint32_t __FLASH_segment_end__[];
+    extern uint32_t __XFLASH_segment_start__[];
+    extern uint32_t __XFLASH_segment_end__[];
+#endif /* if defined( __ARMCC_VERSION ) */
+
+    /* The stack contains: r0, r1, r2, r3, r12, LR, PC and xPSR.  The first
+     * argument (r0) is pulParam[ 0 ]. */
+    uint32_t ulPC = pulParam[ portOFFSET_TO_PC ];
+
+	uint32_t cfsr = portSCB_CFSR_REG;
+	if (cfsr & portCFSR_IACCVIOL_MASK) {
+		// Instruction access fault detected. Switch to the correct flash memory
+		if (ulPC >= (uint32_t)__privileged_functions_end__ && ulPC < (uint32_t)__FLASH_segment_end__) {
+	        /* Setup the unprivileged flash for unprivileged read only access. */
+	        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __FLASH_segment_start__ ) | /* Base address. */
+	                                          ( portMPU_REGION_VALID ) |
+	                                          ( portUNPRIVILEGED_FLASH_REGION );
+
+	        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_ONLY ) |
+	                                       ( ( configTEX_S_C_B_FLASH & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
+	                                       ( prvGetMPURegionSizeSetting( ( uint32_t ) __FLASH_segment_end__ - ( uint32_t ) __FLASH_segment_start__ ) ) |
+										   ( (0x01 << mpuMPU_RASR_SRD_LOCATION) ) |
+	                                       ( portMPU_REGION_ENABLE );
+		}
+		else if (ulPC >= (uint32_t)__XFLASH_segment_start__ && ulPC < (uint32_t)__XFLASH_segment_end__) {
+	        /* Setup the unprivileged xflash for unprivileged read only access. */
+	        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __XFLASH_segment_start__ ) | /* Base address. */
+	                                          ( portMPU_REGION_VALID ) |
+	                                          ( portUNPRIVILEGED_FLASH_REGION );
+
+	        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_ONLY ) |
+	                                       ( ( configTEX_S_C_B_FLASH & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
+	                                       ( prvGetMPURegionSizeSetting( ( uint32_t ) __XFLASH_segment_end__ - ( uint32_t ) __XFLASH_segment_start__ ) ) |
+										   ( (0x00 << mpuMPU_RASR_SRD_LOCATION) ) |
+	                                       ( portMPU_REGION_ENABLE );
+		}
+		else {
+			for (;;); //todo implement instruction access fault handler
+		}
+	}
+	if (cfsr & portCFSR_DACCVIOL_MASK) {
+		if (cfsr & portCFSR_MMARVALID_MASK) {
+			volatile uint32_t * const mmfar = portSCB_MMFAR_REG;
+			for (;;); //todo implement data access fault handler
+		} else {
+			goto hardfault;
+		}
+	}
+	if (cfsr & (portCFSR_MUNSTKERR_MASK | portCFSR_MSTKERR_MASK | portCFSR_MLSPERR_MASK)) {
+hardfault:
+		portNVIC_SYS_CTRL_STATE_REG &= ~portNVIC_MEM_FAULT_ENABLE;
+	}
+}
+
+/*-----------------------------------------------------------*/
+
 void xPortSysTickHandler( void )
 {
     uint32_t ulDummy;
@@ -1514,21 +1626,6 @@ static void vPortEnableVFP( void )
 
 static void prvSetupMPU( void )
 {
-    #if defined( __ARMCC_VERSION )
-        /* Declaration when these variable are defined in code instead of being
-         * exported from linker scripts. */
-        extern uint32_t * __privileged_functions_start__;
-        extern uint32_t * __privileged_functions_end__;
-        extern uint32_t * __FLASH_segment_start__;
-        extern uint32_t * __FLASH_segment_end__;
-    #else
-        /* Declaration when these variable are exported from linker scripts. */
-        extern uint32_t __privileged_functions_start__[];
-        extern uint32_t __privileged_functions_end__[];
-        extern uint32_t __FLASH_segment_start__[];
-        extern uint32_t __FLASH_segment_end__[];
-    #endif /* if defined( __ARMCC_VERSION ) */
-
     /* The only permitted number of regions are 8 or 16. */
     configASSERT( ( configTOTAL_MPU_REGIONS == 8 ) || ( configTOTAL_MPU_REGIONS == 16 ) );
 
@@ -1549,22 +1646,14 @@ static void prvSetupMPU( void )
 									   ( prvGetMPURegionSizeSetting( 0x40000 )) | // DTCMRAM + SRAM1 + SRAM2
 									   ( portMPU_REGION_ENABLE );
 
-        /* First setup the unprivileged flash for unprivileged read only access. */
-        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __FLASH_segment_start__ ) | /* Base address. */
-                                          ( portMPU_REGION_VALID ) |
-                                          ( portUNPRIVILEGED_FLASH_REGION );
-
-        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_ONLY ) |
-                                       ( ( configTEX_S_C_B_FLASH & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
-                                       ( prvGetMPURegionSizeSetting( ( uint32_t ) __FLASH_segment_end__ - ( uint32_t ) __FLASH_segment_start__ ) ) |
-									   ( (0x01 << mpuMPU_RASR_SRD_LOCATION) ) |
-                                       ( portMPU_REGION_ENABLE );
-
         /* Enable the memory fault exception. */
         portNVIC_SYS_CTRL_STATE_REG |= portNVIC_MEM_FAULT_ENABLE;
 
         /* Enable the MPU with the background region configured. */
         portMPU_CTRL_REG |= ( portMPU_ENABLE | portMPU_BACKGROUND_ENABLE );
+
+        /* Disable debug halting on MemManage fault*/
+        portSCB_DEMCR_REG &= ~portDEMCR_VC_MMERR_MASK;
     }
 }
 /*-----------------------------------------------------------*/

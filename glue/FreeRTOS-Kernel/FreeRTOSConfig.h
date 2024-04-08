@@ -115,6 +115,7 @@ extern uint32_t SystemCoreClock;
 #define vPortSVCHandler SVC_Handler
 #define xPortPendSVHandler PendSV_Handler
 #define xPortSysTickHandler SysTick_Handler
+#define vPortMemManageHandler MemManage_Handler
 
 /* Define to trap errors during development. */
 #define configASSERT( x ) if ((x) == 0) { __asm("BKPT #0\n"); taskDISABLE_INTERRUPTS(); for( ;; ); }

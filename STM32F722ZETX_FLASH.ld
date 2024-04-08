@@ -62,6 +62,8 @@ SECTIONS
 	{
 		/* Place the FreeRTOS System Calls first in the unprivileged region. */
 		. = ALIGN(4);
+        __XFLASH_segment_start__ = .;
+        __XFLASH_segment_end__ = __XFLASH_segment_start__ + LENGTH( XFLASH );
 		*(.xflash_text* .xflash_rodata*)
 		./Core/Src/main.o(.text* .rodata*)
 		./Core/Src/stm32f7xx_hal_msp.o(.text* .rodata*)
