@@ -125,7 +125,7 @@ typedef void ( * portISR_t )( void );
 
 /* Constants used for the MemManage handler. */
 #define portSCB_CFSR_REG                          ( *( ( volatile uint32_t * ) 0xe000ed28 ) )
-#define portSCB_MMFAR_REG                         ( *( ( volatile uint32_t ** ) 0xe000ed34 ) )
+#define portSCB_MMFAR_REG                         ( *( ( uint32_t * volatile * ) 0xe000ed34 ) )
 #define portSCB_DEMCR_REG                         ( *( ( volatile uint32_t * ) 0xe000edfc ) )
 #define portCFSR_IACCVIOL_MASK                    ( 1UL << 0UL )
 #define portCFSR_DACCVIOL_MASK                    ( 1UL << 1UL )
@@ -1246,6 +1246,32 @@ void xPortPendSVHandler( void )
 }
 /*-----------------------------------------------------------*/
 
+static void exchangeMPUExtendedRegions(uint32_t addr) {
+	extern TaskHandle_t pxCurrentTCB;
+	xMPU_SETTINGS *xMpuSettings = xTaskGetMPUSettings(pxCurrentTCB);
+
+	if (!xMpuSettings->xExtendedRegions) {
+		portHardFault();
+	}
+
+	for (const xMPU_REGION_REGISTERS *region = xMpuSettings->xExtendedRegions; region->ulRegionBaseAddress; region++) {
+		uint32_t regionBaseAddr = region->ulRegionBaseAddress >> 5;
+		uint32_t regionSize = 1ul << ((region->ulRegionAttribute >> 1) & 0x1f);
+
+		if (addr >= regionBaseAddr && addr < regionBaseAddr + regionSize) {
+			uint32_t regionNumber = region->ulRegionBaseAddress & 0xf;
+			xMpuSettings->xRegion[regionNumber] = *region;
+			portMPU_REGION_BASE_ADDRESS_REG = region->ulRegionBaseAddress;
+			portMPU_REGION_ATTRIBUTE_REG = region->ulRegionAttribute;
+
+			//todo check for subregion disable
+		}
+	}
+
+	// region not found, trigger a HardFault
+	portHardFault();
+}
+
 void vPortMemManageHandler( void ) /* __attribute__( ( naked ) ) PRIVILEGED_FUNCTION */
 {
     __asm volatile
@@ -1257,8 +1283,6 @@ void vPortMemManageHandler( void ) /* __attribute__( ( naked ) ) PRIVILEGED_FUNC
         "ite eq                         \n"
         "mrseq r0, msp                  \n"
         "mrsne r0, psp                  \n"
-        "                               \n"
-        "ldr r1, [r0, #24]              \n"
         "b vMemManageHandler_C          \n"
         "                               \n"
         : /* No outputs. */
@@ -1320,20 +1344,18 @@ void vMemManageHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
 	                                       ( portMPU_REGION_ENABLE );
 		}
 		else {
-			for (;;); //todo implement instruction access fault handler
+			exchangeMPUExtendedRegions(ulPC);
 		}
 	}
 	if (cfsr & portCFSR_DACCVIOL_MASK) {
 		if (cfsr & portCFSR_MMARVALID_MASK) {
-			volatile uint32_t * const mmfar = portSCB_MMFAR_REG;
-			for (;;); //todo implement data access fault handler
+			exchangeMPUExtendedRegions((uint32_t)portSCB_MMFAR_REG);
 		} else {
-			goto hardfault;
+			portHardFault();
 		}
 	}
 	if (cfsr & (portCFSR_MUNSTKERR_MASK | portCFSR_MSTKERR_MASK | portCFSR_MLSPERR_MASK)) {
-hardfault:
-		portNVIC_SYS_CTRL_STATE_REG &= ~portNVIC_MEM_FAULT_ENABLE;
+		portHardFault();
 	}
 }
 
@@ -1831,6 +1853,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
 
             lIndex++;
         }
+        xMPUSettings->xExtendedRegions = (xMPU_REGION_REGISTERS *)xRegions[ ul ].pvBaseAddress;
     }
 }
 /*-----------------------------------------------------------*/

@@ -196,8 +196,8 @@ typedef unsigned long    UBaseType_t;
 #define portUNPRIVILEGED_FLASH_REGION     ( configTOTAL_MPU_REGIONS - 1UL )
 #define portFIRST_CONFIGURABLE_REGION     ( 1UL )
 #define portLAST_CONFIGURABLE_REGION      ( configTOTAL_MPU_REGIONS - 3UL )
-#define portNUM_CONFIGURABLE_REGIONS      ( portLAST_CONFIGURABLE_REGION - portFIRST_CONFIGURABLE_REGION + 1 )
-#define portTOTAL_NUM_REGIONS_IN_TCB      ( portNUM_CONFIGURABLE_REGIONS + 1 ) /* Plus 1 to create space for the stack region. */
+#define portNUM_CONFIGURABLE_REGIONS      ( (portLAST_CONFIGURABLE_REGION - portFIRST_CONFIGURABLE_REGION + 1) + 1 ) /* Plus 1 for the extended regions */
+#define portTOTAL_NUM_REGIONS_IN_TCB      ( portNUM_CONFIGURABLE_REGIONS + 1 - 1) /* +1 to create space for the stack region, -1 to exclude the extended region */
 
 typedef struct MPU_REGION_REGISTERS
 {
@@ -240,6 +240,7 @@ typedef struct MPU_REGION_SETTINGS
 typedef struct MPU_SETTINGS
 {
     xMPU_REGION_REGISTERS xRegion[ portTOTAL_NUM_REGIONS_IN_TCB ];
+    xMPU_REGION_REGISTERS *xExtendedRegions;
     xMPU_REGION_SETTINGS xRegionSettings[ portTOTAL_NUM_REGIONS_IN_TCB ];
     uint32_t ulContext[ MAX_CONTEXT_SIZE ];
     uint32_t ulTaskFlags;
@@ -268,6 +269,7 @@ typedef struct MPU_SETTINGS
 /* Scheduler utilities. */
 
 #define portYIELD()    __asm volatile ( "   SVC %0  \n" ::"i" ( portSVC_YIELD ) : "memory" )
+#define portHardFault() __asm volatile (".hword 0xDEAD\n")
 #define portYIELD_WITHIN_API()                          \
     {                                                   \
         /* Set a PendSV to request a context switch. */ \
