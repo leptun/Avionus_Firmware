@@ -46,8 +46,8 @@ static void taskAppMain(void *pvParameters) {
 	modules::sv.SetPosition(15, 2500);
 
 	// sd test
-//	hw::power::D3.Enable();
-//	modules::logging::Setup();
+	hw::power::D3.Enable();
+	modules::logging::Setup();
 
 	for (;;) {
 		uint32_t pulNotificationValue;

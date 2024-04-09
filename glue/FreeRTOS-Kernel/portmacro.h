@@ -265,11 +265,24 @@ typedef struct MPU_SETTINGS
 #define portSVC_YIELD                  101
 #define portSVC_RAISE_PRIVILEGE        102
 #define portSVC_SYSTEM_CALL_EXIT       103
+#define portSVC_FLUSH_CACHE_REGION     104
 
 /* Scheduler utilities. */
 
-#define portYIELD()    __asm volatile ( "   SVC %0  \n" ::"i" ( portSVC_YIELD ) : "memory" )
+__attribute__((always_inline)) inline void portFlushCacheRegion(const void *addr, uint32_t dsize) {
+	register const void *addr_reg asm ( "r0" ) = addr;
+	register uint32_t dsize_reg asm ( "r1" ) = dsize;
+	__asm volatile (
+			"SVC %2 \n"
+			: "+r" (addr_reg),
+			  "+r" (dsize_reg)
+			: "i" ( portSVC_FLUSH_CACHE_REGION )
+			:
+	);
+}
 #define portHardFault() __asm volatile (".hword 0xDEAD\n")
+#define portYIELD()    __asm volatile ( "   SVC %0  \n" ::"i" ( portSVC_YIELD ) : "memory" )
+
 #define portYIELD_WITHIN_API()                          \
     {                                                   \
         /* Set a PendSV to request a context switch. */ \

@@ -23,9 +23,7 @@
 #include <string.h>
 
 extern "C" uint32_t _tinyusb_bss_run_addr[];
-extern "C" uint32_t _tinyusb_data_end[];
 extern "C" uint32_t _krpc_bss_run_addr[];
-extern "C" uint32_t _krpc_data_end[];
 
 #define KRPC_BULK_START for (bulkState = BulkState::SEND; bulkState != BulkState::DISABLED; bulkState = (BulkState)((int)bulkState - 1)) { krpc_error_t ret;
 #define KRPC_BULK_END } if (bulkState != BulkState::DISABLED) { bulkState = BulkState::DISABLED; state = InternalStates::Init; break; }

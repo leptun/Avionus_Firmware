@@ -530,7 +530,6 @@ void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
             __asm volatile ( "isb" );
 
             break;
-
     #if ( configUSE_MPU_WRAPPERS_V1 == 1 )
         #if ( configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY == 1 )
             case portSVC_RAISE_PRIVILEGE: /* Only raise the privilege, if the
@@ -562,7 +561,9 @@ void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
                 break;
         #endif /* #if( configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY == 1 ) */
     #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 1 ) */
-
+		case portSVC_FLUSH_CACHE_REGION:
+			SCB_CleanDCache_by_Addr((uint32_t*)pulParam[0], pulParam[1]);
+			break;
         default: /* Unknown SVC call. */
             break;
     }
@@ -1255,16 +1256,19 @@ static void exchangeMPUExtendedRegions(uint32_t addr) {
 	}
 
 	for (const xMPU_REGION_REGISTERS *region = xMpuSettings->xExtendedRegions; region->ulRegionBaseAddress; region++) {
-		uint32_t regionBaseAddr = region->ulRegionBaseAddress >> 5;
-		uint32_t regionSize = 1ul << ((region->ulRegionAttribute >> 1) & 0x1f);
+		uint32_t regionBaseAddr = region->ulRegionBaseAddress & 0xffffffe0;
+		uint32_t regionSize = 1ul << (((region->ulRegionAttribute >> 1) & 0x1f) + 1);
 
-		if (addr >= regionBaseAddr && addr < regionBaseAddr + regionSize) {
+		if (addr >= regionBaseAddr && addr <= (regionBaseAddr + regionSize - 1)) {
 			uint32_t regionNumber = region->ulRegionBaseAddress & 0xf;
 			xMpuSettings->xRegion[regionNumber] = *region;
 			portMPU_REGION_BASE_ADDRESS_REG = region->ulRegionBaseAddress;
 			portMPU_REGION_ATTRIBUTE_REG = region->ulRegionAttribute;
 
 			//todo check for subregion disable
+
+
+			return;
 		}
 	}
 
@@ -1357,6 +1361,7 @@ void vMemManageHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
 	if (cfsr & (portCFSR_MUNSTKERR_MASK | portCFSR_MSTKERR_MASK | portCFSR_MLSPERR_MASK)) {
 		portHardFault();
 	}
+	portSCB_CFSR_REG = cfsr; // clear faults
 }
 
 /*-----------------------------------------------------------*/
@@ -1809,7 +1814,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
     {
         lIndex = 0;
 
-        for( ul = 1UL; ul <= portNUM_CONFIGURABLE_REGIONS; ul++ )
+        for( ul = 1UL; ul < portTOTAL_NUM_REGIONS_IN_TCB; ul++ )
         {
             if( ( xRegions[ lIndex ] ).ulLengthInBytes > 0UL )
             {
@@ -1853,7 +1858,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
 
             lIndex++;
         }
-        xMPUSettings->xExtendedRegions = (xMPU_REGION_REGISTERS *)xRegions[ ul ].pvBaseAddress;
+        xMPUSettings->xExtendedRegions = (xMPU_REGION_REGISTERS *)xRegions[ lIndex ].pvBaseAddress;
     }
 }
 /*-----------------------------------------------------------*/

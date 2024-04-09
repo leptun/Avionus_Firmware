@@ -8,11 +8,11 @@
 #include <hw/exti.hpp>
 #include <main.h>
 #include <regions.h>
+#include <util.hpp>
 
 extern "C" uint32_t _fatfs_bss_run_addr[];
-extern "C" uint32_t _fatfs_data_end[];
 extern "C" uint32_t _logging_bss_run_addr[];
-extern "C" uint32_t _logging_data_end[];
+extern "C" uint32_t _shared_bss_run_addr[];
 
 namespace modules {
 namespace logging {
@@ -97,6 +97,11 @@ static void taskLogging(void *pvParameters) {
 	}
 }
 static portSTACK_TYPE xLoggingTaskStack[ 256 ] __attribute__((aligned(256*4))) __attribute__((section(".stack")));
+static constexpr MPU_REGION_REGISTERS xLoggingTaskExtendedRegions[] {
+		util::mpuRegs(5, AHB1PERIPH_BASE, 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b10111111 << MPU_RASR_SRD_Pos)), //GPIOG
+		util::mpuRegs(5, AHB1PERIPH_BASE + 0x6000, 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11111101 << MPU_RASR_SRD_Pos)), //DMA2
+		{0, 0}
+};
 static const TaskParameters_t xLoggingTaskDefinition =
 {
 	taskLogging,
@@ -109,9 +114,10 @@ static const TaskParameters_t xLoggingTaskDefinition =
         /* Base address   Length                    Parameters */
 		{ _fatfs_bss_run_addr, __fatfs_data_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | CACHE_CONF(configTEX_S_C_B_SRAM) },
 		{ _logging_bss_run_addr, __logging_data_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | CACHE_CONF(configTEX_S_C_B_SRAM) },
-        { (uint32_t*)(AHB1PERIPH_BASE), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b10111111 << MPU_RASR_SRD_Pos) }, //GPIOG
-		{ (uint32_t*)(AHB1PERIPH_BASE + 0x6000), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11111101 << MPU_RASR_SRD_Pos) }, //DMA2
+		{ _shared_bss_run_addr, __shared_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | CACHE_CONF(configTEX_S_C_B_TCMRAM) },
 		{ (uint32_t*)(APB2PERIPH_BASE), 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b01111111 << MPU_RASR_SRD_Pos) }, //SDMMC2
+		{0, 0, 0},
+		{(void*)xLoggingTaskExtendedRegions}
     }
 };
 

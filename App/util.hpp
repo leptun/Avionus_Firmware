@@ -85,6 +85,42 @@ constexpr T * ioCast(unsigned long addr) {
 	return static_cast<T *>(static_cast<void *>(&null_ptr + addr));
 }
 
+constexpr uint32_t getMPURegionSizeSettingCxpr(uint32_t ulActualSizeInBytes)
+{
+    uint32_t ulRegionSize, ulReturnValue = 4;
+
+    /* 32 is the smallest region size, 31 is the largest valid value for
+     * ulReturnValue. */
+    for(ulRegionSize = 32UL; ulReturnValue < 31UL; (ulRegionSize <<= 1UL)) {
+        if( ulActualSizeInBytes <= ulRegionSize ) {
+            break;
+        }
+        else {
+            ulReturnValue++;
+        }
+    }
+
+    /* Shift the code by one before returning so it can be written directly
+     * into the the correct bit position of the attribute register. */
+    return(ulReturnValue << 1UL);
+}
+
+constexpr xMPU_REGION_REGISTERS mpuRegs(uint8_t region, uint32_t baseAddress, uint32_t length, uint32_t attributes) {
+	xMPU_REGION_REGISTERS regs = {
+			.ulRegionBaseAddress = (
+					(baseAddress) |
+					(MPU_RBAR_VALID_Msk) |
+					(region)
+			),
+			.ulRegionAttribute = (
+					(getMPURegionSizeSettingCxpr(length)) |
+					(attributes) |
+					(MPU_RASR_ENABLE_Msk)
+			)
+	};
+	return regs;
+}
+
 class AtomicFlags {
 	uint32_t flags_thread;
 	uint32_t flags_handler;

@@ -162,6 +162,10 @@ DRESULT disk_sdmmc_write (const BYTE* buff, LBA_t sector, UINT count) {
 	if (disk_sdmmc_status() & STA_NOINIT) {
 		return RES_NOTRDY;
 	}
+
+	// Flush the write buffer to ram so that the DMA can push it to the SDMMC peripheral
+	portFlushCacheRegion(buff, count * BLOCKSIZE);
+
 	DRESULT res;
 	if ((res = sdmmc_wait_ready()) != RES_OK) {
 		return res;
@@ -224,6 +228,7 @@ void HAL_SD_TxCpltCallback(SD_HandleTypeDef *hsd) {
 void HAL_SD_RxCpltCallback(SD_HandleTypeDef *hsd) {
 	BaseType_t xHigherPriorityTaskWoken, xResult;
 	xResult = xEventGroupSetBitsFromISR(sd_diskio_flags, SD_DISKIO_TRANSFER_CPLT, &xHigherPriorityTaskWoken);
+	SCB_InvalidateDCache_by_Addr((uint32_t*)hsd->hdmarx->Instance->M0AR, (0xFFFF - hsd->hdmarx->Instance->NDTR) << 2);
 	if(xResult != pdFAIL) {
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}

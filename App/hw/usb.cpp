@@ -12,9 +12,7 @@
 #define USBD_STACK_SIZE     256 * (CFG_TUSB_DEBUG ? 2 : 1)
 
 extern "C" uint32_t _tinyusb_bss_run_addr[];
-extern "C" uint32_t _tinyusb_data_end[];
 extern "C" uint32_t _shared_bss_run_addr[];
-extern "C" uint32_t _shared_data_end[];
 
 namespace hw {
 namespace usb {

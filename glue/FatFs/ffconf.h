@@ -202,6 +202,12 @@
 /  for variable sector size mode and disk_ioctl() function needs to implement
 /  GET_SECTOR_SIZE command. */
 
+// Enforce the following alignment on win buffers
+#define FF_ALIGN __attribute__ ((aligned(32)))
+#ifndef FF_ALIGN
+#define FF_ALIGN
+#endif
+
 
 #define FF_LBA64		0
 /* This option switches support for 64-bit LBA. (0:Disable or 1:Enable)
