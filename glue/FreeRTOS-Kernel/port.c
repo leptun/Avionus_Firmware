@@ -1257,22 +1257,29 @@ static void exchangeMPUExtendedRegions(uint32_t addr) {
 
 	for (const xMPU_REGION_REGISTERS *region = xMpuSettings->xExtendedRegions; region->ulRegionBaseAddress; region++) {
 		uint32_t regionBaseAddr = region->ulRegionBaseAddress & 0xffffffe0;
-		uint32_t regionSize = 1ul << (((region->ulRegionAttribute >> 1) & 0x1f) + 1);
+		uint32_t regionSIZE = (region->ulRegionAttribute >> 1) & 0x1f;
+		uint32_t regionEndAddr = regionBaseAddr + (1ul << (regionSIZE + 1)) - 1;
 
-		if (addr >= regionBaseAddr && addr <= (regionBaseAddr + regionSize - 1)) {
+		if (addr >= regionBaseAddr && addr <= regionEndAddr) {
+			if (regionSIZE >= 7) { // minimum size for SRD is 256B
+				uint32_t regionSRD = (region->ulRegionAttribute >> 8) & 0xFF;
+				uint32_t addrSR = 1ul << ((addr >> (regionSIZE - 2)) & 0x7);
+				if (regionSRD & addrSR) {
+					// the region of this address is disabled, so try the next extended region.
+					continue;
+				}
+			}
+
 			uint32_t regionNumber = region->ulRegionBaseAddress & 0xf;
 			xMpuSettings->xRegion[regionNumber] = *region;
 			portMPU_REGION_BASE_ADDRESS_REG = region->ulRegionBaseAddress;
 			portMPU_REGION_ATTRIBUTE_REG = region->ulRegionAttribute;
 
-			//todo check for subregion disable
-
-
-			return;
+			return; // success
 		}
 	}
 
-	// region not found, trigger a HardFault
+	// valid region not found, trigger a HardFault
 	portHardFault();
 }
 
