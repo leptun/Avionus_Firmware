@@ -92,9 +92,7 @@ static void taskLogging(void *pvParameters) {
 	testRead();
 	testWrite();
 
-	for (;;) {
-		vTaskDelay(1000);
-	}
+	vTaskSuspend(NULL);
 }
 static portSTACK_TYPE xLoggingTaskStack[ 256 ] __attribute__((aligned(256*4))) __attribute__((section(".stack")));
 static constexpr MPU_REGION_REGISTERS xLoggingTaskExtendedRegions[] {
