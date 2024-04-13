@@ -2,6 +2,7 @@
 #include "diskio.h"
 #include "ff.h"
 #include <main.h>
+#include "stm32f7xx_hal_sd_ext.h"
 #include <inttypes.h>
 #include "FreeRTOS.h"
 #include "task.h"
@@ -132,17 +133,26 @@ DSTATUS disk_sdmmc_initialize(void) {
 }
 
 DRESULT disk_sdmmc_read (BYTE* buff, LBA_t sector, UINT count) {
+	HAL_StatusTypeDef status;
 	if (disk_sdmmc_status() & STA_NOINIT) {
 		return RES_NOTRDY;
-	}
-	DRESULT res;
-	if ((res = sdmmc_wait_ready()) != RES_OK) {
-		return res;
 	}
 
 	sdmmc_config_dma_stream(buff);
 
-	if (HAL_SD_ReadBlocks_DMA(&hsd2, buff, (uint32_t)sector, count) != HAL_OK) {
+retry:
+	if (hsd2.State == HAL_SD_STATE_READY) {
+		DRESULT res;
+		if ((res = sdmmc_wait_ready()) != RES_OK) {
+			return res;
+		}
+	}
+
+	status = HAL_SD_ReadBlocksUninterrupted_DMA(&hsd2, buff, (uint32_t)sector, count);
+	if (status != HAL_OK) {
+		if (status == HAL_BUSY) {
+			goto retry;
+		}
 		return RES_ERROR;
 	}
 
@@ -159,6 +169,7 @@ DRESULT disk_sdmmc_read (BYTE* buff, LBA_t sector, UINT count) {
 }
 
 DRESULT disk_sdmmc_write (const BYTE* buff, LBA_t sector, UINT count) {
+	HAL_StatusTypeDef status;
 	if (disk_sdmmc_status() & STA_NOINIT) {
 		return RES_NOTRDY;
 	}
@@ -166,14 +177,21 @@ DRESULT disk_sdmmc_write (const BYTE* buff, LBA_t sector, UINT count) {
 	// Flush the write buffer to ram so that the DMA can push it to the SDMMC peripheral
 	portCleanDCache_by_Addr(buff, count * BLOCKSIZE);
 
-	DRESULT res;
-	if ((res = sdmmc_wait_ready()) != RES_OK) {
-		return res;
-	}
-
 	sdmmc_config_dma_stream(buff);
 
-	if (HAL_SD_WriteBlocks_DMA(&hsd2, (uint8_t*)buff, (uint32_t)sector, count) != HAL_OK) {
+retry:
+	if (hsd2.State == HAL_SD_STATE_READY) {
+		DRESULT res;
+		if ((res = sdmmc_wait_ready()) != RES_OK) {
+			return res;
+		}
+	}
+
+	status = HAL_SD_WriteBlocksUninterrupted_DMA(&hsd2, (uint8_t*)buff, (uint32_t)sector, count);
+	if (status != HAL_OK) {
+		if (status == HAL_BUSY) {
+			goto retry;
+		}
 		return RES_ERROR;
 	}
 
@@ -196,6 +214,7 @@ DRESULT disk_sdmmc_ioctl (BYTE cmd, void* buff) {
 
 	switch (cmd) {
 	case CTRL_SYNC:
+		HAL_SD_EXT_Sync(&hsd2);
 		return sdmmc_wait_ready();
 	case GET_SECTOR_COUNT:
 		*(DWORD*)buff = hsd2.SdCard.LogBlockNbr;

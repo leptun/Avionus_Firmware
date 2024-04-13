@@ -22,6 +22,7 @@
 #include "stm32f7xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <FatFs/stm32f7xx_hal_sd_ext.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -326,6 +327,8 @@ void SPI4_IRQHandler(void)
 void SDMMC2_IRQHandler(void)
 {
   /* USER CODE BEGIN SDMMC2_IRQn 0 */
+
+	HAL_SD_EXT_IRQHandler(&hsd2);
 
   /* USER CODE END SDMMC2_IRQn 0 */
   HAL_SD_IRQHandler(&hsd2);
