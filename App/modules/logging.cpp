@@ -17,8 +17,8 @@ extern "C" uint32_t _shared_bss_run_addr[];
 namespace modules {
 namespace logging {
 
-uint8_t aBuf[16384] __attribute__((aligned(16))) __attribute__((section(".app")));
-uint8_t bBuf[16384] __attribute__((aligned(16))) __attribute__((section(".app")));
+uint8_t aBuf[16384] ALIGN_CACHE __attribute__((section(".app")));
+uint8_t bBuf[16384] ALIGN_CACHE __attribute__((section(".app")));
 
 uint8_t retSD;    /* Return value for SD */
 FATFS SDFatFS;    /* File system object for SD logical drive */

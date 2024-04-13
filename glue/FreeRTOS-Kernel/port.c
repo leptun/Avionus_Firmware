@@ -561,7 +561,9 @@ void vSVCHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
                 break;
         #endif /* #if( configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY == 1 ) */
     #endif /* #if ( configUSE_MPU_WRAPPERS_V1 == 1 ) */
-		case portSVC_FLUSH_CACHE_REGION:
+		case portSVC_CleanDCache_by_Addr:
+			configASSERT(!(pulParam[0] & 0x1F)); // Check address is aligned to cache line boundary
+			configASSERT(!(pulParam[1] & 0x1F)); // Check length is a multiple of the cache line size
 			SCB_CleanDCache_by_Addr((uint32_t*)pulParam[0], pulParam[1]);
 			break;
         default: /* Unknown SVC call. */

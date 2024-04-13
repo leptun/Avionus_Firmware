@@ -164,7 +164,7 @@ DRESULT disk_sdmmc_write (const BYTE* buff, LBA_t sector, UINT count) {
 	}
 
 	// Flush the write buffer to ram so that the DMA can push it to the SDMMC peripheral
-	portFlushCacheRegion(buff, count * BLOCKSIZE);
+	portCleanDCache_by_Addr(buff, count * BLOCKSIZE);
 
 	DRESULT res;
 	if ((res = sdmmc_wait_ready()) != RES_OK) {

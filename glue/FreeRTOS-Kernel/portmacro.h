@@ -265,18 +265,18 @@ typedef struct MPU_SETTINGS
 #define portSVC_YIELD                  101
 #define portSVC_RAISE_PRIVILEGE        102
 #define portSVC_SYSTEM_CALL_EXIT       103
-#define portSVC_FLUSH_CACHE_REGION     104
+#define portSVC_CleanDCache_by_Addr    104
 
 /* Scheduler utilities. */
 
-__attribute__((always_inline)) inline void portFlushCacheRegion(const void *addr, uint32_t dsize) {
+__attribute__((always_inline)) inline void portCleanDCache_by_Addr(const void *addr, uint32_t dsize) {
 	register const void *addr_reg asm ( "r0" ) = addr;
 	register uint32_t dsize_reg asm ( "r1" ) = dsize;
 	__asm volatile (
 			"SVC %2 \n"
 			: "+r" (addr_reg),
 			  "+r" (dsize_reg)
-			: "i" ( portSVC_FLUSH_CACHE_REGION )
+			: "i" ( portSVC_CleanDCache_by_Addr )
 			:
 	);
 }

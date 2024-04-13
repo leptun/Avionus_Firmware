@@ -7,8 +7,6 @@
 namespace modules {
 namespace gps {
 
-#define com (*config::gps_usart)
-
 class UbxGNSS {
 	typedef uint8_t U1;
 	typedef uint16_t U2;
@@ -58,7 +56,7 @@ class UbxGNSS {
 static UbxGNSS gnss;
 
 void Setup() {
-	com.Setup();
+	config::gps_usart->Setup();
 	pins::GPS::NRESET.Write(true);
 }
 

@@ -9,6 +9,7 @@ extern uint8_t null_ptr;
 namespace util {
 
 #define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+#define ALIGN_CACHE __attribute__ ((aligned(32)))
 
 class TIM_CHAN_PAIR {
 public:

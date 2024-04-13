@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <config.hpp>
+#include <util.hpp>
 
 namespace hw {
 namespace usart {
@@ -180,7 +181,7 @@ void USART::irq_dma_tx() {
 	}
 }
 
-static uint8_t usart3_rxbuf[64];
+static uint8_t usart3_rxbuf[64] ALIGN_CACHE;
 static constexpr USART_Def usart3_def = {
 	MX_USART3_UART_Init,
 	util::ioCast<USART_TypeDef>(USART3_BASE),
@@ -196,7 +197,7 @@ extern "C" void DMA1_Stream1_IRQHandler(void) { usart3.irq_dma_rx(); }
 extern "C" void DMA1_Stream4_IRQHandler(void) { usart3.irq_dma_tx(); }
 
 
-static uint8_t uart4_rxbuf[64];
+static uint8_t uart4_rxbuf[64] ALIGN_CACHE;
 static constexpr USART_Def uart4_def = {
 	MX_UART4_Init,
 	util::ioCast<USART_TypeDef>(UART4_BASE),
@@ -210,7 +211,7 @@ extern "C" void UART4_IRQHandler(void) { uart4.irq_usart(); }
 extern "C" void DMA1_Stream2_IRQHandler(void) { uart4.irq_dma_rx(); }
 
 
-static uint8_t uart5_rxbuf[config::gps_rxbuf_size];
+static uint8_t uart5_rxbuf[config::gps_rxbuf_size] ALIGN_CACHE;
 static constexpr USART_Def uart5_def = {
 	MX_UART5_Init,
 	util::ioCast<USART_TypeDef>(UART5_BASE),
