@@ -112,7 +112,7 @@ SECTIONS
     *(freertos_system_calls)
     __syscalls_flash_end__ = .;
     . = ALIGN(4);
-    *(.text .text* .glue_7 .glue_7t .eh_frame)
+    *(.text .text* .force_text .glue_7 .glue_7t .eh_frame)
     KEEP (*(.init))
     KEEP (*(.fini))
 

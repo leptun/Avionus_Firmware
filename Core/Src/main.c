@@ -2114,7 +2114,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void Error_Handler(void) __attribute__((section(".force_text")));
 /* USER CODE END 4 */
 
 /**
