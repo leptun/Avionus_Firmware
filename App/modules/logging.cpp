@@ -9,6 +9,9 @@
 #include <main.h>
 #include <regions.h>
 #include <util.hpp>
+#include <config.hpp>
+#include <Arduino.h>
+#include <pins.hpp>
 
 extern "C" uint32_t _fatfs_bss_run_addr[];
 extern "C" uint32_t _logging_bss_run_addr[];
@@ -17,8 +20,7 @@ extern "C" uint32_t _shared_bss_run_addr[];
 namespace modules {
 namespace logging {
 
-uint8_t aBuf[16384] ALIGN_CACHE __attribute__((section(".app")));
-uint8_t bBuf[16384] ALIGN_CACHE __attribute__((section(".app")));
+uint8_t buffers[config::logging_buffer_cnt][16384] ALIGN_CACHE __attribute__((section(".app")));
 
 uint8_t retSD;    /* Return value for SD */
 FATFS SDFatFS;    /* File system object for SD logical drive */
@@ -31,6 +33,8 @@ struct {
 	float sd_speed_r_now;
 	float sd_speed_w;
 	float sd_speed_w_now;
+	TickType_t sd_latency_w_max;
+	TickType_t sd_latency_w_now;
 } stat;
 
 void testRead() {
@@ -41,7 +45,7 @@ void testRead() {
 	UINT last_br_total = stat.br_total;
 	UINT br = 0;
 	do {
-		if ((retSD = f_read(&SDFile, aBuf, sizeof(aBuf), &br)) != FR_OK) {
+		if ((retSD = f_read(&SDFile, buffers[0], sizeof(buffers[0]), &br)) != FR_OK) {
 			break;
 		}
 		stat.br_total += br;
@@ -54,7 +58,7 @@ void testRead() {
 			lastTime = timeNow;
 		}
 	}
-	while (br == sizeof(aBuf));
+	while (br == sizeof(buffers[0]));
 	retSD = f_close(&SDFile);
 }
 
@@ -67,7 +71,7 @@ void testWrite() {
 	UINT last_bw_total = stat.bw_total;
 	UINT bw = 0;
 	do {
-		if ((retSD = f_write(&SDFile, aBuf, sizeof(aBuf), &bw)) != FR_OK) {
+		if ((retSD = f_write(&SDFile, buffers[0], sizeof(buffers[0]), &bw)) != FR_OK) {
 			break;
 		}
 		stat.bw_total += bw;
@@ -80,23 +84,53 @@ void testWrite() {
 			lastTime = timeNow;
 		}
 	}
-	while (bw == sizeof(aBuf) && stat.bw_total < 104857600);
+	while (bw == sizeof(buffers[0]) && stat.bw_total < 104857600);
+	retSD = f_close(&SDFile);
+}
+
+void testWriteThrottled() {
+	static const char path[] = "writelog.bin";
+	retSD = f_unlink(path);
+	retSD = f_open(&SDFile, path, FA_WRITE | FA_CREATE_NEW);
+	UINT bw = 0;
+	uint32_t cycleCnt = 0;
+	TickType_t xLastWakeTime = xTaskGetTickCount();
+	do {
+		TickType_t timeBefore = xTaskGetTickCount();
+		if ((retSD = f_write(&SDFile, buffers[0], sizeof(buffers[0]), &bw)) != FR_OK) {
+			break;
+		}
+		TickType_t timeAfter = xTaskGetTickCount();
+		stat.sd_latency_w_now = timeAfter - timeBefore;
+		stat.sd_latency_w_max = max(stat.sd_latency_w_max, stat.sd_latency_w_now);
+		cycleCnt++;
+
+		vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000 / config::logic_cycle_frequency));
+	}
+	while (bw == sizeof(buffers[0]) && pins::UI::SW_USER.Read());
 	retSD = f_close(&SDFile);
 }
 
 static void taskLogging(void *pvParameters) {
 	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); //wait for parent task to finish initializing this task
 
+	vTaskDelay(1000);
 	retSD = f_mount(&SDFatFS, "0:/", 1);
 
+	vTaskDelay(1000);
 	testRead();
-	testWrite();
+
+//	vTaskDelay(1000);
+//	testWrite();
+
+	vTaskDelay(1000);
+	testWriteThrottled();
 
 	vTaskSuspend(NULL);
 }
 static portSTACK_TYPE xLoggingTaskStack[ 256 ] __attribute__((aligned(256*4))) __attribute__((section(".stack")));
 static constexpr MPU_REGION_REGISTERS xLoggingTaskExtendedRegions[] {
-		util::mpuRegs(5, AHB1PERIPH_BASE, 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b10111111 << MPU_RASR_SRD_Pos)), //GPIOG
+		util::mpuRegs(5, AHB1PERIPH_BASE, 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b10011111 << MPU_RASR_SRD_Pos)), //GPIOF(SW_USER) + GPIOG(SD_CARD_CD/WP)
 		util::mpuRegs(5, AHB1PERIPH_BASE + 0x6000, 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11111101 << MPU_RASR_SRD_Pos)), //DMA2
 		{0, 0}
 };

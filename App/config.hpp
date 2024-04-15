@@ -20,6 +20,7 @@ static constexpr uint32_t lse = LSE_VALUE;
 
 static constexpr uint32_t logic_cycle_frequency = 20;
 static constexpr uint32_t regular_adc_sample_cnt = 500; //samples per cycle
+static constexpr uint32_t logging_buffer_cnt = 4;
 
 static constexpr uint32_t servo_update_freq = 50;
 static constexpr uint32_t servo_min = 500; //us
@@ -46,8 +47,6 @@ inline constexpr util::TIM_CHAN_PAIR servo_channels[] = {
 };
 
 static TIM_TypeDef * const adc_timer = TIM6;
-
-static constexpr uint32_t usb_stream_buffer_size = 64;
 
 static hw::usart::USART * const gps_usart = &hw::usart::uart5;
 static constexpr size_t gps_rxbuf_size = 256;
