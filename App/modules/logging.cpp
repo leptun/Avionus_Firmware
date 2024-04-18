@@ -40,6 +40,7 @@ struct {
 void testRead() {
 	static const char path[] = "test.bin";
 	retSD = f_open(&SDFile, path, FA_READ);
+	stat.br_total = 0;
 	uint32_t lastTime = xTaskGetTickCount();
 	uint32_t startTime = lastTime;
 	UINT last_br_total = stat.br_total;
@@ -66,6 +67,7 @@ void testWrite() {
 	static const char path[] = "write.bin";
 	retSD = f_unlink(path);
 	retSD = f_open(&SDFile, path, FA_WRITE | FA_CREATE_NEW);
+	stat.bw_total = 0;
 	uint32_t lastTime = xTaskGetTickCount();
 	uint32_t startTime = lastTime;
 	UINT last_bw_total = stat.bw_total;
@@ -92,6 +94,7 @@ void testWriteThrottled() {
 	static const char path[] = "writelog.bin";
 	retSD = f_unlink(path);
 	retSD = f_open(&SDFile, path, FA_WRITE | FA_CREATE_NEW);
+	stat.bw_total = 0;
 	UINT bw = 0;
 	uint32_t cycleCnt = 0;
 	TickType_t xLastWakeTime = xTaskGetTickCount();
@@ -100,6 +103,9 @@ void testWriteThrottled() {
 		if ((retSD = f_write(&SDFile, buffers[0], sizeof(buffers[0]), &bw)) != FR_OK) {
 			break;
 		}
+
+		stat.bw_total += bw;
+
 		TickType_t timeAfter = xTaskGetTickCount();
 		stat.sd_latency_w_now = timeAfter - timeBefore;
 		stat.sd_latency_w_max = max(stat.sd_latency_w_max, stat.sd_latency_w_now);
