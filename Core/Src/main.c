@@ -733,12 +733,12 @@ void MX_SDMMC2_SD_Init(void)
 
   /* USER CODE END SDMMC2_Init 1 */
   hsd2.Instance = SDMMC2;
-  hsd2.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
+  hsd2.Init.ClockEdge = SDMMC_CLOCK_EDGE_FALLING;
   hsd2.Init.ClockBypass = SDMMC_CLOCK_BYPASS_DISABLE;
-  hsd2.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
+  hsd2.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_ENABLE;
   hsd2.Init.BusWide = SDMMC_BUS_WIDE_4B;
-  hsd2.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-  hsd2.Init.ClockDiv = 0;
+  hsd2.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_ENABLE;
+  hsd2.Init.ClockDiv = 2;
   if (HAL_SD_Init(&hsd2) != HAL_OK)
   {
     Error_Handler();

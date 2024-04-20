@@ -302,6 +302,8 @@ void HAL_SD_MspInit(SD_HandleTypeDef* hsd)
     HAL_NVIC_EnableIRQ(SDMMC2_IRQn);
   /* USER CODE BEGIN SDMMC2_MspInit 1 */
 
+    LL_RCC_SetSDMMCClockSource(LL_RCC_SDMMC2_CLKSOURCE_SYSCLK);
+
   /* USER CODE END SDMMC2_MspInit 1 */
   }
 

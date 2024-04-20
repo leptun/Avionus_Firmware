@@ -275,7 +275,7 @@ static void taskClockMain(void *pvParameters) {
 	// Set peripheral clock sources
 	LL_RCC_SetTIMPrescaler(LL_RCC_TIM_PRESCALER_FOUR_TIMES); // Make all timers run at HCLK
 	LL_RCC_SetCK48MClockSource(LL_RCC_CK48M_CLKSOURCE_PLLSAI);
-	LL_RCC_SetSDMMCClockSource(LL_RCC_SDMMC2_CLKSOURCE_PLL48CLK);
+	LL_RCC_SetSDMMCClockSource(LL_RCC_SDMMC2_CLKSOURCE_SYSCLK);
 
 	// Setup RCC interrupts
 	LL_RCC_ClearFlag_LSIRDY();

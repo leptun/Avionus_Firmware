@@ -101,12 +101,12 @@ DSTATUS disk_sdmmc_initialize(void) {
 	}
 
 	/* uSD device interface configuration */
-	hsd2.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
+	hsd2.Init.ClockEdge = SDMMC_CLOCK_EDGE_FALLING;
 	hsd2.Init.ClockBypass = SDMMC_CLOCK_BYPASS_DISABLE;
 	hsd2.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_ENABLE;
 	hsd2.Init.BusWide = SDMMC_BUS_WIDE_1B;
 	hsd2.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_ENABLE;
-	hsd2.Init.ClockDiv = SDMMC_INIT_CLK_DIV;
+	hsd2.Init.ClockDiv = 254;
 
 	if (HAL_SD_Init(&hsd2) != HAL_OK) {
 		xEventGroupSetBits(sd_diskio_flags, STA_NOINIT);
@@ -120,9 +120,9 @@ DSTATUS disk_sdmmc_initialize(void) {
 	 */
 	vTaskDelay(1);
 
-	hsd2.Init.ClockBypass = SDMMC_CLOCK_BYPASS_ENABLE;
+	hsd2.Init.ClockBypass = SDMMC_CLOCK_BYPASS_DISABLE;
 	hsd2.Init.BusWide = SDMMC_BUS_WIDE_4B;
-	hsd2.Init.ClockDiv = SDMMC_TRANSFER_CLK_DIV;
+	hsd2.Init.ClockDiv = 2;
 
 	/* Enable wide operation */
 	if (HAL_SD_ConfigWideBusOperation(&hsd2, hsd2.Init.BusWide) != HAL_OK) {
