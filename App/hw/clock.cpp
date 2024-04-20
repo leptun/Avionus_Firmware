@@ -157,7 +157,7 @@ static bool configureHClocks(bool useExternalClock) {
 	const uint32_t pllm = (useExternalClock ? HSE_VALUE : HSI_VALUE) / pllClockInputFreq;
 	const uint32_t plln = pllClockFreq / pllClockInputFreq;
 	const uint32_t pllp_bits = LL_RCC_PLLP_DIV_2;
-	const uint32_t pllq = pllClockFreq / 48000000ul;
+	const uint32_t pllq = 2;
 
 	// configure main PLL
 	MODIFY_REG(RCC->PLLCFGR
@@ -208,6 +208,33 @@ static bool configureHClocks(bool useExternalClock) {
 		return false;
 	}
 
+	// Configure PLLSAI1
+	const uint32_t pllsaitargetClockFreq = config::clocks::pll48clk;
+	const uint32_t pllsaiClockFreq = pllsaitargetClockFreq * 4;
+	const uint32_t pllsain = pllsaiClockFreq / pllClockInputFreq;
+	const uint32_t pllsaip_bits = LL_RCC_PLLSAIP_DIV_4;
+	const uint32_t pllsaiq = 2;
+
+	// configure main PLL
+	MODIFY_REG(RCC->PLLSAICFGR
+			, RCC_PLLSAICFGR_PLLSAIN
+			| RCC_PLLSAICFGR_PLLSAIP
+			| RCC_PLLSAICFGR_PLLSAIQ
+			, (pllsain << RCC_PLLSAICFGR_PLLSAIN_Pos)
+			| (pllsaip_bits)
+			| (pllsaiq << RCC_PLLSAICFGR_PLLSAIQ_Pos)
+	);
+
+	LL_RCC_PLLSAI_Enable();
+	if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG_PLLSAIRDY | FLAG_CSS, &retFlags, pdMS_TO_TICKS(PLLSAI_TIMEOUT_VALUE)) == pdFALSE) {
+		//PLL timeout
+		return false;
+	}
+	if (retFlags & FLAG_CSS) {
+		//CSS during PLL init
+		return false;
+	}
+
 	return true;
 }
 
@@ -247,6 +274,7 @@ static void taskClockMain(void *pvParameters) {
 
 	// Set peripheral clock sources
 	LL_RCC_SetTIMPrescaler(LL_RCC_TIM_PRESCALER_FOUR_TIMES); // Make all timers run at HCLK
+	LL_RCC_SetCK48MClockSource(LL_RCC_CK48M_CLKSOURCE_PLLSAI);
 	LL_RCC_SetSDMMCClockSource(LL_RCC_SDMMC2_CLKSOURCE_PLL48CLK);
 
 	// Setup RCC interrupts

@@ -16,6 +16,7 @@ static constexpr uint32_t hsi = HSI_VALUE;
 static constexpr uint32_t hse = HSE_VALUE;
 static constexpr uint32_t lsi = LSI_VALUE;
 static constexpr uint32_t lse = LSE_VALUE;
+static constexpr uint32_t pll48clk = 48000000;
 }
 
 static constexpr uint32_t logic_cycle_frequency = 20;

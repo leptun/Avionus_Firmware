@@ -235,7 +235,7 @@ void HAL_SD_MspInit(SD_HandleTypeDef* hsd)
 
   /* USER CODE END SDMMC2_MspInit 0 */
     LL_RCC_EnableRTC();
-    LL_RCC_SetCK48MClockSource(LL_RCC_CK48M_CLKSOURCE_PLL);
+    LL_RCC_SetCK48MClockSource(LL_RCC_CK48M_CLKSOURCE_PLLSAI);
     LL_RCC_SetSDMMCClockSource(LL_RCC_SDMMC2_CLKSOURCE_PLL48CLK);
 
     /* Peripheral clock enable */

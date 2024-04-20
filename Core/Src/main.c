@@ -61,6 +61,7 @@ DMA_HandleTypeDef hdma_spi4_tx;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM6_Init(void);
@@ -177,7 +178,6 @@ void SystemClock_Config(void)
   }
   LL_RCC_HSE_EnableCSS();
   LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_12, 216, LL_RCC_PLLP_DIV_2);
-  LL_RCC_PLL_ConfigDomain_48M(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_12, 216, LL_RCC_PLLQ_DIV_9);
   LL_RCC_PLL_Enable();
 
    /* Wait till PLL is ready */
@@ -208,6 +208,22 @@ void SystemClock_Config(void)
 
    /* Set Timers Clock Prescalers */
   LL_RCC_SetTIMPrescaler(LL_RCC_TIM_PRESCALER_FOUR_TIMES);
+}
+
+/**
+  * @brief Peripherals Common Clock Configuration
+  * @retval None
+  */
+void PeriphCommonClock_Config(void)
+{
+  LL_RCC_PLLSAI_ConfigDomain_48M(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_12, 96, LL_RCC_PLLSAIP_DIV_4);
+  LL_RCC_PLLSAI_Enable();
+
+   /* Wait till PLL is ready */
+  while(LL_RCC_PLLSAI_IsReady() != 1)
+  {
+
+  }
 }
 
 /**
