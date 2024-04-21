@@ -12,7 +12,7 @@ void Setup() {
 
 	// Initialize periodic trigger timer
 	constexpr uint32_t timer_cnt_freq = 1000000;
-	constexpr uint32_t timer_upd_freq = config::logic_cycle_frequency * config::regular_adc_sample_cnt;
+	constexpr uint32_t timer_upd_freq = config::regular_adc_cycle_frequency;
 	constexpr uint16_t psc = __LL_TIM_CALC_PSC(config::system_clock_frequency, timer_cnt_freq);
 	constexpr uint16_t arr = __LL_TIM_CALC_ARR(config::system_clock_frequency, psc, timer_upd_freq);
 	LL_TIM_SetPrescaler(config::adc_timer, psc);
