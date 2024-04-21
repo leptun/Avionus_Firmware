@@ -86,7 +86,7 @@ void testWrite() {
 			lastTime = timeNow;
 		}
 	}
-	while (bw == sizeof(buffers[0]) && stat.bw_total < 104857600);
+	while (bw == sizeof(buffers[0]) && stat.bw_total < 268435456);
 	retSD = f_close(&SDFile);
 }
 
@@ -126,8 +126,8 @@ static void taskLogging(void *pvParameters) {
 	vTaskDelay(1000);
 	testRead();
 
-//	vTaskDelay(1000);
-//	testWrite();
+	vTaskDelay(1000);
+	testWrite();
 
 	vTaskDelay(1000);
 	testWriteThrottled();

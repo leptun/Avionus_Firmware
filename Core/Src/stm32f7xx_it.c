@@ -327,9 +327,9 @@ void SPI4_IRQHandler(void)
 void SDMMC2_IRQHandler(void)
 {
   /* USER CODE BEGIN SDMMC2_IRQn 0 */
-
-	HAL_SD_EXT_IRQHandler(&hsd2);
-
+	if (HAL_SD_EXT_IRQHandler(&hsd2)) {
+		return;
+	}
   /* USER CODE END SDMMC2_IRQn 0 */
   HAL_SD_IRQHandler(&hsd2);
   /* USER CODE BEGIN SDMMC2_IRQn 1 */

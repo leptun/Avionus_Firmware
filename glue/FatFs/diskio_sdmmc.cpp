@@ -11,7 +11,8 @@
 #include <pins.hpp>
 
 
-#define SDMMC_TIMEOUT_MS 5000
+#define SDMMC_TIMEOUT_MS 2000
+#define SDMMC_MAX_RETRY 2
 
 extern SD_HandleTypeDef hsd2;
 EventGroupHandle_t sd_diskio_flags;
@@ -43,20 +44,6 @@ static bool sdmmc_card_detected() {
 
 static bool sdmmc_card_write_protected() {
 	return pins::SD_CARD::WP.Read();
-}
-
-static void sdmmc_config_dma_stream(const void *buff) {
-	uint32_t tz = __CLZ(__RBIT((uint32_t)buff)); // get trailing zeros
-	uint32_t sxcr;
-	switch (tz) {
-	case 0: sxcr = DMA_MBURST_SINGLE | DMA_MDATAALIGN_BYTE; break;
-	case 1: sxcr = DMA_MBURST_SINGLE | DMA_MDATAALIGN_HALFWORD; break;
-	case 2:
-	case 3: sxcr = DMA_MBURST_SINGLE | DMA_MDATAALIGN_WORD; break;
-	default: sxcr = DMA_MBURST_INC4 | DMA_MDATAALIGN_WORD;
-	}
-
-	MODIFY_REG(hsd2.hdmarx->Instance->CR, DMA_SxCR_MSIZE | DMA_SxCR_MBURST, sxcr);
 }
 
 static DRESULT sdmmc_wait_ready() {
@@ -134,77 +121,97 @@ DSTATUS disk_sdmmc_initialize(void) {
 
 DRESULT disk_sdmmc_read (BYTE* buff, LBA_t sector, UINT count) {
 	HAL_StatusTypeDef status;
+	DRESULT res;
 	if (disk_sdmmc_status() & STA_NOINIT) {
 		return RES_NOTRDY;
 	}
 
-	sdmmc_config_dma_stream(buff);
+	if ((uint32_t)buff & 0x1f) {
+		Error_Handler();
+	}
 
-retry:
-	if (hsd2.State == HAL_SD_STATE_READY) {
-		DRESULT res;
-		if ((res = sdmmc_wait_ready()) != RES_OK) {
-			return res;
+	for (uint32_t retryCounter = 0; retryCounter < SDMMC_MAX_RETRY; retryCounter++) {
+interrupted:
+		if (hsd2.State == HAL_SD_STATE_READY) {
+			if ((res = sdmmc_wait_ready()) != RES_OK) {
+				continue;
+			}
 		}
-	}
 
-	status = HAL_SD_ReadBlocksUninterrupted_DMA(&hsd2, buff, (uint32_t)sector, count);
-	if (status != HAL_OK) {
-		if (status == HAL_BUSY) {
-			goto retry;
+		status = HAL_SD_ReadBlocksUninterrupted_DMA(&hsd2, buff, (uint32_t)sector, count);
+		if (status != HAL_OK) {
+			if (status == HAL_BUSY) {
+				goto interrupted;
+			}
+			res = RES_ERROR;
+			continue;
 		}
-		return RES_ERROR;
+
+		if (xEventGroupWaitBits(
+				sd_diskio_flags,
+				SD_DISKIO_TRANSFER_CPLT | SD_DISKIO_TRANSFER_ERROR | SD_DISKIO_TRANSFER_ABORTED,
+				pdTRUE,
+				pdFALSE,
+				pdMS_TO_TICKS(SDMMC_TIMEOUT_MS)
+		) != SD_DISKIO_TRANSFER_CPLT) {
+			res = RES_ERROR;
+			continue;
+		}
+
+		res = RES_OK;
+		break;
 	}
 
-	if (xEventGroupWaitBits(
-			sd_diskio_flags,
-			SD_DISKIO_TRANSFER_CPLT | SD_DISKIO_TRANSFER_ERROR | SD_DISKIO_TRANSFER_ABORTED,
-			pdTRUE,
-			pdFALSE,
-			pdMS_TO_TICKS(SDMMC_TIMEOUT_MS)
-	) != SD_DISKIO_TRANSFER_CPLT) {
-		return RES_ERROR;
-	}
-	return RES_OK;
+	return res;
 }
 
 DRESULT disk_sdmmc_write (const BYTE* buff, LBA_t sector, UINT count) {
 	HAL_StatusTypeDef status;
+	DRESULT res;
 	if (disk_sdmmc_status() & STA_NOINIT) {
 		return RES_NOTRDY;
+	}
+
+	if ((uint32_t)buff & 0x1f) {
+		Error_Handler();
 	}
 
 	// Flush the write buffer to ram so that the DMA can push it to the SDMMC peripheral
 	portCleanDCache_by_Addr(buff, count * BLOCKSIZE);
 
-	sdmmc_config_dma_stream(buff);
-
-retry:
-	if (hsd2.State == HAL_SD_STATE_READY) {
-		DRESULT res;
-		if ((res = sdmmc_wait_ready()) != RES_OK) {
-			return res;
+	for (uint32_t retryCounter = 0; retryCounter < SDMMC_MAX_RETRY; retryCounter++) {
+interrupted:
+		if (hsd2.State == HAL_SD_STATE_READY) {
+			if ((res = sdmmc_wait_ready()) != RES_OK) {
+				continue;
+			}
 		}
-	}
 
-	status = HAL_SD_WriteBlocksUninterrupted_DMA(&hsd2, (uint8_t*)buff, (uint32_t)sector, count);
-	if (status != HAL_OK) {
-		if (status == HAL_BUSY) {
-			goto retry;
+		status = HAL_SD_WriteBlocksUninterrupted_DMA(&hsd2, (uint8_t*)buff, (uint32_t)sector, count);
+		if (status != HAL_OK) {
+			if (status == HAL_BUSY) {
+				goto interrupted;
+			}
+			res = RES_ERROR;
+			continue;
 		}
-		return RES_ERROR;
+
+		if (xEventGroupWaitBits(
+				sd_diskio_flags,
+				SD_DISKIO_TRANSFER_CPLT | SD_DISKIO_TRANSFER_ERROR | SD_DISKIO_TRANSFER_ABORTED,
+				pdTRUE,
+				pdFALSE,
+				pdMS_TO_TICKS(SDMMC_TIMEOUT_MS)
+		) != SD_DISKIO_TRANSFER_CPLT) {
+			res = RES_ERROR;
+			continue;
+		}
+
+		res = RES_OK;
+		break;
 	}
 
-	if (xEventGroupWaitBits(
-			sd_diskio_flags,
-			SD_DISKIO_TRANSFER_CPLT | SD_DISKIO_TRANSFER_ERROR | SD_DISKIO_TRANSFER_ABORTED,
-			pdTRUE,
-			pdFALSE,
-			pdMS_TO_TICKS(SDMMC_TIMEOUT_MS)
-	) != SD_DISKIO_TRANSFER_CPLT) {
-		return RES_ERROR;
-	}
-	return RES_OK;
+	return res;
 }
 
 DRESULT disk_sdmmc_ioctl (BYTE cmd, void* buff) {
@@ -247,7 +254,9 @@ void HAL_SD_TxCpltCallback(SD_HandleTypeDef *hsd) {
 void HAL_SD_RxCpltCallback(SD_HandleTypeDef *hsd) {
 	BaseType_t xHigherPriorityTaskWoken, xResult;
 	xResult = xEventGroupSetBitsFromISR(sd_diskio_flags, SD_DISKIO_TRANSFER_CPLT, &xHigherPriorityTaskWoken);
+
 	SCB_InvalidateDCache_by_Addr((uint32_t*)hsd->hdmarx->Instance->M0AR, (0xFFFF - hsd->hdmarx->Instance->NDTR) << 2);
+
 	if(xResult != pdFAIL) {
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
@@ -271,12 +280,7 @@ void HAL_SD_AbortCallback(SD_HandleTypeDef *hsd) {
 
 void hw::exti::exti13_handler() {
 	BaseType_t xHigherPriorityTaskWoken, xResult;
-
-	if ((hsd2.Context & SD_CONTEXT_DMA) != 0U) {
-		(void)HAL_SD_Abort_IT(&hsd2);
-	}
-
-	xResult = xEventGroupSetBitsFromISR(sd_diskio_flags, STA_NOINIT, &xHigherPriorityTaskWoken);
+	xResult = xEventGroupSetBitsFromISR(sd_diskio_flags, SD_DISKIO_FLAG_NOINIT, &xHigherPriorityTaskWoken);
 	if(xResult != pdFAIL) {
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}

@@ -44,10 +44,9 @@ static void SD_DMAReceiveUninterruptedCplt(DMA_HandleTypeDef *hdma)
   * @param  hdma: DMA handle
   * @retval None
   */
-static void SD_DMAError(DMA_HandleTypeDef *hdma)
+static void SD_DMAUninterruptedError(DMA_HandleTypeDef *hdma)
 {
   SD_HandleTypeDef* hsd = (SD_HandleTypeDef* )(hdma->Parent);
-  HAL_SD_CardStateTypeDef CardState;
   uint32_t RxErrorCode, TxErrorCode;
 
   /* if DMA error is FIFO error ignore it */
@@ -65,13 +64,8 @@ static void SD_DMAError(DMA_HandleTypeDef *hdma)
         SDMMC_IT_TXUNDERR| SDMMC_IT_RXOVERR);
 
       hsd->ErrorCode |= HAL_SD_ERROR_DMA;
-      CardState = HAL_SD_GetCardState(hsd);
-      if((CardState == HAL_SD_CARD_RECEIVING) || (CardState == HAL_SD_CARD_SENDING))
-      {
-        hsd->ErrorCode |= SDMMC_CmdStopTransfer(hsd->Instance);
-      }
 
-      hsd->State= HAL_SD_STATE_READY;
+      hsd->State = HAL_SD_STATE_ERROR;
       hsd->Context = SD_CONTEXT_NONE;
     }
 
@@ -82,6 +76,41 @@ static void SD_DMAError(DMA_HandleTypeDef *hdma)
 #endif
   }
 }
+
+static void SD_DMATxUninterruptedAbort(DMA_HandleTypeDef *hdma)
+{
+  SD_HandleTypeDef* hsd = (SD_HandleTypeDef* )(hdma->Parent);
+
+  /* Clear All flags */
+  __HAL_SD_CLEAR_FLAG(hsd, SDMMC_STATIC_DATA_FLAGS);
+
+  hsd->State = HAL_SD_STATE_ERROR;
+  hsd->Context = SD_CONTEXT_NONE;
+
+#if (USE_HAL_SD_REGISTER_CALLBACKS == 1)
+  hsd->AbortCpltCallback(hsd);
+#else
+  HAL_SD_AbortCallback(hsd);
+#endif
+}
+
+static void SD_DMARxUninterruptedAbort(DMA_HandleTypeDef *hdma)
+{
+  SD_HandleTypeDef* hsd = (SD_HandleTypeDef* )(hdma->Parent);
+
+  /* Clear All flags */
+  __HAL_SD_CLEAR_FLAG(hsd, SDMMC_STATIC_DATA_FLAGS);
+
+  hsd->State = HAL_SD_STATE_ERROR;
+  hsd->Context = SD_CONTEXT_NONE;
+
+#if (USE_HAL_SD_REGISTER_CALLBACKS == 1)
+  hsd->AbortCpltCallback(hsd);
+#else
+  HAL_SD_AbortCallback(hsd);
+#endif
+}
+
 
 HAL_StatusTypeDef HAL_SD_ReadBlocksUninterrupted_DMA(SD_HandleTypeDef *hsd, uint8_t *pData, uint32_t BlockAdd, uint32_t NumberOfBlocks)
 {
@@ -122,16 +151,23 @@ HAL_StatusTypeDef HAL_SD_ReadBlocksUninterrupted_DMA(SD_HandleTypeDef *hsd, uint
     	hsd->State = HAL_SD_STATE_BUSY;
     }
 
+    if (HAL_DMA_GetState(hsd->hdmarx) != HAL_DMA_STATE_READY) {
+    	hsd->ErrorCode |= HAL_SD_ERROR_DMA;
+		hsd->State = HAL_SD_STATE_ERROR;
+		return HAL_ERROR;
+    }
+
     __HAL_SD_ENABLE_IT(hsd, (SDMMC_IT_DCRCFAIL | SDMMC_IT_DTIMEOUT | SDMMC_IT_RXOVERR));
+
 
     /* Set the DMA transfer complete callback */
     hsd->hdmarx->XferCpltCallback = SD_DMAReceiveUninterruptedCplt;
 
     /* Set the DMA error callback */
-    hsd->hdmarx->XferErrorCallback = SD_DMAError;
+    hsd->hdmarx->XferErrorCallback = SD_DMAUninterruptedError;
 
     /* Set the DMA Abort callback */
-    hsd->hdmarx->XferAbortCallback = NULL;
+    hsd->hdmarx->XferAbortCallback = SD_DMAUninterruptedError;
 
     /* Force DMA Direction */
     hsd->hdmarx->Init.Direction = DMA_PERIPH_TO_MEMORY;
@@ -143,7 +179,7 @@ HAL_StatusTypeDef HAL_SD_ReadBlocksUninterrupted_DMA(SD_HandleTypeDef *hsd, uint
       __HAL_SD_DISABLE_IT(hsd, (SDMMC_IT_DCRCFAIL | SDMMC_IT_DTIMEOUT | SDMMC_IT_RXOVERR));
       __HAL_SD_CLEAR_FLAG(hsd, SDMMC_STATIC_FLAGS);
       hsd->ErrorCode |= HAL_SD_ERROR_DMA;
-      hsd->State = HAL_SD_STATE_READY;
+      hsd->State = HAL_SD_STATE_ERROR;
       return HAL_ERROR;
     }
     else
@@ -232,6 +268,12 @@ HAL_StatusTypeDef HAL_SD_WriteBlocksUninterrupted_DMA(SD_HandleTypeDef *hsd, uin
     	hsd->State = HAL_SD_STATE_BUSY;
     }
 
+    if (HAL_DMA_GetState(hsd->hdmatx) != HAL_DMA_STATE_READY) {
+		hsd->ErrorCode |= HAL_SD_ERROR_DMA;
+		hsd->State = HAL_SD_STATE_ERROR;
+		return HAL_ERROR;
+	}
+
     /* Enable SD Error interrupts */
     __HAL_SD_ENABLE_IT(hsd, (SDMMC_IT_DCRCFAIL | SDMMC_IT_DTIMEOUT | SDMMC_IT_TXUNDERR));
 
@@ -239,10 +281,10 @@ HAL_StatusTypeDef HAL_SD_WriteBlocksUninterrupted_DMA(SD_HandleTypeDef *hsd, uin
     hsd->hdmatx->XferCpltCallback = SD_DMATransmitUninterruptedCplt;
 
     /* Set the DMA error callback */
-    hsd->hdmatx->XferErrorCallback = SD_DMAError;
+    hsd->hdmatx->XferErrorCallback = SD_DMAUninterruptedError;
 
     /* Set the DMA Abort callback */
-    hsd->hdmatx->XferAbortCallback = NULL;
+    hsd->hdmatx->XferAbortCallback = SD_DMAUninterruptedError;
 
     if(hsd->SdCard.CardType != CARD_SDHC_SDXC)
     {
@@ -321,25 +363,55 @@ HAL_StatusTypeDef HAL_SD_EXT_Sync(SD_HandleTypeDef *hsd) {
 	}
 }
 
-void HAL_SD_EXT_IRQHandler(SD_HandleTypeDef *hsd) {
+uint8_t HAL_SD_EXT_IRQHandler(SD_HandleTypeDef *hsd) {
 	uint32_t context = hsd->Context;
-	if(__HAL_SD_GET_FLAG(hsd, SDMMC_FLAG_DATAEND)
-		&& (context & SD_CONTEXT_UNINTERRUPTED)
-		&& (context & SD_CONTEXT_WRITE_MULTIPLE_BLOCK)
-	) {
-        hsd->Instance->DCTRL &= ~(SDMMC_DCTRL_DMAEN | SDMMC_DCTRL_DTEN);
+	if (context & SD_CONTEXT_UNINTERRUPTED) {
+		if(__HAL_SD_GET_FLAG(hsd, SDMMC_FLAG_DATAEND)) {
+			if (context & SD_CONTEXT_WRITE_MULTIPLE_BLOCK) {
+				hsd->Instance->DCTRL &= ~(SDMMC_DCTRL_DMAEN | SDMMC_DCTRL_DTEN);
+					__HAL_SD_DISABLE_IT(hsd, (SDMMC_FLAG_DATAEND | SDMMC_IT_DCRCFAIL | SDMMC_IT_DTIMEOUT | SDMMC_IT_TXUNDERR));
 
-        __HAL_SD_DISABLE_IT(hsd, (SDMMC_IT_DCRCFAIL | SDMMC_IT_DTIMEOUT | SDMMC_IT_TXUNDERR));
+					/* Clear all the static flags */
+					__HAL_SD_CLEAR_FLAG(hsd, SDMMC_STATIC_DATA_FLAGS);
 
-        /* Clear all the static flags */
-        __HAL_SD_CLEAR_FLAG(hsd, SDMMC_STATIC_DATA_FLAGS);
-
-		hsd->State = HAL_SD_STATE_TRANSFER;
+					hsd->State = HAL_SD_STATE_TRANSFER;
 
 #if defined (USE_HAL_SD_REGISTER_CALLBACKS) && (USE_HAL_SD_REGISTER_CALLBACKS == 1U)
-        hsd->TxCpltCallback(hsd);
+					hsd->TxCpltCallback(hsd);
 #else
-        HAL_SD_TxCpltCallback(hsd);
+					HAL_SD_TxCpltCallback(hsd);
 #endif /* USE_HAL_SD_REGISTER_CALLBACKS */
+			}
+			else {
+				// DATAEND not used for uninterrupted block reads, dma TC flag is used instead
+				__HAL_SD_DISABLE_IT(hsd, (SDMMC_FLAG_DATAEND | SDMMC_IT_DCRCFAIL | SDMMC_IT_DTIMEOUT | SDMMC_IT_TXUNDERR));
+			}
+		}
+		else if(__HAL_SD_GET_FLAG(hsd, SDMMC_FLAG_DCRCFAIL | SDMMC_FLAG_DTIMEOUT | SDMMC_FLAG_RXOVERR | SDMMC_FLAG_TXUNDERR) != RESET) {
+			__HAL_SD_CLEAR_FLAG(hsd, SDMMC_STATIC_DATA_FLAGS);
+			__HAL_SD_DISABLE_IT(hsd, SDMMC_IT_DATAEND | SDMMC_IT_DCRCFAIL | SDMMC_IT_DTIMEOUT | SDMMC_IT_TXUNDERR | SDMMC_IT_RXOVERR);
+			if (context & SD_CONTEXT_WRITE_MULTIPLE_BLOCK) {
+				if (HAL_DMA_Abort_IT(hsd->hdmatx) != HAL_OK) {
+					SD_DMATxUninterruptedAbort(hsd->hdmatx);
+				}
+			} else if (context & SD_CONTEXT_READ_MULTIPLE_BLOCK) {
+				if(HAL_DMA_Abort_IT(hsd->hdmarx) != HAL_OK) {
+					SD_DMARxUninterruptedAbort(hsd->hdmarx);
+		        }
+			} else {
+				hsd->ErrorCode = HAL_SD_ERROR_NONE;
+				hsd->State = HAL_SD_STATE_READY;
+				hsd->Context = SD_CONTEXT_NONE;
+#if defined (USE_HAL_SD_REGISTER_CALLBACKS) && (USE_HAL_SD_REGISTER_CALLBACKS == 1U)
+				hsd->AbortCpltCallback(hsd);
+#else
+				HAL_SD_AbortCallback(hsd);
+#endif /* USE_HAL_SD_REGISTER_CALLBACKS */
+			}
+		}
+		return 1;
+	}
+	else {
+		return 0;
 	}
 }
