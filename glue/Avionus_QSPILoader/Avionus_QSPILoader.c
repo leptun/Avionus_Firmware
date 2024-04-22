@@ -3,7 +3,6 @@
 #include <quadspi.h> // !!! it includes the wrong main.h
 #include <FreeRTOS.h>
 #include <task.h>
-#include <util.hpp>
 
 
 static uint32_t activeStreams;

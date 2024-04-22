@@ -134,6 +134,8 @@ SECTIONS
   /* The program code and other data into "FLASH" Rom type memory */
   .text :
   {
+    . = ALIGN(4);
+    
     *(.text .text* .glue_7 .glue_7t .eh_frame)
     KEEP (*(.init))
     KEEP (*(.fini))

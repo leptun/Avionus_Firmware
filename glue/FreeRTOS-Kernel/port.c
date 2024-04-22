@@ -838,8 +838,8 @@ static void prvRestoreContextOfFirstTask( void )
         " ldr r0, =0xe000ed9c                   \n" /* Region Base Address register. */
         " ldmia r2!, {r4-r11}                   \n" /* Read 4 sets of MPU registers [MPU Region # 0 - 3]. */
 		" stmia r0, {r4-r11}                    \n" /* Write 4 sets of MPU registers [MPU Region # 0 - 3]. */
-        " ldmia r2!, {r4-r7}                    \n" /* Read 2 sets of MPU registers [MPU Region # 4 - 5]. */
-		" stmia r0, {r4-r7}                     \n" /* Write 2 sets of MPU registers. [MPU Region # 4 - 5]. */
+        " ldmia r2!, {r4-r5}                    \n" /* Read 2 sets of MPU registers [MPU Region # 4 - 4]. */
+		" stmia r0, {r4-r5}                     \n" /* Write 2 sets of MPU registers. [MPU Region # 4 - 4]. */
         "                                       \n"
         #if ( configTOTAL_MPU_REGIONS == 16 )
             " ldmia r2!, {r4-r11}                   \n" /* Read 4 sets of MPU registers [MPU Region # 4 - 7]. */
@@ -1203,8 +1203,8 @@ void xPortPendSVHandler( void )
         " ldr r0, =0xe000ed9c                   \n" /* Region Base Address register. */
         " ldmia r2!, {r4-r11}                   \n" /* Read 4 sets of MPU registers [MPU Region # 0 - 3]. */
         " stmia r0, {r4-r11}                    \n" /* Write 4 sets of MPU registers [MPU Region # 0 - 3]. */
-        " ldmia r2!, {r4-r7}                    \n" /* Read 2 sets of MPU registers [MPU Region # 4 - 5]. */
-        " stmia r0, {r4-r7}                     \n" /* Write 2 sets of MPU registers. [MPU Region # 4 - 5]. */
+        " ldmia r2!, {r4-r5}                    \n" /* Read 2 sets of MPU registers [MPU Region # 4 - 4]. */
+        " stmia r0, {r4-r5}                     \n" /* Write 2 sets of MPU registers. [MPU Region # 4 - 4]. */
         "                                       \n"
         #if ( configTOTAL_MPU_REGIONS == 16 )
             " ldmia r2!, {r4-r11}                   \n" /* Read 4 sets of MPU registers [MPU Region # 4 - 7]. */
@@ -1249,12 +1249,13 @@ void xPortPendSVHandler( void )
 }
 /*-----------------------------------------------------------*/
 
-static void exchangeMPUExtendedRegions(uint32_t addr) {
+static uint8_t exchangeMPUExtendedRegions(uint32_t addr) {
 	extern TaskHandle_t pxCurrentTCB;
 	xMPU_SETTINGS *xMpuSettings = xTaskGetMPUSettings(pxCurrentTCB);
 
 	if (!xMpuSettings->xExtendedRegions) {
-		portHardFault();
+		// no extended regions defined for the current task
+		return 0;
 	}
 
 	for (const xMPU_REGION_REGISTERS *region = xMpuSettings->xExtendedRegions; region->ulRegionBaseAddress; region++) {
@@ -1277,12 +1278,12 @@ static void exchangeMPUExtendedRegions(uint32_t addr) {
 			portMPU_REGION_BASE_ADDRESS_REG = region->ulRegionBaseAddress;
 			portMPU_REGION_ATTRIBUTE_REG = region->ulRegionAttribute;
 
-			return; // success
+			return 1; // success
 		}
 	}
 
-	// valid region not found, trigger a HardFault
-	portHardFault();
+	// valid region not found
+	return 0;
 }
 
 void vPortMemManageHandler( void ) /* __attribute__( ( naked ) ) PRIVILEGED_FUNCTION */
@@ -1306,64 +1307,26 @@ void vPortMemManageHandler( void ) /* __attribute__( ( naked ) ) PRIVILEGED_FUNC
 
 void vMemManageHandler_C( uint32_t * pulParam ) /* PRIVILEGED_FUNCTION */
 {
-#if defined( __ARMCC_VERSION )
-    /* Declaration when these variable are defined in code instead of being
-     * exported from linker scripts. */
-    extern uint32_t * __privileged_functions_start__;
-    extern uint32_t * __privileged_functions_end__;
-    extern uint32_t * __FLASH_segment_start__;
-    extern uint32_t * __FLASH_segment_end__;
-    extern uint32_t * __XFLASH_segment_start__;
-    extern uint32_t * __XFLASH_segment_end__;
-#else
-    /* Declaration when these variable are exported from linker scripts. */
-    extern uint32_t __privileged_functions_start__[];
-    extern uint32_t __privileged_functions_end__[];
-    extern uint32_t __FLASH_segment_start__[];
-    extern uint32_t __FLASH_segment_end__[];
-    extern uint32_t __XFLASH_segment_start__[];
-    extern uint32_t __XFLASH_segment_end__[];
-#endif /* if defined( __ARMCC_VERSION ) */
-
     /* The stack contains: r0, r1, r2, r3, r12, LR, PC and xPSR.  The first
      * argument (r0) is pulParam[ 0 ]. */
     uint32_t ulPC = pulParam[ portOFFSET_TO_PC ];
 
 	uint32_t cfsr = portSCB_CFSR_REG;
 	if (cfsr & portCFSR_IACCVIOL_MASK) {
-		// Instruction access fault detected. Switch to the correct flash memory
-		if (ulPC >= (uint32_t)__privileged_functions_end__ && ulPC < (uint32_t)__FLASH_segment_end__) {
-	        /* Setup the unprivileged flash for unprivileged read only access. */
-	        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __FLASH_segment_start__ ) | /* Base address. */
-	                                          ( portMPU_REGION_VALID ) |
-	                                          ( portUNPRIVILEGED_FLASH_REGION );
-
-	        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_ONLY ) |
-	                                       ( ( configTEX_S_C_B_FLASH & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
-	                                       ( prvGetMPURegionSizeSetting( ( uint32_t ) __FLASH_segment_end__ - ( uint32_t ) __FLASH_segment_start__ ) ) |
-										   ( (0x01 << mpuMPU_RASR_SRD_LOCATION) ) |
-	                                       ( portMPU_REGION_ENABLE );
-		}
-		else if (ulPC >= (uint32_t)__XFLASH_segment_start__ && ulPC < (uint32_t)__XFLASH_segment_end__) {
-	        /* Setup the unprivileged xflash for unprivileged read only access. */
-	        portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __XFLASH_segment_start__ ) | /* Base address. */
-	                                          ( portMPU_REGION_VALID ) |
-	                                          ( portUNPRIVILEGED_FLASH_REGION );
-
-	        portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_ONLY ) |
-	                                       ( ( configTEX_S_C_B_FLASH & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
-	                                       ( prvGetMPURegionSizeSetting( ( uint32_t ) __XFLASH_segment_end__ - ( uint32_t ) __XFLASH_segment_start__ ) ) |
-										   ( (0x00 << mpuMPU_RASR_SRD_LOCATION) ) |
-	                                       ( portMPU_REGION_ENABLE );
-		}
-		else {
-			exchangeMPUExtendedRegions(ulPC);
+		if (!exchangeMPUExtendedRegions(ulPC)) {
+			// no valid region found
+			portHardFault();
 		}
 	}
 	if (cfsr & portCFSR_DACCVIOL_MASK) {
 		if (cfsr & portCFSR_MMARVALID_MASK) {
-			exchangeMPUExtendedRegions((uint32_t)portSCB_MMFAR_REG);
+			uint32_t addr = (uint32_t)portSCB_MMFAR_REG;
+			if (!exchangeMPUExtendedRegions(addr)) {
+				// no valid region found
+				portHardFault();
+			}
 		} else {
+			// data access fault without a valid MMFAR? Should not happen
 			portHardFault();
 		}
 	}
@@ -1662,6 +1625,25 @@ static void vPortEnableVFP( void )
 
 static void prvSetupMPU( void )
 {
+#if defined( __ARMCC_VERSION )
+    /* Declaration when these variable are defined in code instead of being
+     * exported from linker scripts. */
+    extern uint32_t * __privileged_functions_start__;
+    extern uint32_t * __privileged_functions_end__;
+    extern uint32_t * __FLASH_segment_start__;
+    extern uint32_t * __FLASH_segment_end__;
+    extern uint32_t * __XFLASH_segment_start__;
+    extern uint32_t * __XFLASH_segment_end__;
+#else
+    /* Declaration when these variable are exported from linker scripts. */
+    extern uint32_t __privileged_functions_start__[];
+    extern uint32_t __privileged_functions_end__[];
+    extern uint32_t __FLASH_segment_start__[];
+    extern uint32_t __FLASH_segment_end__[];
+    extern uint32_t __XFLASH_segment_start__[];
+    extern uint32_t __XFLASH_segment_end__[];
+#endif /* if defined( __ARMCC_VERSION ) */
+
     /* The only permitted number of regions are 8 or 16. */
     configASSERT( ( configTOTAL_MPU_REGIONS == 8 ) || ( configTOTAL_MPU_REGIONS == 16 ) );
 
@@ -1680,6 +1662,28 @@ static void prvSetupMPU( void )
 									   ( portMPU_REGION_EXECUTE_NEVER ) |
 									   ( ( configTEX_S_C_B_SRAM & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
 									   ( prvGetMPURegionSizeSetting( 0x40000 )) | // DTCMRAM + SRAM1 + SRAM2
+									   ( portMPU_REGION_ENABLE );
+
+		/* Setup the unprivileged flash for unprivileged read only access. */
+		portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __FLASH_segment_start__ ) | /* Base address. */
+										  ( portMPU_REGION_VALID ) |
+										  ( portUNPRIVILEGED_FLASH_REGION );
+
+		portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_ONLY ) |
+									   ( ( configTEX_S_C_B_FLASH & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
+									   ( prvGetMPURegionSizeSetting( ( uint32_t ) __FLASH_segment_end__ - ( uint32_t ) __FLASH_segment_start__ ) ) |
+									   ( (0x01 << mpuMPU_RASR_SRD_LOCATION) ) |
+									   ( portMPU_REGION_ENABLE );
+
+		/* Setup the unprivileged xflash for unprivileged read only access. */
+		portMPU_REGION_BASE_ADDRESS_REG = ( ( uint32_t ) __XFLASH_segment_start__ ) | /* Base address. */
+										  ( portMPU_REGION_VALID ) |
+										  ( portUNPRIVILEGED_XFLASH_REGION );
+
+		portMPU_REGION_ATTRIBUTE_REG = ( portMPU_REGION_READ_ONLY ) |
+									   ( ( configTEX_S_C_B_FLASH & portMPU_RASR_TEX_S_C_B_MASK ) << portMPU_RASR_TEX_S_C_B_LOCATION ) |
+									   ( prvGetMPURegionSizeSetting( ( uint32_t ) __XFLASH_segment_end__ - ( uint32_t ) __XFLASH_segment_start__ ) ) |
+									   ( (0x00 << mpuMPU_RASR_SRD_LOCATION) ) |
 									   ( portMPU_REGION_ENABLE );
 
         /* Enable the memory fault exception. */
@@ -1833,7 +1837,7 @@ void vPortStoreTaskMPUSettings( xMPU_SETTINGS * xMPUSettings,
                 xMPUSettings->xRegion[ ul ].ulRegionBaseAddress =
                     ( ( uint32_t ) xRegions[ lIndex ].pvBaseAddress ) |
                     ( portMPU_REGION_VALID ) |
-                    ( ul - 1UL ); /* Region number. */
+                    ( ul - 1 + portFIRST_CONFIGURABLE_REGION ); /* Region number. */
 
                 xMPUSettings->xRegion[ ul ].ulRegionAttribute =
                     ( prvGetMPURegionSizeSetting( xRegions[ lIndex ].ulLengthInBytes ) ) |

@@ -28,7 +28,22 @@ void init_sections(void) {
 	extern uint32_t g_pfnVectors[];
 	SCB->VTOR = (uint32_t)g_pfnVectors;
 
-	HAL_DeInit();
+	// reset peripherals
+	__HAL_RCC_APB1_FORCE_RESET();
+	__HAL_RCC_APB1_RELEASE_RESET();
+
+	__HAL_RCC_APB2_FORCE_RESET();
+	__HAL_RCC_APB2_RELEASE_RESET();
+
+	__HAL_RCC_AHB1_FORCE_RESET();
+	__HAL_RCC_AHB1_RELEASE_RESET();
+
+	__HAL_RCC_AHB2_FORCE_RESET();
+	__HAL_RCC_AHB2_RELEASE_RESET();
+
+	__HAL_RCC_AHB3_FORCE_RESET();
+	__HAL_RCC_AHB3_RELEASE_RESET();
+
     // reset clocks
     SET_BIT(RCC->CR, RCC_CR_HSION); /* Set HSION bit to the reset value */
     while (READ_BIT(RCC->CR, RCC_CR_HSIRDY) == RESET) { } /* Wait till HSI is ready */
