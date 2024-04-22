@@ -45,7 +45,7 @@ void init_sections(void) {
 
 	INIT_SECTION(freertos);
 	INIT_SECTION(xflashmgr);
-	INIT_SECTION(noncache);
+	INIT_SECTION(buffers);
 	INIT_SECTION(app);
 	INIT_SECTION(tinyusb);
 	INIT_SECTION(fatfs);

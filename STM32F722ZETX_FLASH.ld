@@ -58,19 +58,6 @@ null_ptr = 0;
 /* Sections */
 SECTIONS
 {
-	.xflash_text_rodata :
-	{
-		/* Place the FreeRTOS System Calls first in the unprivileged region. */
-		. = ALIGN(4);
-        __XFLASH_segment_start__ = .;
-        __XFLASH_segment_end__ = __XFLASH_segment_start__ + LENGTH( XFLASH );
-		*(.xflash_text* .xflash_rodata*)
-		./Core/Src/main.o(.text* .rodata*)
-		./Core/Src/stm32f7xx_hal_msp.o(.text* .rodata*)
-		. = ALIGN(4);
-	} >XFLASH
-/* -------------------------------------------------------------------------- */
-  
     /* The startup code and FreeRTOS kernel code are placed into privileged
      * flash. */
     .privileged_functions :
@@ -100,19 +87,51 @@ SECTIONS
         . = __privileged_functions_region_size__ - (_privileged_functions_text_end - _privileged_functions_text_run_addr);
         __privileged_functions_end__ = .;
     } >FLASH
+    
+    .syscalls :
+    {
+	    /* Place the FreeRTOS System Calls first in the unprivileged region. */
+	    . = ALIGN(4);
+	    __syscalls_flash_start__ = .;
+	    *(freertos_system_calls)
+	    __syscalls_flash_end__ = .;
+	    . = ALIGN(4);
+    } > FLASH
+    
+	.force_text :
+	{
+		. = ALIGN(4);
+		
+		*(.force_text)
+		*(.text.*_IRQHandler)
+		./Drivers/*qspi.o(.text* .rodata*) /* */
+		./Drivers/*gpio.o(.text* .rodata*) /* */
+		
+		. = ALIGN(4);
+	} > FLASH
+	
+	.xflash_text_rodata :
+	{
+		/* Place the FreeRTOS System Calls first in the unprivileged region. */
+		. = ALIGN(4);
+        __XFLASH_segment_start__ = .;
+        __XFLASH_segment_end__ = __XFLASH_segment_start__ + LENGTH( XFLASH );
+		*(.xflash_text* .xflash_rodata*)
+		./Core/Src/main.o(.text* .rodata*)
+		./Core/Src/stm32f7xx_hal_msp.o(.text* .rodata*)
+		./Drivers/*.o(
+			.text*
+			.rodata*
+		) /* */
+		. = ALIGN(4);
+	} >XFLASH
 
 /* -------------------------------------------------------------------------- */
 
   /* The program code and other data into "FLASH" Rom type memory */
   .text :
   {
-    /* Place the FreeRTOS System Calls first in the unprivileged region. */
-    . = ALIGN(4);
-    __syscalls_flash_start__ = .;
-    *(freertos_system_calls)
-    __syscalls_flash_end__ = .;
-    . = ALIGN(4);
-    *(.text .text* .force_text .glue_7 .glue_7t .eh_frame)
+    *(.text .text* .glue_7 .glue_7t .eh_frame)
     KEEP (*(.init))
     KEEP (*(.fini))
 
@@ -128,13 +147,13 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
-  .ARM.extab   : {
+  .ARM.extab (READONLY) : {
     . = ALIGN(4);
     *(.ARM.extab* .gnu.linkonce.armextab.*)
     . = ALIGN(4);
   } >FLASH
 
-  .ARM : {
+  .ARM (READONLY): {
     . = ALIGN(4);
     __exidx_start = .;
     *(.ARM.exidx*)
@@ -142,7 +161,7 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
-  .preinit_array     :
+  .preinit_array (READONLY) :
   {
     . = ALIGN(4);
     PROVIDE_HIDDEN (__preinit_array_start = .);
@@ -151,7 +170,7 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
-  .init_array :
+  .init_array (READONLY):
   {
     . = ALIGN(4);
     PROVIDE_HIDDEN (__init_array_start = .);
@@ -161,7 +180,7 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
-  .fini_array :
+  .fini_array (READONLY):
   {
     . = ALIGN(4);
     PROVIDE_HIDDEN (__fini_array_start = .);
@@ -226,31 +245,6 @@ SECTIONS
 		_xflashmgr_data_end = .;
 	} >DTCMRAM AT> FLASH
 	_xflashmgr_data_load_addr = LOADADDR(.xflashmgr_data);
-
-/* -------------------------------------------------------------------------- */
-
-	.noncache_bss (NOLOAD) :
-	{
-		. = ALIGN(4);
-		_noncache_bss_run_addr = .;
-		
-		*(.noncache)
-		
-		. = ALIGN(4);
-		_noncache_bss_end = .;
-	} >DTCMRAM
-
-	.noncache_data :
-	{
-		. = ALIGN(4);
-		_noncache_data_run_addr = .;
-		
-		*(.noncache_data)
-		
-		. = ALIGN(4);
-		_noncache_data_end = .;
-	} >DTCMRAM AT> FLASH
-	_noncache_data_load_addr = LOADADDR(.noncache_data);
 
 /* -------------------------------------------------------------------------- */
 
@@ -399,6 +393,37 @@ SECTIONS
 	} >SRAM2
 
 /* -------------------------------------------------------------------------- */
+
+	.buffers_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_buffers_bss_run_addr = .;
+		
+		*(.buffers)
+		
+		. = ALIGN(4);
+		_buffers_bss_end = .;
+	} >SRAM1
+
+	.buffers_data :
+	{
+		. = ALIGN(4);
+		_buffers_data_run_addr = .;
+		
+		*(.buffers_data)
+		
+		. = ALIGN(4);
+		_buffers_data_end = .;
+	} >SRAM1 AT> FLASH
+	_buffers_data_load_addr = LOADADDR(.buffers_data);
+	
+	.buffers_free (NOLOAD) :
+	{
+		FILL(0);
+		. = __buffers_data_region_size__ - (_buffers_data_end - _buffers_bss_run_addr);
+	} >SRAM1
+
+
 
 	.app_bss (NOLOAD) :
 	{

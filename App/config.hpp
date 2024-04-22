@@ -21,7 +21,6 @@ static constexpr uint32_t pll48clk = 48000000;
 
 static constexpr uint32_t logic_cycle_frequency = 50;
 static constexpr uint32_t regular_adc_cycle_frequency = 10000;
-static constexpr uint32_t logging_buffer_cnt = 4;
 
 static constexpr uint32_t servo_update_freq = 50;
 static constexpr uint32_t servo_min = 500; //us

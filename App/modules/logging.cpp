@@ -20,7 +20,7 @@ extern "C" uint32_t _shared_bss_run_addr[];
 namespace modules {
 namespace logging {
 
-uint8_t buffers[config::logging_buffer_cnt][16384] ALIGN_CACHE __attribute__((section(".app")));
+uint8_t testBuffer[16384] ALIGN_CACHE __attribute__((section(".buffers")));
 
 uint8_t retSD;    /* Return value for SD */
 FATFS SDFatFS;    /* File system object for SD logical drive */
@@ -46,7 +46,7 @@ void testRead() {
 	UINT last_br_total = stat.br_total;
 	UINT br = 0;
 	do {
-		if ((retSD = f_read(&SDFile, buffers[0], sizeof(buffers[0]), &br)) != FR_OK) {
+		if ((retSD = f_read(&SDFile, testBuffer, sizeof(testBuffer), &br)) != FR_OK) {
 			break;
 		}
 		stat.br_total += br;
@@ -59,7 +59,7 @@ void testRead() {
 			lastTime = timeNow;
 		}
 	}
-	while (br == sizeof(buffers[0]));
+	while (br == sizeof(testBuffer));
 	retSD = f_close(&SDFile);
 }
 
@@ -73,7 +73,7 @@ void testWrite() {
 	UINT last_bw_total = stat.bw_total;
 	UINT bw = 0;
 	do {
-		if ((retSD = f_write(&SDFile, buffers[0], sizeof(buffers[0]), &bw)) != FR_OK) {
+		if ((retSD = f_write(&SDFile, testBuffer, sizeof(testBuffer), &bw)) != FR_OK) {
 			break;
 		}
 		stat.bw_total += bw;
@@ -86,7 +86,7 @@ void testWrite() {
 			lastTime = timeNow;
 		}
 	}
-	while (bw == sizeof(buffers[0]) && stat.bw_total < 268435456);
+	while (bw == sizeof(testBuffer) && stat.bw_total < 268435456);
 	retSD = f_close(&SDFile);
 }
 
@@ -100,7 +100,7 @@ void testWriteThrottled() {
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 	do {
 		TickType_t timeBefore = xTaskGetTickCount();
-		if ((retSD = f_write(&SDFile, buffers[0], sizeof(buffers[0]), &bw)) != FR_OK) {
+		if ((retSD = f_write(&SDFile, testBuffer, sizeof(testBuffer), &bw)) != FR_OK) {
 			break;
 		}
 
@@ -113,7 +113,7 @@ void testWriteThrottled() {
 
 		vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000 / config::logic_cycle_frequency));
 	}
-	while (bw == sizeof(buffers[0]) && pins::UI::SW_USER.Read());
+	while (bw == sizeof(testBuffer) && pins::UI::SW_USER.Read());
 	retSD = f_close(&SDFile);
 }
 
