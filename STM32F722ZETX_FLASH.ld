@@ -117,12 +117,15 @@ SECTIONS
         __XFLASH_segment_start__ = .;
         __XFLASH_segment_end__ = __XFLASH_segment_start__ + LENGTH( XFLASH );
 		*(.xflash_text* .xflash_rodata*)
+		./App/*.o(.text* .rodata*) /* */
 		./Core/Src/main.o(.text* .rodata*)
 		./Core/Src/stm32f7xx_hal_msp.o(.text* .rodata*)
-		./Drivers/*.o(
-			.text*
-			.rodata*
-		) /* */
+		./Drivers/*.o(.text* .rodata*) /* */
+		./lib/Fusion/*.o(.text* .rodata*) /* */
+		./lib/FatFs/*.o(.text* .rodata*) /* */ ./glue/FatFs/*.o(.text* .rodata*) /* */
+		./lib/krpc-arduino/*.o(.text* .rodata*) /* */
+		./lib/tinyusb/*.o(.text* .rodata*) /* */ ./glue/tinyusb/*.o(.text* .rodata*) /* */
+		./lib/umm_malloc/*.o(.text* .rodata*) /* */
 		. = ALIGN(4);
 	} >XFLASH
 
