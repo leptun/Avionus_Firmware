@@ -221,7 +221,9 @@ DRESULT disk_sdmmc_ioctl (BYTE cmd, void* buff) {
 
 	switch (cmd) {
 	case CTRL_SYNC:
-		HAL_SD_EXT_Sync(&hsd2);
+		if (HAL_SD_EXT_Sync(&hsd2) != HAL_OK) {
+			return RES_ERROR;
+		}
 		return sdmmc_wait_ready();
 	case GET_SECTOR_COUNT:
 		*(DWORD*)buff = hsd2.SdCard.LogBlockNbr;
@@ -234,6 +236,15 @@ DRESULT disk_sdmmc_ioctl (BYTE cmd, void* buff) {
 		return RES_OK;
 	case CTRL_TRIM: {
 		LBA_t *addr = (LBA_t *)buff;
+		// finish ongoing operations
+		if (HAL_SD_EXT_Sync(&hsd2) != HAL_OK) {
+			return RES_ERROR;
+		}
+		DRESULT res;
+		if ((res = sdmmc_wait_ready()) != RES_OK) {
+			return res;
+		}
+		// erase sectors that are no longer used
 		if (HAL_SD_Erase(&hsd2, addr[0], addr[1]) != HAL_OK) {
 			return RES_ERROR;
 		}
