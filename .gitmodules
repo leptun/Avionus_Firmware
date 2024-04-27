@@ -16,3 +16,6 @@
 [submodule "Avionus_QSPILoader"]
 	path = lib/Avionus_QSPILoader
 	url = https://github.com/leptun/Avionus_QSPILoader.git
+[submodule "lib/CrashCatcher"]
+	path = lib/CrashCatcher
+	url = https://github.com/adamgreen/CrashCatcher.git

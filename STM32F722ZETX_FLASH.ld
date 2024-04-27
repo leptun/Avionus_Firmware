@@ -106,16 +106,25 @@ SECTIONS
 		*(.text.*_IRQHandler)
 		./Drivers/*qspi.o(.text* .rodata*) /* */
 		./Drivers/*gpio.o(.text* .rodata*) /* */
+		./lib/Avionus_QSPILoader/*(.text* .rodata*) /* */ ./glue/Avionus_QSPILoader/*(.text* .rodata*) /* */
+		./lib/CrashCatcher/*(.text* .rodata*) /* */ ./glue/CrashCatcher/*(.text* .rodata*) /* */
 		
 		. = ALIGN(4);
 	} > FLASH
+	
+	.xflash_crash_dump :
+	{
+		. = ALIGN(4);
+		FILL(0xFF);
+		. = __xflash_crash_dump_region_size__;
+	} > XFLASH
 	
 	.xflash_text_rodata :
 	{
 		/* Place the FreeRTOS System Calls first in the unprivileged region. */
 		. = ALIGN(4);
-        __XFLASH_segment_start__ = .;
-        __XFLASH_segment_end__ = __XFLASH_segment_start__ + LENGTH( XFLASH );
+        __XFLASH_segment_start__ = ORIGIN(XFLASH);
+        __XFLASH_segment_end__ = ORIGIN(XFLASH) + LENGTH(XFLASH);
 		*(.xflash_text* .xflash_rodata*)
 		./App/*.o(.text* .rodata*) /* */
 		./Core/Src/main.o(.text* .rodata*)
@@ -203,8 +212,7 @@ SECTIONS
 		_freertos_bss_run_addr = .;
 		
 		*(.stack)
-		./glue/FreeRTOS-Kernel/*.o(.bss*) /* */
-		./lib/FreeRTOS-Kernel/*.o(.bss*) /* */
+		./lib/FreeRTOS-Kernel/*.o(.bss*) /* */ ./glue/FreeRTOS-Kernel/*.o(.bss*) /* */
 		
 		. = ALIGN(4);
 		_freertos_bss_end = .;
@@ -215,8 +223,7 @@ SECTIONS
 		. = ALIGN(4);
 		_freertos_data_run_addr = .;
 		
-		./glue/FreeRTOS-Kernel/*.o(.data*) /* */
-		./lib/FreeRTOS-Kernel/*.o(.data*) /* */
+		./lib/FreeRTOS-Kernel/*.o(.data*) /* */ ./glue/FreeRTOS-Kernel/*.o(.data*) /* */
 		
 		. = ALIGN(4);
 		_freertos_data_end = .;
@@ -230,8 +237,9 @@ SECTIONS
 		. = ALIGN(4);
 		_xflashmgr_bss_run_addr = .;
 		
-		./glue/Avionus_QSPILoader/*.o(.bss*) /* */
-		./lib/Avionus_QSPILoader/*.o(.bss*) /* */
+		./lib/Avionus_QSPILoader/*.o(.bss*) /* */ ./glue/Avionus_QSPILoader/*.o(.bss*) /* */
+		./lib/CrashCatcher/*(.bss*) /* */ ./glue/CrashCatcher/*(.bss*) /* */
+		
 		*(.xflashmgr)
 		
 		. = ALIGN(4);
@@ -243,8 +251,8 @@ SECTIONS
 		. = ALIGN(4);
 		_xflashmgr_data_run_addr = .;
 		
-		./glue/Avionus_QSPILoader/*.o(.data*) /* */
-		./lib/Avionus_QSPILoader/*.o(.data*) /* */
+		./lib/Avionus_QSPILoader/*.o(.data*) /* */ ./glue/Avionus_QSPILoader/*.o(.data*) /* */
+		./lib/CrashCatcher/*(.data*) /* */ ./glue/CrashCatcher/*(.data*) /* */
 		
 		. = ALIGN(4);
 		_xflashmgr_data_end = .;
@@ -268,8 +276,7 @@ SECTIONS
 		. = ALIGN(4);
 		_fatfs_bss_run_addr = .;
 		
-		./glue/FatFs/*.o(.bss*) /* */
-		./lib/FatFs/*.o(.bss*) /* */
+		./lib/FatFs/*.o(.bss*) /* */ ./glue/FatFs/*.o(.bss*) /* */
 		*(.fatfs)
 		
 		. = ALIGN(4);
@@ -281,8 +288,7 @@ SECTIONS
 		. = ALIGN(4);
 		_fatfs_data_run_addr = .;
 		
-		./glue/FatFs/*.o(.data*) /* */
-		./lib/FatFs/*.o(.data*) /* */
+		./lib/FatFs/*.o(.data*) /* */ ./glue/FatFs/*.o(.data*) /* */
 		
 		. = ALIGN(4);
 		_fatfs_data_end = .;
@@ -336,8 +342,7 @@ SECTIONS
 		. = ALIGN(4);
 		_tinyusb_bss_run_addr = .;
 		
-		./lib/tinyusb/*.o(.bss*) /* */
-		./glue/tinyusb/*.o(.bss*) /* */
+		./lib/tinyusb/*.o(.bss*) /* */ ./glue/tinyusb/*.o(.bss*) /* */
 		./App/hw/usb.o(.bss*)
 		*(.tinyusb)
 		
@@ -350,8 +355,7 @@ SECTIONS
 		. = ALIGN(4);
 		_tinyusb_data_run_addr = .;
 		
-		./lib/tinyusb/*.o(.data*) /* */
-		./glue/tinyusb/*.o(.data*) /* */
+		./lib/tinyusb/*.o(.data*) /* */ ./glue/tinyusb/*.o(.data*) /* */
 		./App/hw/usb.o(.data*)
 		
 		. = ALIGN(4);
