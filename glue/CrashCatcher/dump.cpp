@@ -1,14 +1,13 @@
 #include <string.h>
 #include "dump.hpp"
-#include <stdio.h>
-//#include "disable_interrupts.h"
+#include <fatfs.h>
 #include "utility_extensions.hpp"
 #include <quadspi.h>
 #include <main.h>
 #include <regions.h>
+#include <hw/eeprom.hpp>
 #include "FreeRTOS.h"
 #include "task.h"
-//#include <error_codes.hpp>
 //#include "safe_state.h"
 //#include <wdt.hpp>
 #include <algorithm>
@@ -26,21 +25,12 @@ static bool wdg_reset_safeguard = false; ///< Safeguard to prevent multiple refr
 /// Just random value, used to check that dump is probably valid in flash
 inline constexpr uint32_t CRASH_DUMP_MAGIC_NR = 0x3DC53F;
 
-typedef struct __attribute__((packed)) __attribute__((aligned(2))) {
-    /// Magic number, that indicates that crash dump is valid
-    uint32_t crash_dump_magic_nr;
-    DumpFlags dump_flags;
-    uint32_t dump_size;
-} info_t;
-
-/// Position of dump header
-inline constexpr uint32_t dump_header_addr = Regions::__xflash_crash_dump_region_start__;
 /// Position of dump data
-inline constexpr uint32_t dump_data_addr = dump_header_addr + sizeof(info_t);
+inline constexpr uint32_t dump_data_addr = QSPI_BASE;
 /// Max size of dump (header + data)
 inline constexpr uint32_t dump_max_size = Regions::__xflash_crash_dump_region_size__;
 /// Max size of dump data
-inline constexpr uint32_t dump_max_data_size = dump_max_size - sizeof(info_t);
+inline constexpr uint32_t dump_max_data_size = dump_max_size;
 
 enum {
     // dumped ram area (256kb)
@@ -56,90 +46,55 @@ enum {
 
 };
 
-static bool dump_read_header(info_t &dumpinfo) {
-	memcpy(&dumpinfo, (void*)dump_header_addr, sizeof(dumpinfo));
-    return true;
-}
-
 bool dump_is_exported() {
-    info_t dumpinfo;
-    dump_read_header(dumpinfo);
-    return !any(dumpinfo.dump_flags & DumpFlags::EXPORTED);
+    return !any(hw::eeprom::data.dump_header.dump_flags & DumpFlags::EXPORTED);
 }
 
 bool dump_is_valid() {
-    info_t dumpinfo;
-    dump_read_header(dumpinfo);
-    return (bool)(dumpinfo.crash_dump_magic_nr == CRASH_DUMP_MAGIC_NR) && dumpinfo.dump_size > 0 && dumpinfo.dump_size <= dump_max_data_size;
-}
-
-bool dump_is_displayed() {
-    info_t dumpinfo;
-    dump_read_header(dumpinfo);
-    return !any(dumpinfo.dump_flags & DumpFlags::DISPL);
+    return (bool)(
+    		(hw::eeprom::data.dump_header.crash_dump_magic_nr == CRASH_DUMP_MAGIC_NR)
+			&& hw::eeprom::data.dump_header.dump_size > 0
+			&& hw::eeprom::data.dump_header.dump_size <= dump_max_data_size
+	);
 }
 
 size_t dump_get_size() {
     if (!dump_is_valid()) {
         return 0;
     }
-    info_t dumpinfo;
-    dump_read_header(dumpinfo);
-    return dumpinfo.dump_size;
+    return hw::eeprom::data.dump_header.dump_size;
 }
 
-bool dump_read_data(size_t offset, size_t size, uint8_t *ptr) {
-	memcpy(ptr, (void*)(dump_data_addr + offset), size);
-    return true;
+static void dump_set_flag(const DumpFlags flag) {
+	hw::eeprom::data.dump_header.dump_flags = hw::eeprom::data.dump_header.dump_flags & (~flag);
+}
+
+void dump_set_exported() {
+    dump_set_flag(DumpFlags::EXPORTED);
 }
 
 void dump_reset() {
-    static_assert((dump_header_addr + dump_max_size) % Regions::XFLASH_SECTOR_SIZE == 0, "More than reserved area is erased.");
-    CSP_QSPI_EraseSector(dump_header_addr, dump_header_addr + dump_max_size - 1);
+    static_assert((dump_data_addr + dump_max_size) % Regions::XFLASH_SECTOR_SIZE == 0, "More than reserved area is erased.");
+    CSP_QSPI_EraseSector(dump_data_addr, dump_data_addr + dump_max_size - 1);
 }
 
-bool save_dump_to_usb(const char *fn) {
-    FILE *fd;
-    constexpr uint16_t dump_buff_size = 0x100;
-    uint8_t buff[dump_buff_size];
-    int bw;
-    uint32_t bw_total = 0;
+bool save_dump_to_sd(const char *fn, FIL *fil) {
+	uint8_t retSD = 0;
+	f_unlink(fn);
+	retSD |= f_open(fil, fn, FA_WRITE | FA_CREATE_NEW);
+	if (retSD != FR_OK) {
+		return false;
+	}
+	UINT bw = 0;
+	retSD |= f_write(fil, (const uint32_t *)dump_data_addr, hw::eeprom::data.dump_header.dump_size, &bw);
+	retSD |= f_close(fil);
 
-    info_t dump_info;
-    if (!dump_read_header(dump_info)) {
-        return false;
-    }
-
-    fd = fopen(fn, "w");
-    if (fd != NULL) {
-        // save dumped RAM and CCMRAM from xflash
-        for (uint32_t offset = 0; offset < dump_info.dump_size;) {
-            size_t read_size = std::min(sizeof(buff), (size_t)(dump_info.dump_size - offset));
-
-            memset(buff, 0, read_size);
-            if (!dump_read_data(offset, read_size, buff)) {
-                break;
-            }
-            bw = fwrite(buff, 1, read_size, fd);
-            if (bw <= 0) {
-                break;
-            }
-            bw_total += bw;
-            offset += read_size;
-        }
-        fclose(fd);
-        if (bw_total != dump_info.dump_size) {
-            return false;
-        }
-        dump_set_exported();
-        return true;
-    }
-    return false;
+	return !retSD && bw == hw::eeprom::data.dump_header.dump_size;
 }
 
 static void dump_failed() {
     // nothing left to do here, when dump fails just restart
-    HAL_NVIC_SystemReset();
+	NVIC_SystemReset();
 }
 
 static const CrashCatcherMemoryRegion regions[] = {
@@ -205,7 +160,7 @@ void CrashCatcher_DumpStart([[maybe_unused]] const CrashCatcherInfo *pInfo) {
         crash_dump::dump_failed();
     }
 
-    if (crash_dump::dump_is_valid() && !crash_dump::dump_is_displayed()) {
+    if (crash_dump::dump_is_valid() && !crash_dump::dump_is_exported()) {
         // do not overwrite dump that is already valid & wasn't displayed to user yet
         crash_dump::dump_failed();
     }
@@ -252,9 +207,7 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void) {
         .dump_size = crash_dump::dump_size,
     };
 
-    if (CSP_QSPI_WriteMemory((uint8_t *)&dump_info, crash_dump::dump_header_addr, sizeof(dump_info)) != HAL_OK) {
-    	crash_dump::dump_failed();
-    }
+    hw::eeprom::data.dump_header = dump_info;
 
     // All done, now restart and display BSOD
     NVIC_SystemReset();

@@ -1,9 +1,9 @@
 #include "AppMain.hpp"
+#include "hw/eeprom.hpp"
+#include "hw/power.hpp"
 #include "hw/exti.hpp"
-#include "hw/usart.hpp"
 #include "hw/clock.hpp"
 #include "hw/adc.hpp"
-#include "hw/power.hpp"
 #include "hw/usb.hpp"
 #include "modules/module_manager.hpp"
 #include "modules/modules.hpp"
@@ -19,6 +19,7 @@ namespace AppMain {
 TaskHandle_t pxTaskHandle;
 
 static void taskAppMain(void *pvParameters) {
+	hw::eeprom::Setup();
 	hw::power::Setup();
 	hw::exti::Setup();
 	hw::clock::Setup();

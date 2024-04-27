@@ -13,6 +13,5 @@ __krpc_data_region_size__             = 4 * K,
 __tinyusb_data_region_size__          = 2 * K,
 __logging_data_region_size__          = 2 * K,
 __buffers_data_region_size__          = 64 * K,
-
-__xflash_crash_dump_region_start__    = 0,
+__backup_sram_region_size__           = 4 * K,
 __xflash_crash_dump_region_size__     = 280 * K,

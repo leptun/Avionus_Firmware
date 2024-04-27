@@ -12,10 +12,10 @@
 #include <config.hpp>
 #include <Arduino.h>
 #include <pins.hpp>
+#include <dump.hpp>
 
 extern "C" uint32_t _fatfs_bss_run_addr[];
 extern "C" uint32_t _logging_bss_run_addr[];
-extern "C" uint32_t _shared_bss_run_addr[];
 
 namespace modules {
 namespace logging {
@@ -121,7 +121,14 @@ static void taskLogging(void *pvParameters) {
 	xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); //wait for parent task to finish initializing this task
 
 	vTaskDelay(1000);
+
 	retSD = f_mount(&SDFatFS, "0:/", 1);
+
+	if (crash_dump::dump_is_valid() && !crash_dump::dump_is_exported()) {
+		if (crash_dump::save_dump_to_sd("dump_avionus.bin", &SDFile)) {
+			crash_dump::dump_set_exported();
+		}
+	}
 
 	vTaskDelay(1000);
 	testRead();
@@ -136,6 +143,8 @@ static void taskLogging(void *pvParameters) {
 }
 static portSTACK_TYPE xLoggingTaskStack[ 256 ] __attribute__((aligned(256*4))) __attribute__((section(".stack")));
 static constexpr MPU_REGION_REGISTERS xLoggingTaskExtendedRegions[] {
+		util::mpuRegs(3, RAMITCM_BASE, Regions::__shared_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | CACHE_CONF(configTEX_S_C_B_TCMRAM)), //shared ram
+		util::mpuRegs(3, BKPSRAM_BASE, Regions::__backup_sram_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | CACHE_CONF(configTEX_S_C_B_TCMRAM)), //eeprom
 		util::mpuRegs(4, APB2PERIPH_BASE, 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b01111111 << MPU_RASR_SRD_Pos)), //SDMMC2
 		util::mpuRegs(4, AHB1PERIPH_BASE + 0x6000, 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b11111101 << MPU_RASR_SRD_Pos)), //DMA2
 		util::mpuRegs(4, AHB1PERIPH_BASE, 0x400 * 8, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | (0b10011111 << MPU_RASR_SRD_Pos)), //GPIOF(SW_USER) + GPIOG(SD_CARD_CD/WP)
@@ -153,7 +162,7 @@ static const TaskParameters_t xLoggingTaskDefinition =
         /* Base address   Length                    Parameters */
 		{ _fatfs_bss_run_addr, __fatfs_data_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | CACHE_CONF(configTEX_S_C_B_SRAM) },
 		{ _logging_bss_run_addr, __logging_data_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | CACHE_CONF(configTEX_S_C_B_SRAM) },
-		{ _shared_bss_run_addr, __shared_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | CACHE_CONF(configTEX_S_C_B_TCMRAM) },
+		{0, 0, 0},
 		{0, 0, 0},
 		{(void*)xLoggingTaskExtendedRegions}
     }

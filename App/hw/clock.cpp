@@ -44,7 +44,7 @@ static void configureRTC() {
 		return;
 	}
 
-	LL_PWR_EnableBkUpAccess();
+
 	LL_RTC_DisableWriteProtection(RTC);
 
 	LL_RTC_DisableIT_WUT(RTC);
@@ -58,7 +58,6 @@ static void configureRTC() {
 	LL_RTC_EnableIT_WUT(RTC);
 
 	LL_RTC_EnableWriteProtection(RTC);
-	LL_PWR_DisableBkUpAccess();
 }
 
 static bool configureLClocks(bool useExternalClock) {
@@ -69,8 +68,6 @@ static bool configureLClocks(bool useExternalClock) {
 	if ((LL_RCC_GetRTCClockSource() == (useExternalClock ? LL_RCC_RTC_CLKSOURCE_LSE : LL_RCC_RTC_CLKSOURCE_LSI)) && LL_RCC_IsEnabledRTC()) {
 		return true;
 	}
-
-	LL_PWR_EnableBkUpAccess();
 
 	LL_RCC_ForceBackupDomainReset();
 	LL_RCC_ReleaseBackupDomainReset();
@@ -86,14 +83,14 @@ static bool configureLClocks(bool useExternalClock) {
 		LL_RCC_LSE_Enable();
 		if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG_LSERDY, NULL, pdMS_TO_TICKS(LSE_STARTUP_TIMEOUT)) == pdFALSE) {
 			// LSE timeout
-			goto fail;
+			return false;
 		}
 		LL_RCC_SetRTCClockSource(LL_RCC_RTC_CLKSOURCE_LSE);
 	} else {
 		LL_RCC_LSI_Enable();
 		if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG_LSIRDY, NULL, pdMS_TO_TICKS(LSI_TIMEOUT_VALUE)) == pdFALSE) {
 			// LSI timeout
-			goto fail;
+			return false;
 		}
 		LL_RCC_SetRTCClockSource(LL_RCC_RTC_CLKSOURCE_LSI);
 	}
@@ -105,11 +102,7 @@ static bool configureLClocks(bool useExternalClock) {
 		LL_RTC_EnableWriteProtection(RTC);
 	}
 
-	LL_PWR_DisableBkUpAccess();
 	return true;
-fail:
-	LL_PWR_DisableBkUpAccess();
-	return false;
 }
 
 static bool configureHClocks(bool useExternalClock) {
@@ -244,12 +237,7 @@ static void taskClockMain(void *pvParameters) {
 	TimeOut_t xTimeOut;
 	TickType_t xTicksToWait;
 
-//	// Enable backup SRAM regulator
-//	if (!LL_PWR_IsEnabledBkUpRegulator()) {
-//		LL_PWR_EnableBkUpAccess();
-//		LL_PWR_EnableBkUpRegulator();
-//		LL_PWR_DisableBkUpAccess();
-//	}
+	LL_PWR_EnableBkUpAccess();
 
 	// Set flash latency
 	LL_FLASH_SetLatency(LL_FLASH_LATENCY_7);
@@ -299,11 +287,9 @@ static void taskClockMain(void *pvParameters) {
 	LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_22);
 	HAL_NVIC_SetPriority(RTC_WKUP_IRQn, 5, 0);
 	HAL_NVIC_EnableIRQ(RTC_WKUP_IRQn);
-	LL_PWR_EnableBkUpAccess();
 	LL_RTC_DisableWriteProtection(RTC);
 	LL_RTC_ClearFlag_WUT(RTC);
 	LL_RTC_EnableWriteProtection(RTC);
-	LL_PWR_DisableBkUpAccess();
 
 
 	// try to setup the low speed clocks using the LSE
@@ -347,11 +333,9 @@ static void taskClockMain(void *pvParameters) {
 				}
 			}
 			else if (retFlags & FLAG_RTC_TICK) {
-				LL_PWR_EnableBkUpAccess();
 				LL_RTC_DisableWriteProtection(RTC);
 				LL_RTC_ClearFlag_WUT(RTC);
 				LL_RTC_EnableWriteProtection(RTC);
-				LL_PWR_DisableBkUpAccess();
 
 				rtcTickHandler();
 			}

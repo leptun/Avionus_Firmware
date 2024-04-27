@@ -309,10 +309,8 @@ HAL_StatusTypeDef HAL_SD_WriteBlocksUninterrupted_DMA(SD_HandleTypeDef *hsd, uin
 		}
     }
 
-    /* Enable SDMMC DMA transfer */
-    __HAL_SD_DMA_ENABLE(hsd);
-
     /* Force DMA Direction */
+    __HAL_DMA_DISABLE(hsd->hdmatx);
     hsd->hdmatx->Init.Direction = DMA_MEMORY_TO_PERIPH;
     MODIFY_REG(hsd->hdmatx->Instance->CR, DMA_SxCR_DIR, hsd->hdmatx->Init.Direction);
 
@@ -328,6 +326,8 @@ HAL_StatusTypeDef HAL_SD_WriteBlocksUninterrupted_DMA(SD_HandleTypeDef *hsd, uin
     }
     else
     {
+        /* Enable SDMMC DMA transfer */
+        __HAL_SD_DMA_ENABLE(hsd);
       /* Configure the SD DPSM (Data Path State Machine) */
       config.DataTimeOut   = SDMMC_DATATIMEOUT;
       config.DataLength    = BLOCKSIZE * NumberOfBlocks;

@@ -38,6 +38,8 @@ ENTRY(Reset_Handler)
 _Min_Heap_Size = 0x1fc; /* required amount of heap */
 _Min_Stack_Size = 0x400; /* required amount of stack */
 
+INCLUDE ../glue/_regions.ld
+
 /* Memories definition */
 MEMORY
 {
@@ -45,11 +47,10 @@ MEMORY
 	DTCMRAM (rw) : ORIGIN = 0x20000000, LENGTH = 64K
 	SRAM1 (rw) : ORIGIN = 0x20010000, LENGTH = 176K
 	SRAM2 (rw) : ORIGIN = 0x2003C000, LENGTH = 16K
+	BKPSRAM (rw) : ORIGIN = 0x40024000, LENGTH = __backup_sram_region_size__
 	FLASH (rx) : ORIGIN = 0x00200000, LENGTH = 512K
 	XFLASH (rx) : ORIGIN = 0x90000000, LENGTH = 16M
 }
-
-INCLUDE ../glue/_regions.ld
 
 null_ptr = 0;
 
@@ -511,6 +512,11 @@ SECTIONS
 		. = __shared_region_size__ - (_shared_data_end - _shared_bss_run_addr);
 		__SHARED_SRAM_segment_end__ = .;
 	} >ITCMRAM
+	
+	.bkpsram (NOLOAD) :
+	{
+		*(.bkpsram)
+	} > BKPSRAM
 
 /* -------------------------------------------------------------------------- */
 

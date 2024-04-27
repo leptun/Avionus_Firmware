@@ -9,6 +9,7 @@
 #include "event_groups.h"
 #include <hw/exti.hpp>
 #include <pins.hpp>
+#include <Arduino.h>
 
 
 #define SDMMC_TIMEOUT_MS 2000
@@ -130,36 +131,50 @@ DRESULT disk_sdmmc_read (BYTE* buff, LBA_t sector, UINT count) {
 		Error_Handler();
 	}
 
-	for (uint32_t retryCounter = 0; retryCounter < SDMMC_MAX_RETRY; retryCounter++) {
+	while (count > 0) {
+		for (uint32_t retryCounter = 0; retryCounter < SDMMC_MAX_RETRY; retryCounter++) {
 interrupted:
-		if (hsd2.State == HAL_SD_STATE_READY) {
-			if ((res = sdmmc_wait_ready()) != RES_OK) {
+			if (hsd2.State == HAL_SD_STATE_READY) {
+				if ((res = sdmmc_wait_ready()) != RES_OK) {
+					continue;
+				}
+			}
+			else if (hsd2.State == HAL_SD_STATE_ERROR) {
+				res = RES_ERROR;
 				continue;
 			}
-		}
 
-		status = HAL_SD_ReadBlocksUninterrupted_DMA(&hsd2, buff, (uint32_t)sector, count);
-		if (status != HAL_OK) {
-			if (status == HAL_BUSY) {
-				goto interrupted;
+			UINT splitCount = min(count, 32768 * 4 / BLOCKSIZE);
+
+			status = HAL_SD_ReadBlocksUninterrupted_DMA(&hsd2, buff, (uint32_t)sector, splitCount);
+			if (status != HAL_OK) {
+				if (status == HAL_BUSY) {
+					goto interrupted;
+				}
+				res = RES_ERROR;
+				continue;
 			}
-			res = RES_ERROR;
-			continue;
-		}
 
-		if (xEventGroupWaitBits(
-				sd_diskio_flags,
-				SD_DISKIO_TRANSFER_CPLT | SD_DISKIO_TRANSFER_ERROR | SD_DISKIO_TRANSFER_ABORTED,
-				pdTRUE,
-				pdFALSE,
-				pdMS_TO_TICKS(SDMMC_TIMEOUT_MS)
-		) != SD_DISKIO_TRANSFER_CPLT) {
-			res = RES_ERROR;
-			continue;
-		}
+			if (xEventGroupWaitBits(
+					sd_diskio_flags,
+					SD_DISKIO_TRANSFER_CPLT | SD_DISKIO_TRANSFER_ERROR | SD_DISKIO_TRANSFER_ABORTED,
+					pdTRUE,
+					pdFALSE,
+					pdMS_TO_TICKS(SDMMC_TIMEOUT_MS)
+			) != SD_DISKIO_TRANSFER_CPLT) {
+				res = RES_ERROR;
+				continue;
+			}
 
-		res = RES_OK;
-		break;
+			sector += splitCount;
+			count -= splitCount;
+
+			res = RES_OK;
+			break;
+		}
+		if (res != RES_OK) {
+			break;
+		}
 	}
 
 	return res;
@@ -179,36 +194,50 @@ DRESULT disk_sdmmc_write (const BYTE* buff, LBA_t sector, UINT count) {
 	// Flush the write buffer to ram so that the DMA can push it to the SDMMC peripheral
 	portCleanDCache_by_Addr(buff, count * BLOCKSIZE);
 
-	for (uint32_t retryCounter = 0; retryCounter < SDMMC_MAX_RETRY; retryCounter++) {
+	while (count > 0) {
+		for (uint32_t retryCounter = 0; retryCounter < SDMMC_MAX_RETRY; retryCounter++) {
 interrupted:
-		if (hsd2.State == HAL_SD_STATE_READY) {
-			if ((res = sdmmc_wait_ready()) != RES_OK) {
+			if (hsd2.State == HAL_SD_STATE_READY) {
+				if ((res = sdmmc_wait_ready()) != RES_OK) {
+					continue;
+				}
+			}
+			else if (hsd2.State == HAL_SD_STATE_ERROR) {
+				res = RES_ERROR;
 				continue;
 			}
-		}
 
-		status = HAL_SD_WriteBlocksUninterrupted_DMA(&hsd2, (uint8_t*)buff, (uint32_t)sector, count);
-		if (status != HAL_OK) {
-			if (status == HAL_BUSY) {
-				goto interrupted;
+			UINT splitCount = min(count, 32768 * 4 / BLOCKSIZE);
+
+			status = HAL_SD_WriteBlocksUninterrupted_DMA(&hsd2, (uint8_t*)buff, (uint32_t)sector, splitCount);
+			if (status != HAL_OK) {
+				if (status == HAL_BUSY) {
+					goto interrupted;
+				}
+				res = RES_ERROR;
+				continue;
 			}
-			res = RES_ERROR;
-			continue;
-		}
 
-		if (xEventGroupWaitBits(
-				sd_diskio_flags,
-				SD_DISKIO_TRANSFER_CPLT | SD_DISKIO_TRANSFER_ERROR | SD_DISKIO_TRANSFER_ABORTED,
-				pdTRUE,
-				pdFALSE,
-				pdMS_TO_TICKS(SDMMC_TIMEOUT_MS)
-		) != SD_DISKIO_TRANSFER_CPLT) {
-			res = RES_ERROR;
-			continue;
-		}
+			if (xEventGroupWaitBits(
+					sd_diskio_flags,
+					SD_DISKIO_TRANSFER_CPLT | SD_DISKIO_TRANSFER_ERROR | SD_DISKIO_TRANSFER_ABORTED,
+					pdTRUE,
+					pdFALSE,
+					pdMS_TO_TICKS(SDMMC_TIMEOUT_MS)
+			) != SD_DISKIO_TRANSFER_CPLT) {
+				res = RES_ERROR;
+				continue;
+			}
 
-		res = RES_OK;
-		break;
+			sector += splitCount;
+			count -= splitCount;
+
+			res = RES_OK;
+			break;
+		}
+		if (res != RES_OK) {
+			break;
+		}
 	}
 
 	return res;
