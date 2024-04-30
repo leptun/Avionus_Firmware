@@ -77,12 +77,12 @@ inline constexpr PowerDomain D4 = PowerDomain(pins::POWER::D4_EN,
 );
 inline constexpr PowerDomain D5 = PowerDomain(pins::POWER::D5_EN,
 	[]() {
-		pins::LIDAR::XSHUT.Write(true);
+		pins::LIDAR::XSHUT.SetMode(LL_GPIO_MODE_OUTPUT);
 		pins::LIDAR::TX.SetMode(LL_GPIO_MODE_ALTERNATE);
 		pins::REMOTE::iBUS.SetMode(LL_GPIO_MODE_ALTERNATE);
 	},
 	[]() {
-		pins::LIDAR::XSHUT.Write(false);
+		pins::LIDAR::XSHUT.SetMode(LL_GPIO_MODE_INPUT);
 		pins::LIDAR::TX.SetMode(LL_GPIO_MODE_INPUT);
 		pins::REMOTE::iBUS.SetMode(LL_GPIO_MODE_INPUT);
 	}
