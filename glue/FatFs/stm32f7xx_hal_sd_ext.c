@@ -348,7 +348,7 @@ HAL_StatusTypeDef HAL_SD_WriteBlocksUninterrupted_DMA(SD_HandleTypeDef *hsd, uin
   }
 }
 
-HAL_StatusTypeDef HAL_SD_EXT_Sync(SD_HandleTypeDef *hsd) {
+HAL_StatusTypeDef HAL_SD_Uninterrupted_Sync(SD_HandleTypeDef *hsd) {
 	if (hsd->State == HAL_SD_STATE_TRANSFER) {
 		hsd->ErrorCode |= SDMMC_CmdStopTransfer(hsd->Instance);
 		if (hsd->ErrorCode == HAL_SD_ERROR_NONE) {
@@ -361,6 +361,122 @@ HAL_StatusTypeDef HAL_SD_EXT_Sync(SD_HandleTypeDef *hsd) {
 	} else {
 		return HAL_BUSY;
 	}
+}
+
+uint32_t SDMMC_CmdErase_ext(SDMMC_TypeDef *SDMMCx, uint32_t arg)
+{
+  SDMMC_CmdInitTypeDef  sdmmc_cmdinit;
+  uint32_t errorstate;
+
+  /* Set Block Size for Card */
+  sdmmc_cmdinit.Argument         = arg;
+  sdmmc_cmdinit.CmdIndex         = SDMMC_CMD_ERASE;
+  sdmmc_cmdinit.Response         = SDMMC_RESPONSE_SHORT;
+  sdmmc_cmdinit.WaitForInterrupt = SDMMC_WAIT_NO;
+  sdmmc_cmdinit.CPSM             = SDMMC_CPSM_ENABLE;
+  (void)SDMMC_SendCommand(SDMMCx, &sdmmc_cmdinit);
+
+  /* Check for error conditions */
+  errorstate = SDMMC_GetCmdResp1(SDMMCx, SDMMC_CMD_ERASE, SDMMC_MAXERASETIMEOUT);
+
+  return errorstate;
+}
+
+HAL_StatusTypeDef HAL_SD_Discard(SD_HandleTypeDef *hsd, uint32_t BlockStartAdd, uint32_t BlockEndAdd)
+{
+  uint32_t errorstate;
+  uint32_t start_add = BlockStartAdd;
+  uint32_t end_add = BlockEndAdd;
+
+  if(hsd->State == HAL_SD_STATE_READY)
+  {
+    hsd->ErrorCode = HAL_SD_ERROR_NONE;
+
+    if(end_add < start_add)
+    {
+      hsd->ErrorCode |= HAL_SD_ERROR_PARAM;
+      return HAL_ERROR;
+    }
+
+    if(end_add > (hsd->SdCard.LogBlockNbr))
+    {
+      hsd->ErrorCode |= HAL_SD_ERROR_ADDR_OUT_OF_RANGE;
+      return HAL_ERROR;
+    }
+
+    hsd->State = HAL_SD_STATE_BUSY;
+
+    /* Check if the card command class supports erase command */
+    if(((hsd->SdCard.Class) & SDMMC_CCCC_ERASE) == 0U)
+    {
+      /* Clear all the static flags */
+      __HAL_SD_CLEAR_FLAG(hsd, SDMMC_STATIC_FLAGS);
+      hsd->ErrorCode |= HAL_SD_ERROR_REQUEST_NOT_APPLICABLE;
+      hsd->State = HAL_SD_STATE_READY;
+      return HAL_ERROR;
+    }
+
+    if((SDMMC_GetResponse(hsd->Instance, SDMMC_RESP1) & SDMMC_CARD_LOCKED) == SDMMC_CARD_LOCKED)
+    {
+      /* Clear all the static flags */
+      __HAL_SD_CLEAR_FLAG(hsd, SDMMC_STATIC_FLAGS);
+      hsd->ErrorCode |= HAL_SD_ERROR_LOCK_UNLOCK_FAILED;
+      hsd->State = HAL_SD_STATE_READY;
+      return HAL_ERROR;
+    }
+
+    /* Get start and end block for high capacity cards */
+    if(hsd->SdCard.CardType != CARD_SDHC_SDXC)
+    {
+      start_add *= 512U;
+      end_add   *= 512U;
+    }
+
+    /* According to sd-card spec 1.0 ERASE_GROUP_START (CMD32) and erase_group_end(CMD33) */
+    if(hsd->SdCard.CardType != CARD_SECURED)
+    {
+      /* Send CMD32 SD_ERASE_GRP_START with argument as addr  */
+      errorstate = SDMMC_CmdSDEraseStartAdd(hsd->Instance, start_add);
+      if(errorstate != HAL_SD_ERROR_NONE)
+      {
+        /* Clear all the static flags */
+        __HAL_SD_CLEAR_FLAG(hsd, SDMMC_STATIC_FLAGS);
+        hsd->ErrorCode |= errorstate;
+        hsd->State = HAL_SD_STATE_READY;
+        return HAL_ERROR;
+      }
+
+      /* Send CMD33 SD_ERASE_GRP_END with argument as addr  */
+      errorstate = SDMMC_CmdSDEraseEndAdd(hsd->Instance, end_add);
+      if(errorstate != HAL_SD_ERROR_NONE)
+      {
+        /* Clear all the static flags */
+        __HAL_SD_CLEAR_FLAG(hsd, SDMMC_STATIC_FLAGS);
+        hsd->ErrorCode |= errorstate;
+        hsd->State = HAL_SD_STATE_READY;
+        return HAL_ERROR;
+      }
+    }
+
+    /* Send CMD38 ERASE */
+    errorstate = SDMMC_CmdErase_ext(hsd->Instance, 1);
+    if(errorstate != HAL_SD_ERROR_NONE)
+    {
+      /* Clear all the static flags */
+      __HAL_SD_CLEAR_FLAG(hsd, SDMMC_STATIC_FLAGS);
+      hsd->ErrorCode |= errorstate;
+      hsd->State = HAL_SD_STATE_READY;
+      return HAL_ERROR;
+    }
+
+    hsd->State = HAL_SD_STATE_READY;
+
+    return HAL_OK;
+  }
+  else
+  {
+    return HAL_BUSY;
+  }
 }
 
 uint8_t HAL_SD_EXT_IRQHandler(SD_HandleTypeDef *hsd) {

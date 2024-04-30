@@ -250,7 +250,7 @@ DRESULT disk_sdmmc_ioctl (BYTE cmd, void* buff) {
 
 	switch (cmd) {
 	case CTRL_SYNC:
-		if (HAL_SD_EXT_Sync(&hsd2) != HAL_OK) {
+		if (HAL_SD_Uninterrupted_Sync(&hsd2) != HAL_OK) {
 			return RES_ERROR;
 		}
 		return sdmmc_wait_ready();
@@ -266,16 +266,19 @@ DRESULT disk_sdmmc_ioctl (BYTE cmd, void* buff) {
 	case CTRL_TRIM: {
 		LBA_t *addr = (LBA_t *)buff;
 		// finish ongoing operations
-		if (HAL_SD_EXT_Sync(&hsd2) != HAL_OK) {
+		if (HAL_SD_Uninterrupted_Sync(&hsd2) != HAL_OK) {
 			return RES_ERROR;
 		}
 		DRESULT res;
 		if ((res = sdmmc_wait_ready()) != RES_OK) {
 			return res;
 		}
-		// erase sectors that are no longer used
-		if (HAL_SD_Erase(&hsd2, addr[0], addr[1]) != HAL_OK) {
-			return RES_ERROR;
+		// try to execute a Discard operation to those sectors
+		if (HAL_SD_Discard(&hsd2, addr[0], addr[1]) != HAL_OK) {
+			// discard failed, try erase instead
+			if (HAL_SD_Erase(&hsd2, addr[0], addr[1]) != HAL_OK) {
+				return RES_ERROR;
+			}
 		}
 	} return RES_OK;
 	default:
