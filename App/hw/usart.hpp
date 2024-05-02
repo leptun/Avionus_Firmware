@@ -38,6 +38,7 @@ public:
 	void GrantAccess(TaskHandle_t task);
 
 	void receive(uint8_t *buf, size_t len);
+	size_t receiveAny(uint8_t *buf, size_t maxlen);
 	void send(const uint8_t *buf, size_t len);
 	void setBaud(uint32_t baud);
 	inline bool rx_empty() {
