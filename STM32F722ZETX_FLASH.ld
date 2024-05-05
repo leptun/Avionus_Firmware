@@ -207,6 +207,74 @@ SECTIONS
 
 /* -------------------------------------------------------------------------- */
 
+	.krpc_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_krpc_bss_run_addr = .;
+		
+		./App/modules/krpc_client.o(.bss*)
+		./lib/krpc-arduino/*.o(.bss*) /* */
+		*(.krpc)
+		
+		. = ALIGN(4);
+		_krpc_bss_end = .;
+	} >DTCMRAM
+
+	.krpc_data :
+	{
+		. = ALIGN(4);
+		_krpc_data_run_addr = .;
+		
+		./App/modules/krpc_client.o(.data*)
+		./lib/krpc-arduino/*.o(.data*) /* */
+		
+		. = ALIGN(4);
+		_krpc_data_end = .;
+	} >DTCMRAM AT> FLASH
+	_krpc_data_load_addr = LOADADDR(.krpc_data);
+	
+	.krpc_free (NOLOAD) :
+	{
+		FILL(0);
+		. = __krpc_data_region_size__ - (_krpc_data_end - _krpc_bss_run_addr);
+	} >DTCMRAM
+
+/* -------------------------------------------------------------------------- */
+
+	.tinyusb_bss (NOLOAD) :
+	{
+		. = ALIGN(4);
+		_tinyusb_bss_run_addr = .;
+		
+		./lib/tinyusb/*.o(.bss*) /* */ ./glue/tinyusb/*.o(.bss*) /* */
+		./App/hw/usb.o(.bss*)
+		*(.tinyusb)
+		
+		. = ALIGN(4);
+		_tinyusb_bss_end = .;
+	} >DTCMRAM
+
+	.tinyusb_data :
+	{
+		. = ALIGN(4);
+		_tinyusb_data_run_addr = .;
+		
+		./lib/tinyusb/*.o(.data*) /* */ ./glue/tinyusb/*.o(.data*) /* */
+		./App/hw/usb.o(.data*)
+		
+		. = ALIGN(4);
+		_tinyusb_data_end = .;
+	} >DTCMRAM AT> FLASH
+	_tinyusb_data_load_addr = LOADADDR(.tinyusb_data);
+	
+	.tinyusb_free (NOLOAD) :
+	{
+		FILL(0);
+		. = __tinyusb_data_region_size__ - (_tinyusb_data_end - _tinyusb_bss_run_addr);
+	} >DTCMRAM
+
+/* -------------------------------------------------------------------------- */
+
 	.freertos_bss (NOLOAD) :
 	{
 		. = ALIGN(4);
@@ -300,74 +368,6 @@ SECTIONS
 	{
 		FILL(0);
 		. = __fatfs_data_region_size__ - (_fatfs_data_end - _fatfs_bss_run_addr);
-	} >SRAM2
-
-/* -------------------------------------------------------------------------- */
-
-	.krpc_bss (NOLOAD) :
-	{
-		. = ALIGN(4);
-		_krpc_bss_run_addr = .;
-		
-		./App/modules/krpc_client.o(.bss*)
-		./lib/krpc-arduino/*.o(.bss*) /* */
-		*(.krpc)
-		
-		. = ALIGN(4);
-		_krpc_bss_end = .;
-	} >SRAM2
-
-	.krpc_data :
-	{
-		. = ALIGN(4);
-		_krpc_data_run_addr = .;
-		
-		./App/modules/krpc_client.o(.data*)
-		./lib/krpc-arduino/*.o(.data*) /* */
-		
-		. = ALIGN(4);
-		_krpc_data_end = .;
-	} >SRAM2 AT> FLASH
-	_krpc_data_load_addr = LOADADDR(.krpc_data);
-	
-	.krpc_free (NOLOAD) :
-	{
-		FILL(0);
-		. = __krpc_data_region_size__ - (_krpc_data_end - _krpc_bss_run_addr);
-	} >SRAM2
-
-/* -------------------------------------------------------------------------- */
-
-	.tinyusb_bss (NOLOAD) :
-	{
-		. = ALIGN(4);
-		_tinyusb_bss_run_addr = .;
-		
-		./lib/tinyusb/*.o(.bss*) /* */ ./glue/tinyusb/*.o(.bss*) /* */
-		./App/hw/usb.o(.bss*)
-		*(.tinyusb)
-		
-		. = ALIGN(4);
-		_tinyusb_bss_end = .;
-	} >SRAM2
-
-	.tinyusb_data :
-	{
-		. = ALIGN(4);
-		_tinyusb_data_run_addr = .;
-		
-		./lib/tinyusb/*.o(.data*) /* */ ./glue/tinyusb/*.o(.data*) /* */
-		./App/hw/usb.o(.data*)
-		
-		. = ALIGN(4);
-		_tinyusb_data_end = .;
-	} >SRAM2 AT> FLASH
-	_tinyusb_data_load_addr = LOADADDR(.tinyusb_data);
-	
-	.tinyusb_free (NOLOAD) :
-	{
-		FILL(0);
-		. = __tinyusb_data_region_size__ - (_tinyusb_data_end - _tinyusb_bss_run_addr);
 	} >SRAM2
 
 /* -------------------------------------------------------------------------- */
