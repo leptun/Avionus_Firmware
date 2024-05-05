@@ -93,8 +93,6 @@ void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts) {
 void Setup() {
 	memcpy(UUID, (const uint32_t*)UID_BASE, sizeof(UUID));
 
-	LL_RCC_SetUSBClockSource(LL_RCC_USB_CLKSOURCE_PLL);
-
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
