@@ -1630,6 +1630,8 @@ static void MX_GPIO_Init(void)
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOG);
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
 
+  return;
+
   /**/
   LL_GPIO_ResetOutputPin(UI_LED_1_GPIO_Port, UI_LED_1_Pin);
 
