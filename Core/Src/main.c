@@ -101,7 +101,7 @@ int main(void)
   SCB_EnableICache();
 
   /* Enable D-Cache---------------------------------------------------------*/
-  SCB_EnableDCache();
+//  SCB_EnableDCache();
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -122,16 +122,16 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_TIM6_Init();
-  MX_ADC1_Init();
-  MX_ADC2_Init();
-  MX_ADC3_Init();
-  MX_TIM1_Init();
-  MX_TIM2_Init();
-  MX_TIM3_Init();
-  MX_TIM4_Init();
-  MX_SPI1_Init();
-  MX_SPI4_Init();
-  MX_I2C2_Init();
+//  MX_ADC1_Init();
+//  MX_ADC2_Init();
+//  MX_ADC3_Init();
+//  MX_TIM1_Init();
+//  MX_TIM2_Init();
+//  MX_TIM3_Init();
+//  MX_TIM4_Init();
+//  MX_SPI1_Init();
+//  MX_SPI4_Init();
+//  MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

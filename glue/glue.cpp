@@ -23,7 +23,7 @@ void HAL_ResumeTick(void) { xTaskResumeAll(); }
 
 extern "C"
 void vApplicationDaemonTaskStartupHook(void) {
-	Avionus_QSPILoader_init();
+//	Avionus_QSPILoader_init();
 
 	retarget_locks_init();
 	__libc_init_array();

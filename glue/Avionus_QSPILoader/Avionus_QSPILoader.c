@@ -8,6 +8,7 @@
 static uint32_t activeStreams;
 
 void Avionus_QSPILoader_init() {
+	return;
 	if (CSP_QUADSPI_Init() != HAL_OK) {
 		Error_Handler();
 	}
@@ -18,6 +19,7 @@ void Avionus_QSPILoader_init() {
 }
 
 void Avionus_QSPILoader_idleTaskEnterLowPower() {
+	return;
 	// inside critical section by callee
 
 	if (activeStreams) {
@@ -34,12 +36,14 @@ void Avionus_QSPILoader_idleTaskEnterLowPower() {
 }
 
 void Avionus_QSPILoader_announceDmaStreamBegin() {
+	return;
 	if (xTaskNotifyGiveIndexed(xTaskGetIdleTaskHandle(), 0) != pdPASS) {
 		Error_Handler();
 	}
 }
 
 void Avionus_QSPILoader_announceDmaStreamEnd() {
+	return;
 	if (xTaskNotifyGiveIndexed(xTaskGetIdleTaskHandle(), 1) != pdPASS) {
 		Error_Handler();
 	}

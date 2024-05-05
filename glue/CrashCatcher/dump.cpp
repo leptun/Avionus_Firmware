@@ -148,6 +148,7 @@ const CrashCatcherMemoryRegion *CrashCatcher_GetMemoryRegions(void) {
 }
 
 void CrashCatcher_DumpStart([[maybe_unused]] const CrashCatcherInfo *pInfo) {
+	return;
     __disable_irq();
 //    vTaskEndScheduler();
 
@@ -171,6 +172,7 @@ void CrashCatcher_DumpStart([[maybe_unused]] const CrashCatcherInfo *pInfo) {
 }
 
 void CrashCatcher_DumpMemory(const void *pvMemory, CrashCatcherElementSizes element_size, size_t elementCount) {
+	return;
     if (element_size == CRASH_CATCHER_BYTE) {
         if (crash_dump::dump_size + elementCount > crash_dump::dump_max_data_size) {
             crash_dump::dump_failed();
@@ -200,6 +202,7 @@ void CrashCatcher_DumpMemory(const void *pvMemory, CrashCatcherElementSizes elem
 }
 
 CrashCatcherReturnCodes CrashCatcher_DumpEnd(void) {
+	return CRASH_CATCHER_TRY_AGAIN;
     // if we got up to here with success, program dump header
     crash_dump::info_t dump_info = {
         .crash_dump_magic_nr = crash_dump::CRASH_DUMP_MAGIC_NR,

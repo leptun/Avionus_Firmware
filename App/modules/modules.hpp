@@ -6,7 +6,7 @@
 
 namespace modules {
 
-extern servo::Servo sv;
+//extern servo::Servo sv;
 extern krpc_client::KrpcClient krpc;
 
 }

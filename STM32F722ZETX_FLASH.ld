@@ -137,7 +137,7 @@ SECTIONS
 		./lib/tinyusb/*.o(.text* .rodata*) /* */ ./glue/tinyusb/*.o(.text* .rodata*) /* */
 		./lib/umm_malloc/*.o(.text* .rodata*) /* */
 		. = ALIGN(4);
-	} >XFLASH
+	} >FLASH
 
 /* -------------------------------------------------------------------------- */
 
