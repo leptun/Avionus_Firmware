@@ -24,6 +24,7 @@
 
 extern "C" uint32_t _tinyusb_bss_run_addr[];
 extern "C" uint32_t _krpc_bss_run_addr[];
+extern "C" uint32_t _shared_bss_run_addr[];
 
 #define KRPC_BULK_START for (bulkState = BulkState::SEND; bulkState != BulkState::DISABLED; bulkState = (BulkState)((int)bulkState - 1)) { krpc_error_t ret;
 #define KRPC_BULK_END } if (bulkState != BulkState::DISABLED) { bulkState = BulkState::DISABLED; state = InternalStates::Init; break; }
@@ -176,6 +177,7 @@ const TaskParameters_t KrpcClient::krpc_clientTaskDefinition =
 		/* Base address   Length                    Parameters */
 		{ _tinyusb_bss_run_addr, __tinyusb_data_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | CACHE_CONF(configTEX_S_C_B_SRAM) },
 		{ _krpc_bss_run_addr, __krpc_data_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | CACHE_CONF(configTEX_S_C_B_SRAM) },
+		{ _shared_bss_run_addr, __shared_region_size__, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER | CACHE_CONF(configTEX_S_C_B_TCMRAM) },
 		{ (uint32_t*)(USB_OTG_HS_PERIPH_BASE), 0x40000, portMPU_REGION_READ_WRITE | portMPU_REGION_EXECUTE_NEVER },
 	}
 };
