@@ -233,8 +233,10 @@ krpc_error_t KrpcClient::krpc_open() {
 }
 
 krpc_error_t KrpcClient::krpc_close() {
-	tud_cdc_n_read_flush(0);
-	tud_cdc_n_write_clear(0);
+	if (tud_ready()) {
+		tud_cdc_n_read_flush(0);
+		tud_cdc_n_write_clear(0);
+	}
 	return KRPC_OK;
 }
 
