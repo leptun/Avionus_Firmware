@@ -47,7 +47,17 @@
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
   #include <stdint.h>
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern uint32_t SystemCoreClock;
+
+#ifdef __cplusplus
+}
+#endif
+
 #define configENABLE_FPU                         1
 #define configENABLE_MPU                         1
 
@@ -114,7 +124,7 @@ extern uint32_t SystemCoreClock;
 /* Interrupt nesting behaviour configuration. */
 #define vPortSVCHandler SVC_Handler
 #define xPortPendSVHandler PendSV_Handler
-#define xPortSysTickHandler SysTick_Handler
+//#define xPortSysTickHandler SysTick_Handler
 #define vPortMemManageHandler MemManage_Handler
 
 /* Define to trap errors during development. */

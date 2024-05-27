@@ -4,7 +4,8 @@
 #include <AppMain.hpp>
 #include <retarget_locks.h>
 #include <Avionus_QSPILoader/Avionus_QSPILoader.h>
-
+#include <timing.hpp>
+#include <Marlin/src/HAL/shared/Delay.h>
 
 extern "C" int __libc_init_array(void);
 extern "C" void vPortSetupTimerInterrupt(void);
@@ -13,11 +14,13 @@ extern "C" int main();
 
 HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority) {
 	vPortSetupTimerInterrupt();
+	tick_timer_init();
+	calibrate_delay_loop();
 	return HAL_OK;
 }
 void HAL_IncTick(void) { Error_Handler(); }
 uint32_t HAL_GetTick(void) { return (xPortIsInsideInterrupt() != pdFALSE) ? xTaskGetTickCountFromISR() : xTaskGetTickCount(); }
-void HAL_Delay(uint32_t Delay) { if (xPortIsInsideInterrupt() == pdFALSE) vTaskDelay(Delay); } //todo implement spinlock or something for the case of ISR
+void HAL_Delay(uint32_t Delay) { if (xPortIsInsideInterrupt() == pdFALSE) vTaskDelay(Delay); else delay_ms(Delay); }
 void HAL_SuspendTick(void) { vTaskSuspendAll(); }
 void HAL_ResumeTick(void) { xTaskResumeAll(); }
 

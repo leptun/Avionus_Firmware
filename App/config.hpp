@@ -10,6 +10,7 @@ static constexpr uint32_t system_clock_frequency = 216000000;
 
 namespace clocks {
 static constexpr uint32_t hclk = system_clock_frequency;
+static constexpr uint32_t timclk = hclk;
 static constexpr uint32_t pclk1 = hclk / 4;
 static constexpr uint32_t pclk2 = hclk / 2;
 static constexpr uint32_t hsi = HSI_VALUE;

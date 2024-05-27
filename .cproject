@@ -68,6 +68,7 @@
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src/krpc_cnano"/>
 									<listOptionValue builtIn="false" value="../lib/Fusion/Fusion"/>
 									<listOptionValue builtIn="false" value="../lib/CrashCatcher/include"/>
+									<listOptionValue builtIn="false" value="../lib/Marlin"/>
 									<listOptionValue builtIn="false" value="../lib/utils"/>
 									<listOptionValue builtIn="false" value="../glue"/>
 									<listOptionValue builtIn="false" value="../glue/FreeRTOS-Kernel"/>
@@ -75,6 +76,7 @@
 									<listOptionValue builtIn="false" value="../glue/FatFs"/>
 									<listOptionValue builtIn="false" value="../glue/Arduino"/>
 									<listOptionValue builtIn="false" value="../glue/CrashCatcher"/>
+									<listOptionValue builtIn="false" value="../glue/timing"/>
 								</option>
 								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.languagestandard.1897046078" name="Language standard" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.languagestandard" useByScannerDiscovery="true" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.languagestandard.value.gnu18" valueType="enumerated"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="true" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.otherflags.1066546987" name="Other flags" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.otherflags" useByScannerDiscovery="true" valueType="stringList"/>
@@ -111,6 +113,7 @@
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src/krpc_cnano"/>
 									<listOptionValue builtIn="false" value="../lib/Fusion/Fusion"/>
 									<listOptionValue builtIn="false" value="../lib/CrashCatcher/include"/>
+									<listOptionValue builtIn="false" value="../lib/Marlin"/>
 									<listOptionValue builtIn="false" value="../lib/utils"/>
 									<listOptionValue builtIn="false" value="../glue"/>
 									<listOptionValue builtIn="false" value="../glue/FreeRTOS-Kernel"/>
@@ -118,6 +121,7 @@
 									<listOptionValue builtIn="false" value="../glue/FatFs"/>
 									<listOptionValue builtIn="false" value="../glue/Arduino"/>
 									<listOptionValue builtIn="false" value="../glue/CrashCatcher"/>
+									<listOptionValue builtIn="false" value="../glue/timing"/>
 								</option>
 								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.languagestandard.294688666" name="Language standard" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.languagestandard" useByScannerDiscovery="true" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.languagestandard.value.gnupp20" valueType="enumerated"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.otherflags.826555577" name="Other flags" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.otherflags" useByScannerDiscovery="true" valueType="stringList">
@@ -152,12 +156,13 @@
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Fusion/Fusion"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/umm_malloc/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/Common"/>
-						<entry excluding="tim.c|system_stm32f7xx.c|syscalls.c|stm32f7xx_it.c|stm32f7xx_hal_msp.c|main.c|Loader_Src.c|gpio.c|Dev_Inf.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Avionus_QSPILoader/Core/Src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/tinyusb/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="App"/>
+						<entry excluding="Fusion|Avionus_QSPILoader|FreeRTOS-Kernel/examples|krpc-arduino/src/communication.cpp|umm_malloc|CrashCatcher|FreeRTOS-Kernel/portable|tinyusb" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
+						<entry excluding="heap_3.c|heap_2.c|heap_1.c|heap_5.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/MemMang"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="glue"/>
-						<entry excluding="CrashCatcher|Avionus_QSPILoader|krpc-arduino/src/communication.cpp|tinyusb|umm_malloc|Fusion|FreeRTOS-Kernel/portable|FreeRTOS-Kernel/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
+						<entry excluding="system_stm32f7xx.c|syscalls.c|Loader_Src.c|tim.c|stm32f7xx_it.c|stm32f7xx_hal_msp.c|gpio.c|Dev_Inf.c|main.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Avionus_QSPILoader/Core/Src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 					</sourceEntries>
 				</configuration>
@@ -193,7 +198,7 @@
 							<builder buildPath="${workspace_loc:/Avionus_Firmware}/Release" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.builder.1237113304" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.builder"/>
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.1640670705" name="MCU GCC Assembler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler">
 								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.debuglevel.1669408912" name="Debug level" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.debuglevel" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.debuglevel.value.g3" valueType="enumerated"/>
-								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.definedsymbols.299614951" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.definedsymbols" valueType="definedSymbols">
+								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.definedsymbols.299614951" name="Define symbols (-D)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.option.definedsymbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="CRASH_CATCHER_STACK_WORD_COUNT=256"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.input.1645189456" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.assembler.input"/>
@@ -227,6 +232,7 @@
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src/krpc_cnano"/>
 									<listOptionValue builtIn="false" value="../lib/Fusion/Fusion"/>
 									<listOptionValue builtIn="false" value="../lib/CrashCatcher/include"/>
+									<listOptionValue builtIn="false" value="../lib/Marlin"/>
 									<listOptionValue builtIn="false" value="../lib/utils"/>
 									<listOptionValue builtIn="false" value="../glue"/>
 									<listOptionValue builtIn="false" value="../glue/FreeRTOS-Kernel"/>
@@ -234,6 +240,7 @@
 									<listOptionValue builtIn="false" value="../glue/FatFs"/>
 									<listOptionValue builtIn="false" value="../glue/Arduino"/>
 									<listOptionValue builtIn="false" value="../glue/CrashCatcher"/>
+									<listOptionValue builtIn="false" value="../glue/timing"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="true" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.otherflags.1906335652" name="Other flags" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.otherflags" useByScannerDiscovery="true" valueType="stringList"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="true" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.undefinedsymbols.495006275" name="Undefine symbols (-U)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.undefinedsymbols" useByScannerDiscovery="false" valueType="undefDefinedSymbols"/>
@@ -269,6 +276,7 @@
 									<listOptionValue builtIn="false" value="../lib/krpc-arduino/src/krpc_cnano"/>
 									<listOptionValue builtIn="false" value="../lib/Fusion/Fusion"/>
 									<listOptionValue builtIn="false" value="../lib/CrashCatcher/include"/>
+									<listOptionValue builtIn="false" value="../lib/Marlin"/>
 									<listOptionValue builtIn="false" value="../lib/utils"/>
 									<listOptionValue builtIn="false" value="../glue"/>
 									<listOptionValue builtIn="false" value="../glue/FreeRTOS-Kernel"/>
@@ -276,6 +284,7 @@
 									<listOptionValue builtIn="false" value="../glue/FatFs"/>
 									<listOptionValue builtIn="false" value="../glue/Arduino"/>
 									<listOptionValue builtIn="false" value="../glue/CrashCatcher"/>
+									<listOptionValue builtIn="false" value="../glue/timing"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.otherflags.1724231789" name="Other flags" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.otherflags" useByScannerDiscovery="true" valueType="stringList">
 									<listOptionValue builtIn="false" value="-Wno-volatile"/>
@@ -310,12 +319,13 @@
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Fusion/Fusion"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/umm_malloc/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/Common"/>
-						<entry excluding="tim.c|system_stm32f7xx.c|syscalls.c|stm32f7xx_it.c|stm32f7xx_hal_msp.c|main.c|Loader_Src.c|gpio.c|Dev_Inf.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Avionus_QSPILoader/Core/Src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/tinyusb/src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="App"/>
+						<entry excluding="Fusion|Avionus_QSPILoader|FreeRTOS-Kernel/examples|krpc-arduino/src/communication.cpp|umm_malloc|CrashCatcher|FreeRTOS-Kernel/portable|tinyusb" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
+						<entry excluding="heap_3.c|heap_2.c|heap_1.c|heap_5.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/FreeRTOS-Kernel/portable/MemMang"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="glue"/>
-						<entry excluding="CrashCatcher|Avionus_QSPILoader|krpc-arduino/src/communication.cpp|tinyusb|umm_malloc|Fusion|FreeRTOS-Kernel/portable|FreeRTOS-Kernel/examples" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib"/>
+						<entry excluding="system_stm32f7xx.c|syscalls.c|Loader_Src.c|tim.c|stm32f7xx_it.c|stm32f7xx_hal_msp.c|gpio.c|Dev_Inf.c|main.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lib/Avionus_QSPILoader/Core/Src"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
 					</sourceEntries>
 				</configuration>

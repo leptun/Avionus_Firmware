@@ -11,7 +11,7 @@ BaseType_t xTaskNotifyWaitBitsAllIndexed(UBaseType_t uxIndexToWaitOn, uint32_t u
 	uint32_t currBits = 0;
 
 	xTaskNotifyIndexed(xTaskGetCurrentTaskHandle(), uxIndexToWaitOn, 0, eNoAction);
-	while (currBits != ulBitsToClearOnExit) {
+	while (ulBitsToClearOnExit) {
 		if (xTaskCheckForTimeOut(&xTimeOut, &xTicksToWait) != pdFALSE) {
 			ret = pdFALSE;
 			break;
