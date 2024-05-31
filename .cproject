@@ -59,6 +59,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F7xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../App"/>
+									<listOptionValue builtIn="false" value="../lib"/>
 									<listOptionValue builtIn="false" value="../lib/Avionus_QSPILoader/Core/Inc"/>
 									<listOptionValue builtIn="false" value="../lib/FreeRTOS-Kernel/include"/>
 									<listOptionValue builtIn="false" value="../lib/tinyusb/src"/>
@@ -104,6 +105,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F7xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../App"/>
+									<listOptionValue builtIn="false" value="../lib"/>
 									<listOptionValue builtIn="false" value="../lib/Avionus_QSPILoader/Core/Inc"/>
 									<listOptionValue builtIn="false" value="../lib/FreeRTOS-Kernel/include"/>
 									<listOptionValue builtIn="false" value="../lib/tinyusb/src"/>
@@ -223,6 +225,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F7xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../App"/>
+									<listOptionValue builtIn="false" value="../lib"/>
 									<listOptionValue builtIn="false" value="../lib/Avionus_QSPILoader/Core/Inc"/>
 									<listOptionValue builtIn="false" value="../lib/FreeRTOS-Kernel/include"/>
 									<listOptionValue builtIn="false" value="../lib/tinyusb/src"/>
@@ -267,6 +270,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F7xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../App"/>
+									<listOptionValue builtIn="false" value="../lib"/>
 									<listOptionValue builtIn="false" value="../lib/Avionus_QSPILoader/Core/Inc"/>
 									<listOptionValue builtIn="false" value="../lib/FreeRTOS-Kernel/include"/>
 									<listOptionValue builtIn="false" value="../lib/tinyusb/src"/>
