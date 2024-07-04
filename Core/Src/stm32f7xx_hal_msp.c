@@ -1,3 +1,4 @@
+
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
@@ -174,6 +175,7 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
   /* USER CODE BEGIN I2C2_MspInit 1 */
 
   /* USER CODE END I2C2_MspInit 1 */
+
   }
 
 }
@@ -305,6 +307,7 @@ void HAL_SD_MspInit(SD_HandleTypeDef* hsd)
     LL_RCC_SetSDMMCClockSource(LL_RCC_SDMMC2_CLKSOURCE_SYSCLK);
 
   /* USER CODE END SDMMC2_MspInit 1 */
+
   }
 
 }
