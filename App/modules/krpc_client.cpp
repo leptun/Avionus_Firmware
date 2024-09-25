@@ -26,6 +26,8 @@ extern "C" uint32_t _tinyusb_bss_run_addr[];
 extern "C" uint32_t _krpc_bss_run_addr[];
 extern "C" uint32_t _shared_bss_run_addr[];
 
+#define KRPC_TEST(x) if (x) { state = InternalStates::Init; break; }
+
 #define KRPC_BULK_START for (bulkState = BulkState::SEND; bulkState != BulkState::DISABLED; bulkState = (BulkState)((int)bulkState - 1)) { krpc_error_t ret;
 #define KRPC_BULK_END } if (bulkState != BulkState::DISABLED) { bulkState = BulkState::DISABLED; state = InternalStates::Init; break; }
 #define KRPC_BULK_TEST(x) if (((ret = x)) && ret != KRPC_ERROR_DECODING_FAILED) { break; }
@@ -70,27 +72,27 @@ void KrpcClient::task_krpc_client_Main() {
 		} break;
 		case InternalStates::Connected: {
 			krpc_KRPC_GameScene_t scene;
-			if (krpc_KRPC_CurrentGameScene(conn, &scene)) { state = InternalStates::Init; break; }
+			KRPC_TEST(krpc_KRPC_CurrentGameScene(conn, &scene));
 			if (scene == KRPC_KRPC_GAMESCENE_FLIGHT) {
-				if (krpc_SpaceCenter_ActiveVessel(conn, &vessel)) { state = InternalStates::Init; break; }
+				KRPC_TEST(krpc_SpaceCenter_ActiveVessel(conn, &vessel));
 				{
 					krpc_SpaceCenter_Parts_t vessel_parts;
-					if (krpc_SpaceCenter_Vessel_Parts(conn, &vessel_parts, vessel)) { state = InternalStates::Init; break; }
+					KRPC_TEST(krpc_SpaceCenter_Vessel_Parts(conn, &vessel_parts, vessel));
 					krpc_list_object_t vessel_parts_lasers = { 0 };
-					if (krpc_SpaceCenter_Parts_WithName(conn, &vessel_parts_lasers, vessel_parts, "distometer100x")) { state = InternalStates::Init; break; }
-					if (vessel_parts_lasers.size == 0) { state = InternalStates::Init; break; }
+					KRPC_TEST(krpc_SpaceCenter_Parts_WithName(conn, &vessel_parts_lasers, vessel_parts, "distometer100x"));
+					KRPC_TEST(vessel_parts_lasers.size == 0);
 					krpc_SpaceCenter_Part_t laser_part = vessel_parts_lasers.items[0];
 					krpc_free(vessel_parts_lasers.items);
-					if (krpc_LiDAR_Laser(conn, &laser, laser_part)) { state = InternalStates::Init; break; }
+					KRPC_TEST(krpc_LiDAR_Laser(conn, &laser, laser_part));
 				}
-				if (krpc_SpaceCenter_Vessel_Orbit(conn, &orbit, vessel)) { state = InternalStates::Init; break; }
-				if (krpc_SpaceCenter_Orbit_Body(conn, &body, orbit)) { state = InternalStates::Init; break; }
-				if (krpc_SpaceCenter_CelestialBody_ReferenceFrame(conn, &body_frame, body)) { state = InternalStates::Init; break; }
-				if (krpc_SpaceCenter_Vessel_ReferenceFrame(conn, &ref_frame, vessel)) { state = InternalStates::Init; break; }
-				if (krpc_SpaceCenter_Vessel_SurfaceReferenceFrame(conn, &surface_ref_frame, vessel)) { state = InternalStates::Init; break; }
-				if (krpc_SpaceCenter_ReferenceFrame_CreateHybrid(conn, &flight_ref_frame, body_frame, surface_ref_frame, body_frame, body_frame)) { state = InternalStates::Init; break; }
-				if (krpc_SpaceCenter_Vessel_Flight(conn, &flight, vessel, flight_ref_frame)) { state = InternalStates::Init; break; }
-				if (krpc_SpaceCenter_Vessel_Control(conn, &control, vessel)) { state = InternalStates::Init; break; }
+				KRPC_TEST(krpc_SpaceCenter_Vessel_Orbit(conn, &orbit, vessel));
+				KRPC_TEST(krpc_SpaceCenter_Orbit_Body(conn, &body, orbit));
+				KRPC_TEST(krpc_SpaceCenter_CelestialBody_ReferenceFrame(conn, &body_frame, body));
+				KRPC_TEST(krpc_SpaceCenter_Vessel_ReferenceFrame(conn, &ref_frame, vessel));
+				KRPC_TEST(krpc_SpaceCenter_Vessel_SurfaceReferenceFrame(conn, &surface_ref_frame, vessel));
+				KRPC_TEST(krpc_SpaceCenter_ReferenceFrame_CreateHybrid(conn, &flight_ref_frame, body_frame, surface_ref_frame, body_frame, body_frame));
+				KRPC_TEST(krpc_SpaceCenter_Vessel_Flight(conn, &flight, vessel, flight_ref_frame));
+				KRPC_TEST(krpc_SpaceCenter_Vessel_Control(conn, &control, vessel));
 				state = InternalStates::Flight;
 			}
 			else {
@@ -101,7 +103,7 @@ void KrpcClient::task_krpc_client_Main() {
 			uint32_t flags = 0;
 			if (util::xTaskNotifyWaitBitsAnyIndexed(0, 0, FLAG0_CYCLE | FLAG0_COMM_LINE_STATE, &flags, pdMS_TO_TICKS(1000)) == pdFALSE) {
 				krpc_KRPC_GameScene_t scene;
-				if (krpc_KRPC_CurrentGameScene(conn, &scene)) { state = InternalStates::Init; break; }
+				KRPC_TEST(krpc_KRPC_CurrentGameScene(conn, &scene));
 				if (scene != KRPC_KRPC_GAMESCENE_FLIGHT) {
 					state = InternalStates::Connected;
 					break;
