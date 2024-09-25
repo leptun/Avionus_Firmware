@@ -84,11 +84,15 @@
  * - CFG_TUSB_MEM_ALIGN   : __attribute__ ((aligned(4)))
  */
 #ifndef CFG_TUSB_MEM_SECTION
-#define CFG_TUSB_MEM_SECTION
+#define CFG_TUSB_MEM_SECTION  __attribute__ ((section(".buffers")))
 #endif
 
 #ifndef CFG_TUSB_MEM_ALIGN
 #define CFG_TUSB_MEM_ALIGN    __attribute__ ((aligned(4)))
+#endif
+
+#ifndef CFG_TUD_DWC2_DMA
+#define CFG_TUD_DWC2_DMA      1
 #endif
 
 //--------------------------------------------------------------------

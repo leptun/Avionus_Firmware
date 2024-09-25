@@ -135,6 +135,7 @@ extern uint32_t SystemCoreClock;
 #define configTOTAL_MPU_REGIONS                                8 /* Default value. */
 #define configTEX_S_C_B_FLASH                                  0x03UL
 #define configTEX_S_C_B_SRAM                                   0x0BUL
+#define configTEX_S_C_B_SRAM_NONCACHE                          0x08UL
 #define configTEX_S_C_B_TCMRAM                                 0x08UL
 #define configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY            1
 #define configALLOW_UNPRIVILEGED_CRITICAL_SECTIONS             0
